@@ -6,20 +6,20 @@
 
 typedef struct {
   char name[16];
-  unsigned int score;
-  unsigned int invalid_moves;
-  unsigned int valid_moves;
-  unsigned short x;
-  unsigned short y;
+  uint32_t score;
+  uint32_t invalid_moves;
+  uint32_t valid_moves;
+  uint16_t x;
+  uint16_t y;
   pid_t player_id; //> Each player will be a separate process
   bool state;
 } player_t;
 
 typedef struct {
-  unsigned short width;
-  unsigned short height;
-  unsigned char players_count;
+  uint16_t width;
+  uint16_t height;
+  int8_t players_count;
   player_t players[9];
   bool state;
-  char board[]; // tablero. fila-0, fila-1, ..., fila-n-1
+  int8_t board[]; // tablero. fila-0, fila-1, ..., fila-n-1
 } game_state_t;
