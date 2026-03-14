@@ -15,10 +15,11 @@
 
 # AI - Player types
 
+- Navie (random no checks)
 - BFS
 - DFS
 - Minimax
-- A*
+- A\*
 
 ## Take into account
 
