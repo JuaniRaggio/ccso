@@ -5,7 +5,7 @@
 /**
  * @brief: Calculates next move for player
  **/
-int8_t compute_next_move();
+int8_t compute_next_move(int8_t[], uint16_t, uint16_t);
 
 /**
  * @brief: gets a set of available movements (8 bits, each bit is a direction -
