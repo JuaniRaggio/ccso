@@ -1,5 +1,6 @@
 #include <shmemory_utils.h>
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdlib.h>
 #include <sys/_types/_off_t.h>
 #include <sys/fcntl.h>
@@ -8,23 +9,26 @@ inline bool is_creator(int openFlags) {
    return openFlags & O_CREAT;
 }
 
-void *createSharedMemory(char *sharedMemoryName, int totalSize, int openFlags, int permissions, int proteccions,
-                         int mapFlag, off_t offset) {
+void *createSharedMemory(char *sharedMemoryName, size_t totalSize, int openFlags, int permissions, int proteccions,
+                         int mapFlag, off_t offset, error_manager_t errno_manager) {
    errno = 0;
 
    int fd = shm_open(sharedMemoryName, openFlags, permissions);
    if (fd == -1) {
+      errno_manager();
       return NULL;
    }
 
    // O_CREAT means that you are the creator of a new shared memory object
    if (is_creator(openFlags) && ftruncate(fd, totalSize) == -1) {
+      errno_manager();
       close(fd);
       return NULL;
    }
 
    void *ptr = mmap(NULL, totalSize, proteccions, mapFlag, fd, offset);
    if (ptr == MAP_FAILED) {
+      errno_manager();
       close(fd);
       return NULL;
    }
