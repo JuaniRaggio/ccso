@@ -4,6 +4,8 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+#define MAX_PLAYERS 9
+
 typedef struct {
   char name[16];
   uint32_t score;
@@ -19,7 +21,7 @@ typedef struct {
   uint16_t width;
   uint16_t height;
   int8_t players_count;
-  player_t players[9];
+  player_t players[MAX_PLAYERS];
   bool state;
   int8_t board[]; // tablero. fila-0, fila-1, ..., fila-n-1
 } game_state_t;

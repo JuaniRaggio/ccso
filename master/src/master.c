@@ -11,6 +11,11 @@
 #include <game_state.h>
 #include <game_sync.h>
 #include "master.h"
+
+void printGameState(int8_t board[], uint16_t height, uint16_t width,
+                    int8_t players_count, bool state);
+void printBoard(int8_t board[], uint16_t height, uint16_t width);
+
 /*
 totalSize:
    -> In the shared memory: "/game_state", totalSize = sizeOf(game_state_t) +
