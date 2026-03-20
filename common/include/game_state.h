@@ -5,9 +5,10 @@
 #include <stdlib.h>
 
 #define MAX_PLAYERS 9
+#define MAX_NAME_LENGTH 16
 
 typedef struct {
-   char name[16];
+   char name[MAX_NAME_LENGTH];
    uint32_t score;
    uint32_t invalid_moves;
    uint32_t valid_moves;
