@@ -14,4 +14,8 @@ int8_t compute_next_move(int8_t board[], uint16_t width, uint16_t height) {}
 
 #elif MINIMAX
 
+#elif A_STAR
+
+int8_t compute_next_move(int8_t board[], uint16_t width, uint16_t height) {}
+
 #endif
