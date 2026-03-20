@@ -16,3 +16,4 @@ typedef void (*error_manager_t)();
  */
 void *createSharedMemory(char *sharedMemoryName, size_t totalSize, int openFlags, int permissions, int proteccions,
                          int mapFlag, off_t offset, error_manager_t manage_errno);
+void initalizeGameSync(game_sync_t *sharedGameSync);
