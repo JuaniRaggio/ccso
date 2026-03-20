@@ -50,11 +50,11 @@ int main(int argc, char *argv[]) {
 
    errno = 0;
    size_t totalSize = (sizeof(game_state_t) + sizeof(int8_t) * parameters.height * parameters.width);
-   game_state_t *sharedGameState =
-       createSharedMemory("/game_state", totalSize, O_CREAT | O_RDWR, PERMISSIONS, PROTECTIONS, MAPFLAG, 0, manage_errno);
+   game_state_t *sharedGameState = createSharedMemory("/game_state", totalSize, O_CREAT | O_RDWR, PERMISSIONS,
+                                                      PROTECTIONS, MAPFLAG, 0, manage_errno);
 
-   game_sync_t *sharedGameSync =
-       createSharedMemory("/game_sync", sizeof(game_sync_t), O_CREAT | O_RDWR, PERMISSIONS, PROTECTIONS, MAPFLAG, 0, manage_errno);
+   game_sync_t *sharedGameSync = createSharedMemory("/game_sync", sizeof(game_sync_t), O_CREAT | O_RDWR, PERMISSIONS,
+                                                    PROTECTIONS, MAPFLAG, 0, manage_errno);
 
    initalizeGameState(sharedGameState, parameters.width, parameters.height, parameters.players_count, (player_t *){});
 
