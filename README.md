@@ -11,8 +11,6 @@
   
   _Se traduce todo usando shm_overview / mmap / unmap, probablemente se vea en la clase de memoria compartida_
 
-\
-
 # AI - Player types
 
 - Navie (random no checks)
@@ -26,8 +24,6 @@
 - Si un jugador calcular que va a ir a una posicion {a, b}, podria pasar que siga calculando los siguientes
   movimientos pero eso implicaria que si justo otro jugador decide moverse a {a, b}, entonces va a cometer un
   movimiento invalido lo cual invalida todos los siguientes movimientos que queria hacer este jugador
-
-\
 
 ## Type lengths
 
