@@ -1,3 +1,4 @@
--I../common/include/
+-Wall
+-g
+-I../common/include
 -Iinclude
-

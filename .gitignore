@@ -1,4 +1,6 @@
 /.lesshst
 /.viminfo
 /build/
+/common/compile_flags.txt
+/common/compile_flags.txt
 /master/compile_flags.txt
