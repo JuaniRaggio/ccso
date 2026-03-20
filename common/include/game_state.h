@@ -9,8 +9,8 @@ typedef struct {
   uint32_t score;
   uint32_t invalid_moves;
   uint32_t valid_moves;
-  uint16_t x;
-  uint16_t y;
+  uint16_t x; // Random
+  uint16_t y; // Random
   pid_t player_id; //> Each player will be a separate process
   bool state;
 } player_t;
