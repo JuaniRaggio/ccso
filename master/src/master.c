@@ -64,33 +64,33 @@ void printBoard(int8_t board[], uint16_t height, uint16_t width) {
 
 void printGameSync(game_sync_t *sync) {
 
-    int val;
+   int val;
 
-    fprintf(stderr, "\n=== GAME SYNC ===\n");
+   fprintf(stderr, "\n=== GAME SYNC ===\n");
 
-    sem_getvalue(&sync->A, &val);
-    fprintf(stderr, "A: %d\n", val);
+   sem_getvalue(&sync->A, &val);
+   fprintf(stderr, "A: %d\n", val);
 
-    sem_getvalue(&sync->B, &val);
-    fprintf(stderr, "B: %d\n", val);
+   sem_getvalue(&sync->B, &val);
+   fprintf(stderr, "B: %d\n", val);
 
-    sem_getvalue(&sync->C, &val);
-    fprintf(stderr, "C: %d\n", val);
+   sem_getvalue(&sync->C, &val);
+   fprintf(stderr, "C: %d\n", val);
 
-    sem_getvalue(&sync->D, &val);
-    fprintf(stderr, "D: %d\n", val);
+   sem_getvalue(&sync->D, &val);
+   fprintf(stderr, "D: %d\n", val);
 
-    sem_getvalue(&sync->E, &val);
-    fprintf(stderr, "E: %d\n", val);
+   sem_getvalue(&sync->E, &val);
+   fprintf(stderr, "E: %d\n", val);
 
-    fprintf(stderr, "F (lectores): %u\n", sync->F);
+   fprintf(stderr, "F (lectores): %u\n", sync->F);
 
-    for (int i = 0; i < 9; i++) {
-        sem_getvalue(&sync->G[i], &val);
-        fprintf(stderr, "G[%d]: %d\n", i, val);
-    }
+   for (int i = 0; i < 9; i++) {
+      sem_getvalue(&sync->G[i], &val);
+      fprintf(stderr, "G[%d]: %d\n", i, val);
+   }
 
-    fprintf(stderr, "=================\n\n");
+   fprintf(stderr, "=================\n\n");
 }
 
 // ------------------------------------------------------------------------------------------------------------------
