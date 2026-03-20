@@ -29,7 +29,7 @@ typedef enum {
    success = 0x0,
    invalid_width_type = success << 1,
    invalid_height_type = invalid_width_type << 1,
-   invalid_delay_type =  invalid_height_type << 1,
+   invalid_delay_type = invalid_height_type << 1,
    invalid_timeout_type = invalid_delay_type << 1,
    invalid_seed_type = invalid_timeout_type << 1,
    invalid_view_path = invalid_seed_type << 1,
