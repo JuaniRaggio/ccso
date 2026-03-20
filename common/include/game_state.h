@@ -7,14 +7,14 @@
 #define MAX_PLAYERS 9
 
 typedef struct {
-  char name[16];
-  uint32_t score;
-  uint32_t invalid_moves;
-  uint32_t valid_moves;
-  uint16_t x; // Random
-  uint16_t y; // Random
-  pid_t player_id; //> Each player will be a separate process
-  bool state;
+   char name[16];
+   uint32_t score;
+   uint32_t invalid_moves;
+   uint32_t valid_moves;
+   uint16_t x;      // Random
+   uint16_t y;      // Random
+   pid_t player_id; //> Each player will be a separate process
+   bool state;
 } player_t;
 
 typedef struct {

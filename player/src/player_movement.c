@@ -2,6 +2,5 @@
 
 // Naive version
 int8_t compute_next_move() {
-    return rand() % 8; 
+   return rand() % 8;
 }
-
