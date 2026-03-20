@@ -5,10 +5,10 @@
 #include <sys/fcntl.h>
 
 inline bool is_creator(int openFlags) {
-    return openFlags & O_CREAT;
+   return openFlags & O_CREAT;
 }
 
-void * createSharedMemory(char *sharedMemoryName, int totalSize, int openFlags, int permissions, int proteccions,
+void *createSharedMemory(char *sharedMemoryName, int totalSize, int openFlags, int permissions, int proteccions,
                          int mapFlag, off_t offset) {
    errno = 0;
 
@@ -19,8 +19,8 @@ void * createSharedMemory(char *sharedMemoryName, int totalSize, int openFlags, 
 
    // O_CREAT means that you are the creator of a new shared memory object
    if (is_creator(openFlags) && ftruncate(fd, totalSize) == -1) {
-         close(fd);
-         return NULL;
+      close(fd);
+      return NULL;
    }
 
    void *ptr = mmap(NULL, totalSize, proteccions, mapFlag, fd, offset);
@@ -32,4 +32,3 @@ void * createSharedMemory(char *sharedMemoryName, int totalSize, int openFlags, 
    close(fd);
    return ptr;
 }
-
