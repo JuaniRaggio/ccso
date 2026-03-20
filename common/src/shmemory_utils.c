@@ -1,6 +1,7 @@
 #include <shmemory_utils.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#include <sys/_types/_off_t.h>
 #include <sys/fcntl.h>
 
 inline bool is_creator(int openFlags) {
@@ -8,7 +9,7 @@ inline bool is_creator(int openFlags) {
 }
 
 void * createSharedMemory(char *sharedMemoryName, int totalSize, int openFlags, int permissions, int proteccions,
-                         int mapFlag, int offset) {
+                         int mapFlag, off_t offset) {
    errno = 0;
 
    int fd = shm_open(sharedMemoryName, openFlags, permissions);
