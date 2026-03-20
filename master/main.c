@@ -1,6 +1,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <parser.h>
+#include <stdio.h>
+#include <sys/errno.h>
 #include <sys/mman.h>
 #include <time.h>
 #include <unistd.h>
@@ -18,10 +20,19 @@
 void printGameState(int8_t board[], uint16_t height, uint16_t width, int8_t players_count, bool state);
 void printBoard(int8_t board[], uint16_t height, uint16_t width); // Just for us
 
-#define manage_errno() exit(1);
+void manage_errno(const char *file, const char *func, uint64_t line) {
+   switch (errno) {
+   case EACCES:
+      fprintf(stderr, "Access Error... File: %s\n Function: %s Line: %llu\n", file, func, line);
+      break;
+   case EEXIST:
+      fprintf(stderr, "Exist Error... File: %s\n Function: %s Line: %llu\n", file, func, line);
+      break;
+   }
+}
 
 int main(int argc, char *argv[]) {
-
+   errno = 0;
    parameters_t parameters = (parameters_t){
        .width = 10,
        .height = 10,
@@ -37,21 +48,13 @@ int main(int argc, char *argv[]) {
       // Manage errors using status
    }
 
-   // We create the sharedMemory for "game state" and assign a pointer to its
-   // beginning
+   errno = 0;
+   size_t totalSize = (sizeof(game_state_t) + sizeof(int8_t) * parameters.height * parameters.width);
+   game_state_t *sharedGameState = createSharedMemory("/game_state", totalSize, O_CREAT | O_RDWR, PERMISSIONS,
+                                                      PROTECTIONS, MAPFLAG, 0, manage_errno);
 
-   int totalSize = (sizeof(game_state_t) + sizeof(int8_t) * parameters.height * parameters.width);
-   game_state_t *sharedGameState =
-       createSharedMemory("/game_state", totalSize, O_CREAT | O_RDWR, PERMISSIONS, PROTECTIONS, MAPFLAG, 0);
-   if (sharedGameState == NULL) {
-      manage_errno();
-   }
-
-   game_sync_t *sharedGameSync =
-       createSharedMemory("/game_sync", sizeof(game_sync_t), O_CREAT | O_RDWR, PERMISSIONS, PROTECTIONS, MAPFLAG, 0);
-   if (sharedGameState == NULL) {
-      manage_errno();
-   }
+   game_sync_t *sharedGameSync = createSharedMemory("/game_sync", sizeof(game_sync_t), O_CREAT | O_RDWR, PERMISSIONS,
+                                                    PROTECTIONS, MAPFLAG, 0, manage_errno);
 
    initalizeGameState(sharedGameState, parameters.width, parameters.height, parameters.players_count, (player_t *){});
 
