@@ -11,10 +11,10 @@ endif
 BUILD_DIR = build
 COMMON_INC = common/include
 
-# Source discovery
-MASTER_SRCS = $(wildcard master/src/*.c) $(wildcard master/utils/*.c)
-PLAYER_SRCS = $(wildcard player/src/*.c)
-VIEW_SRCS   = $(wildcard view/src/*.c)
+# Source discovery (main.c at module root + sources in src/ and utils/)
+MASTER_SRCS = master/main.c $(wildcard master/src/*.c) $(wildcard master/utils/*.c)
+PLAYER_SRCS = player/main.c $(wildcard player/src/*.c)
+VIEW_SRCS   = view/main.c $(wildcard view/src/*.c)
 COMMON_SRCS = $(wildcard common/src/*.c)
 
 # Binaries
@@ -51,8 +51,8 @@ clean:
 
 # Generate compile_flags.txt for clangd / IDEs
 compile_flags:
-	@printf -- "-Wall\n-g\n-I../common/include\n-Iinclude\n-Iutils\n" > master/compile_flags.txt
-	@printf -- "-Wall\n-g\n-I../common/include\n-Iinclude\n" > player/compile_flags.txt
-	@printf -- "-Wall\n-g\n-I../common/include\n-Iinclude\n" > view/compile_flags.txt
-	@printf -- "-Wall\n-g\n-Iinclude\n" > common/compile_flags.txt
+	@printf "%s\n" "-Wall" "-g" "-I../common/include" "-Iinclude" "-Iutils" > master/compile_flags.txt
+	@printf "%s\n" "-Wall" "-g" "-I../common/include" "-Iinclude" > player/compile_flags.txt
+	@printf "%s\n" "-Wall" "-g" "-I../common/include" "-Iinclude" > view/compile_flags.txt
+	@printf "%s\n" "-Wall" "-g" "-Iinclude" > common/compile_flags.txt
 	@echo "compile_flags.txt generated for all modules"
