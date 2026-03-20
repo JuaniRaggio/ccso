@@ -14,4 +14,4 @@
 void *createSharedMemory(char *sharedMemoryName, int totalSize, int openFlags, int permissions, int proteccions,
                          int mapFlag, off_t offset);
 
-void init_sync(game_sync_t *sharedGameSync);
+void initalizeGameSync(game_sync_t *sharedGameSync);
