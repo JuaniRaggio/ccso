@@ -35,7 +35,7 @@ typedef struct {
 } Estado;
 */
 
-//está en game_sync
+// está en game_sync
 /*
 typedef struct {
    sem_t A;
@@ -63,7 +63,7 @@ int main(int argc, char *argv[]) {
       perror("shm_open /game_state");
       return 1;
    }
-   //Mapear el estado del juego en memoria, le pasamos el tamaño del estado, permisos, tipo de mapeo, fd y offset.
+   // Mapear el estado del juego en memoria, le pasamos el tamaño del estado, permisos, tipo de mapeo, fd y offset.
    game_state_t *state = mmap(NULL, tam_estado, PROT_READ, MAP_SHARED, fd_state, 0);
    if (state == MAP_FAILED) {
       perror("mmap state");
@@ -71,10 +71,10 @@ int main(int argc, char *argv[]) {
    }
    close(fd_state);
 
-   //Abrir shared memory de sincronizacion (lectura/escritura para los semaforos)
+   // Abrir shared memory de sincronizacion (lectura/escritura para los semaforos)
    int32_t fd_sync = shm_open("/game_sync", O_RDWR, 0);
    if (fd_sync < 0) {
-      perror("shm_open /game_sync"); 
+      perror("shm_open /game_sync");
       return 1;
    }
    game_sync_t *sync = mmap(NULL, sizeof(game_sync_t), PROT_READ | PROT_WRITE, MAP_SHARED, fd_sync, 0);
@@ -104,12 +104,11 @@ int main(int argc, char *argv[]) {
       return 1;
    }
 
-   fprintf(stderr, "I'm player %d\nInitial position: (%d,%d)\n", idx, state->players[idx].x,
-           state->players[idx].y);
+   fprintf(stderr, "I'm player %d\nInitial position: (%d,%d)\n", idx, state->players[idx].x, state->players[idx].y);
 
-// algo habría que cambiar, no conviene que se llame state.
+   // algo habría que cambiar, no conviene que se llame state.
 
-   while (!state->state) { //se considera a state como juego_terminado
+   while (!state->state) { // se considera a state como juego_terminado
       // Esperar que el master me habilite para enviar un movimiento
       sem_wait(&sync->G[idx]);
 

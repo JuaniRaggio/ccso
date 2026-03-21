@@ -35,8 +35,8 @@ int8_t decidir_movimiento(game_state_t *state, uint16_t width, uint16_t height, 
    // y eventualmente cierra el juego por timeout o bloqueado
    return 0;
 }
-   /**
-    * @brief: gets a set of available movements (8 bits, each bit is a direction -
-    *         0 if invalid)
-    **/
-   uint8_t get_available_moves();
+/**
+ * @brief: gets a set of available movements (8 bits, each bit is a direction -
+ *         0 if invalid)
+ **/
+uint8_t get_available_moves();
