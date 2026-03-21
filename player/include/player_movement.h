@@ -10,10 +10,10 @@ static const int DY[] = {-1, -1, 0, 1, 1, 1, 0, -1};
 /**
  * @brief: Calculates next move for player
  **/
-int8_t compute_next_move(int8_t[], uint16_t, uint16_t);
+int8_t compute_next_move(int8_t[], uint16_t, uint16_t, uint16_t idx);
 
 // del mockup
-int8_t decidir_movimiento(game_state_t *state, uint16_t width, uint16_t height, int idx) {
+int8_t decidir_movimiento(game_state_t *state, uint16_t width, uint16_t height, uint16_t idx) {
    int x = state->players[idx].x;
    int y = state->players[idx].y;
 
@@ -34,7 +34,7 @@ int8_t decidir_movimiento(game_state_t *state, uint16_t width, uint16_t height, 
    // Sin movimiento válido — mandamos algo inválido, el master lo ignora
    // y eventualmente cierra el juego por timeout o bloqueado
    return 0;
-
+}
    /**
     * @brief: gets a set of available movements (8 bits, each bit is a direction -
     *         0 if invalid)

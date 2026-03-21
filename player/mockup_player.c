@@ -1,11 +1,4 @@
-// este es un player que funcionó con el ChompChamps de la cátedra sin tirar movimientos inálidos.
 
-/*
-- para compilarlo: gcc -Wall -o mockup_player mockup_player.c -lrt -lpthread
-- para correrlo con ChompChamps: ./ChompChamps -w 11 -h 11 -p ./mockup_player -i -s 100
-- resultado:  Soy jugador 0, posicion inicial (5,5)
-Player mockup_player (0) exited (0) with a score of 176 / 36 / 0
-*/
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -14,8 +7,14 @@ Player mockup_player (0) exited (0) with a score of 176 / 36 / 0
 #include <semaphore.h>
 #include <stdbool.h>
 #include <stdint.h>
-#include <player_movement.h>
 
+#include <player_movement.h>
+#include <game_state.h>
+#include <game_sync.h>
+#include <shmemory_utils.h>
+
+// esta en game_state.h
+/*
 typedef struct {
    char nombre[16];
    unsigned int puntaje;
@@ -34,7 +33,10 @@ typedef struct {
    bool juego_terminado;
    char tablero[];
 } Estado;
+*/
 
+//está en game_sync
+/*
 typedef struct {
    sem_t A;
    sem_t B;
@@ -44,6 +46,7 @@ typedef struct {
    unsigned int F;
    sem_t G[9];
 } Sync;
+*/
 
 int main(int argc, char *argv[]) {
    if (argc < 3) {
@@ -52,42 +55,43 @@ int main(int argc, char *argv[]) {
    }
    uint16_t width = atoi(argv[1]);
    uint16_t height = atoi(argv[2]);
-   size_t tam_estado = sizeof(Estado) + (size_t)width * height;
+   size_t tam_estado = sizeof(game_state_t) + (size_t)width * height;
 
    // Abrir shared memory del estado (solo lectura)
-   int fd_e = shm_open("/game_state", O_RDONLY, 0);
-   if (fd_e < 0) {
+   int32_t fd_state = shm_open("/game_state", O_RDONLY, 0);
+   if (fd_state < 0) {
       perror("shm_open /game_state");
       return 1;
    }
-   Estado *estado = mmap(NULL, tam_estado, PROT_READ, MAP_SHARED, fd_e, 0);
-   if (estado == MAP_FAILED) {
-      perror("mmap estado");
+   //Mapear el estado del juego en memoria, le pasamos el tamaño del estado, permisos, tipo de mapeo, fd y offset.
+   game_state_t *state = mmap(NULL, tam_estado, PROT_READ, MAP_SHARED, fd_state, 0);
+   if (state == MAP_FAILED) {
+      perror("mmap state");
       return 1;
    }
-   close(fd_e);
+   close(fd_state);
 
-   // Abrir shared memory de sincronizacion (lectura/escritura para los semaforos)
-   int fd_s = shm_open("/game_sync", O_RDWR, 0);
-   if (fd_s < 0) {
-      perror("shm_open /game_sync");
+   //Abrir shared memory de sincronizacion (lectura/escritura para los semaforos)
+   int32_t fd_sync = shm_open("/game_sync", O_RDWR, 0);
+   if (fd_sync < 0) {
+      perror("shm_open /game_sync"); 
       return 1;
    }
-   Sync *sync = mmap(NULL, sizeof(Sync), PROT_READ | PROT_WRITE, MAP_SHARED, fd_s, 0);
+   game_sync_t *sync = mmap(NULL, sizeof(game_sync_t), PROT_READ | PROT_WRITE, MAP_SHARED, fd_sync, 0);
    if (sync == MAP_FAILED) {
       perror("mmap sync");
       return 1;
    }
-   close(fd_s);
+   close(fd_sync);
 
    // Buscar mi indice por PID
    // El master hace fork->exec, puede que el PID todavia no este cargado
    // en la shm cuando arrancamos, por eso reintentamos un poco
-   pid_t mi_pid = getpid();
-   int idx = -1;
+   pid_t my_pid = getpid();
+   int16_t idx = -1;
    for (int intento = 0; intento < 1000 && idx < 0; intento++) {
-      for (int i = 0; i < estado->cant_jugadores; i++) {
-         if (estado->jugadores[i].pid == mi_pid) {
+      for (int i = 0; i < state->players_count; i++) {
+         if (state->players[i].player_id == my_pid) {
             idx = i;
             break;
          }
@@ -96,18 +100,20 @@ int main(int argc, char *argv[]) {
          usleep(1000); // esperar 1ms y reintentar
    }
    if (idx < 0) {
-      fprintf(stderr, "No encontre mi PID %d en la lista de jugadores\n", mi_pid);
+      fprintf(stderr, " PID %d not found in players' list.\n", my_pid);
       return 1;
    }
 
-   fprintf(stderr, "Soy jugador %d, posicion inicial (%d,%d)\n", idx, estado->jugadores[idx].x,
-           estado->jugadores[idx].y);
+   fprintf(stderr, "I'm player %d\nInitial position: (%d,%d)\n", idx, state->players[idx].x,
+           state->players[idx].y);
 
-   while (!estado->juego_terminado) {
+// algo habría que cambiar, no conviene que se llame state.
+
+   while (!state->state) { //se considera a state como juego_terminado
       // Esperar que el master me habilite para enviar un movimiento
       sem_wait(&sync->G[idx]);
 
-      if (estado->juego_terminado)
+      if (state->state)
          break;
 
       // --- Adquirir lectura (readers-writers sin inanicion del escritor) ---
@@ -120,7 +126,7 @@ int main(int argc, char *argv[]) {
       sem_post(&sync->C);
 
       // Decidir movimiento mirando el tablero
-      uint8_t mov = decidir_movimiento(estado, width, height, idx);
+      uint8_t mov = compute_next_move(state, width, height, idx);
 
       // --- Liberar lectura ---
       sem_wait(&sync->E);
@@ -133,7 +139,7 @@ int main(int argc, char *argv[]) {
       write(1, &mov, 1);
    }
 
-   munmap(estado, tam_estado);
-   munmap(sync, sizeof(Sync));
+   munmap(state, tam_estado);
+   munmap(sync, sizeof(game_sync_t));
    return 0;
 }
