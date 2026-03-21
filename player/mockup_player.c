@@ -121,7 +121,7 @@ int main(int argc, char *argv[]) {
       sem_post(&sync->C);
 
       // Decidir movimiento mirando el tablero
-      uint8_t mov = decidir_movimiento(estado, ancho, alto, idx);
+      uint8_t mov = decidir_movimiento(estado, width, height, idx);
 
       // --- Liberar lectura ---
       sem_wait(&sync->E);
