@@ -16,133 +16,151 @@ Player mockup_player (0) exited (0) with a score of 176 / 36 / 0
 #include <stdint.h>
 
 typedef struct {
-    char nombre[16];
-    unsigned int puntaje;
-    unsigned int mov_invalidos;
-    unsigned int mov_validos;
-    unsigned short x, y;
-    pid_t pid;
-    bool bloqueado;
+   char nombre[16];
+   unsigned int puntaje;
+   unsigned int mov_invalidos;
+   unsigned int mov_validos;
+   unsigned short x, y;
+   pid_t pid;
+   bool bloqueado;
 } Jugador;
 
 typedef struct {
-    unsigned short ancho;
-    unsigned short alto;
-    unsigned char cant_jugadores;
-    Jugador jugadores[9];
-    bool juego_terminado;
-    char tablero[];
+   unsigned short ancho;
+   unsigned short alto;
+   unsigned char cant_jugadores;
+   Jugador jugadores[9];
+   bool juego_terminado;
+   char tablero[];
 } Estado;
 
 typedef struct {
-    sem_t A;
-    sem_t B;
-    sem_t C;
-    sem_t D;
-    sem_t E;
-    unsigned int F;
-    sem_t G[9];
+   sem_t A;
+   sem_t B;
+   sem_t C;
+   sem_t D;
+   sem_t E;
+   unsigned int F;
+   sem_t G[9];
 } Sync;
 
 // Deltas para las 8 direcciones: 0=arriba, 1=arriba-der, 2=der, 3=abajo-der,
 //                                 4=abajo,  5=abajo-izq,  6=izq, 7=arriba-izq
-static const int DX[] = { 0,  1, 1, 1, 0, -1, -1, -1};
-static const int DY[] = {-1, -1, 0, 1, 1,  1,  0, -1};
+static const int DX[] = {0, 1, 1, 1, 0, -1, -1, -1};
+static const int DY[] = {-1, -1, 0, 1, 1, 1, 0, -1};
 
 uint8_t decidir_movimiento(Estado *estado, int ancho, int alto, int idx) {
-    int x = estado->jugadores[idx].x;
-    int y = estado->jugadores[idx].y;
+   int x = estado->jugadores[idx].x;
+   int y = estado->jugadores[idx].y;
 
-    for (int dir = 0; dir < 8; dir++) {
-        int nx = x + DX[dir];
-        int ny = y + DY[dir];
+   for (int dir = 0; dir < 8; dir++) {
+      int nx = x + DX[dir];
+      int ny = y + DY[dir];
 
-        // Fuera del tablero
-        if (nx < 0 || nx >= ancho || ny < 0 || ny >= alto) continue;
+      // Fuera del tablero
+      if (nx < 0 || nx >= ancho || ny < 0 || ny >= alto)
+         continue;
 
-        // Celda libre: valor entre 1 y 9
-        char celda = estado->tablero[ny * ancho + nx];
-        if (celda >= 1 && celda <= 9) return (uint8_t)dir;
-    }
+      // Celda libre: valor entre 1 y 9
+      char celda = estado->tablero[ny * ancho + nx];
+      if (celda >= 1 && celda <= 9)
+         return (uint8_t)dir;
+   }
 
-    // Sin movimiento válido — mandamos algo inválido, el master lo ignora
-    // y eventualmente cierra el juego por timeout o bloqueado
-    return 0;
+   // Sin movimiento válido — mandamos algo inválido, el master lo ignora
+   // y eventualmente cierra el juego por timeout o bloqueado
+   return 0;
 }
 
 int main(int argc, char *argv[]) {
-    if (argc < 3) {
-        fprintf(stderr, "Uso: %s <ancho> <alto>\n", argv[0]);
-        return 1;
-    }
-    int ancho = atoi(argv[1]);
-    int alto  = atoi(argv[2]);
-    size_t tam_estado = sizeof(Estado) + (size_t)ancho * alto;
+   if (argc < 3) {
+      fprintf(stderr, "Uso: %s <ancho> <alto>\n", argv[0]);
+      return 1;
+   }
+   int ancho = atoi(argv[1]);
+   int alto = atoi(argv[2]);
+   size_t tam_estado = sizeof(Estado) + (size_t)ancho * alto;
 
-    // Abrir shared memory del estado (solo lectura)
-    int fd_e = shm_open("/game_state", O_RDONLY, 0);
-    if (fd_e < 0) { perror("shm_open /game_state"); return 1; }
-    Estado *estado = mmap(NULL, tam_estado, PROT_READ, MAP_SHARED, fd_e, 0);
-    if (estado == MAP_FAILED) { perror("mmap estado"); return 1; }
-    close(fd_e);
+   // Abrir shared memory del estado (solo lectura)
+   int fd_e = shm_open("/game_state", O_RDONLY, 0);
+   if (fd_e < 0) {
+      perror("shm_open /game_state");
+      return 1;
+   }
+   Estado *estado = mmap(NULL, tam_estado, PROT_READ, MAP_SHARED, fd_e, 0);
+   if (estado == MAP_FAILED) {
+      perror("mmap estado");
+      return 1;
+   }
+   close(fd_e);
 
-    // Abrir shared memory de sincronizacion (lectura/escritura para los semaforos)
-    int fd_s = shm_open("/game_sync", O_RDWR, 0);
-    if (fd_s < 0) { perror("shm_open /game_sync"); return 1; }
-    Sync *sync = mmap(NULL, sizeof(Sync), PROT_READ|PROT_WRITE, MAP_SHARED, fd_s, 0);
-    if (sync == MAP_FAILED) { perror("mmap sync"); return 1; }
-    close(fd_s);
+   // Abrir shared memory de sincronizacion (lectura/escritura para los semaforos)
+   int fd_s = shm_open("/game_sync", O_RDWR, 0);
+   if (fd_s < 0) {
+      perror("shm_open /game_sync");
+      return 1;
+   }
+   Sync *sync = mmap(NULL, sizeof(Sync), PROT_READ | PROT_WRITE, MAP_SHARED, fd_s, 0);
+   if (sync == MAP_FAILED) {
+      perror("mmap sync");
+      return 1;
+   }
+   close(fd_s);
 
-    // Buscar mi indice por PID
-    // El master hace fork->exec, puede que el PID todavia no este cargado
-    // en la shm cuando arrancamos, por eso reintentamos un poco
-    pid_t mi_pid = getpid();
-    int idx = -1;
-    for (int intento = 0; intento < 1000 && idx < 0; intento++) {
-        for (int i = 0; i < estado->cant_jugadores; i++) {
-            if (estado->jugadores[i].pid == mi_pid) {
-                idx = i;
-                break;
-            }
-        }
-        if (idx < 0) usleep(1000); // esperar 1ms y reintentar
-    }
-    if (idx < 0) {
-        fprintf(stderr, "No encontre mi PID %d en la lista de jugadores\n", mi_pid);
-        return 1;
-    }
+   // Buscar mi indice por PID
+   // El master hace fork->exec, puede que el PID todavia no este cargado
+   // en la shm cuando arrancamos, por eso reintentamos un poco
+   pid_t mi_pid = getpid();
+   int idx = -1;
+   for (int intento = 0; intento < 1000 && idx < 0; intento++) {
+      for (int i = 0; i < estado->cant_jugadores; i++) {
+         if (estado->jugadores[i].pid == mi_pid) {
+            idx = i;
+            break;
+         }
+      }
+      if (idx < 0)
+         usleep(1000); // esperar 1ms y reintentar
+   }
+   if (idx < 0) {
+      fprintf(stderr, "No encontre mi PID %d en la lista de jugadores\n", mi_pid);
+      return 1;
+   }
 
-    fprintf(stderr, "Soy jugador %d, posicion inicial (%d,%d)\n",
-            idx, estado->jugadores[idx].x, estado->jugadores[idx].y);
+   fprintf(stderr, "Soy jugador %d, posicion inicial (%d,%d)\n", idx, estado->jugadores[idx].x,
+           estado->jugadores[idx].y);
 
-    while (!estado->juego_terminado) {
-        // Esperar que el master me habilite para enviar un movimiento
-        sem_wait(&sync->G[idx]);
+   while (!estado->juego_terminado) {
+      // Esperar que el master me habilite para enviar un movimiento
+      sem_wait(&sync->G[idx]);
 
-        if (estado->juego_terminado) break;
+      if (estado->juego_terminado)
+         break;
 
-        // --- Adquirir lectura (readers-writers sin inanicion del escritor) ---
-        sem_wait(&sync->C);       // me bloqueo si hay un escritor esperando
-        sem_wait(&sync->E);
-        sync->F++;
-        if (sync->F == 1) sem_wait(&sync->D); // primer lector bloquea escritores
-        sem_post(&sync->E);
-        sem_post(&sync->C);
+      // --- Adquirir lectura (readers-writers sin inanicion del escritor) ---
+      sem_wait(&sync->C); // me bloqueo si hay un escritor esperando
+      sem_wait(&sync->E);
+      sync->F++;
+      if (sync->F == 1)
+         sem_wait(&sync->D); // primer lector bloquea escritores
+      sem_post(&sync->E);
+      sem_post(&sync->C);
 
-        // Decidir movimiento mirando el tablero
-        uint8_t mov = decidir_movimiento(estado, ancho, alto, idx);
+      // Decidir movimiento mirando el tablero
+      uint8_t mov = decidir_movimiento(estado, ancho, alto, idx);
 
-        // --- Liberar lectura ---
-        sem_wait(&sync->E);
-        sync->F--;
-        if (sync->F == 0) sem_post(&sync->D); // ultimo lector libera escritores
-        sem_post(&sync->E);
+      // --- Liberar lectura ---
+      sem_wait(&sync->E);
+      sync->F--;
+      if (sync->F == 0)
+         sem_post(&sync->D); // ultimo lector libera escritores
+      sem_post(&sync->E);
 
-        // Enviar movimiento al master por stdout (que es el pipe)
-        write(1, &mov, 1);
-    }
+      // Enviar movimiento al master por stdout (que es el pipe)
+      write(1, &mov, 1);
+   }
 
-    munmap(estado, tam_estado);
-    munmap(sync, sizeof(Sync));
-    return 0;
+   munmap(estado, tam_estado);
+   munmap(sync, sizeof(Sync));
+   return 0;
 }
