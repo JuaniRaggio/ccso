@@ -45,15 +45,14 @@ typedef struct {
    sem_t G[9];
 } Sync;
 
-
 int main(int argc, char *argv[]) {
-    if (argc < 3) {
-        fprintf(stderr, "Use: %s <width> <height>\n", argv[0]);
-        return 1;
-    }
-    uint16_t width = atoi(argv[1]);
-    uint16_t height  = atoi(argv[2]);
-    size_t tam_estado = sizeof(Estado) + (size_t)width * height;
+   if (argc < 3) {
+      fprintf(stderr, "Use: %s <width> <height>\n", argv[0]);
+      return 1;
+   }
+   uint16_t width = atoi(argv[1]);
+   uint16_t height = atoi(argv[2]);
+   size_t tam_estado = sizeof(Estado) + (size_t)width * height;
 
    // Abrir shared memory del estado (solo lectura)
    int fd_e = shm_open("/game_state", O_RDONLY, 0);
