@@ -14,6 +14,7 @@ Player mockup_player (0) exited (0) with a score of 176 / 36 / 0
 #include <semaphore.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <player_movement.h>
 
 typedef struct {
     char nombre[16];
@@ -44,40 +45,15 @@ typedef struct {
     sem_t G[9];
 } Sync;
 
-// Deltas para las 8 direcciones: 0=arriba, 1=arriba-der, 2=der, 3=abajo-der,
-//                                 4=abajo,  5=abajo-izq,  6=izq, 7=arriba-izq
-static const int DX[] = { 0,  1, 1, 1, 0, -1, -1, -1};
-static const int DY[] = {-1, -1, 0, 1, 1,  1,  0, -1};
-
-uint8_t decidir_movimiento(Estado *estado, int ancho, int alto, int idx) {
-    int x = estado->jugadores[idx].x;
-    int y = estado->jugadores[idx].y;
-
-    for (int dir = 0; dir < 8; dir++) {
-        int nx = x + DX[dir];
-        int ny = y + DY[dir];
-
-        // Fuera del tablero
-        if (nx < 0 || nx >= ancho || ny < 0 || ny >= alto) continue;
-
-        // Celda libre: valor entre 1 y 9
-        char celda = estado->tablero[ny * ancho + nx];
-        if (celda >= 1 && celda <= 9) return (uint8_t)dir;
-    }
-
-    // Sin movimiento válido — mandamos algo inválido, el master lo ignora
-    // y eventualmente cierra el juego por timeout o bloqueado
-    return 0;
-}
 
 int main(int argc, char *argv[]) {
     if (argc < 3) {
-        fprintf(stderr, "Uso: %s <ancho> <alto>\n", argv[0]);
+        fprintf(stderr, "Use: %s <width> <height>\n", argv[0]);
         return 1;
     }
-    int ancho = atoi(argv[1]);
-    int alto  = atoi(argv[2]);
-    size_t tam_estado = sizeof(Estado) + (size_t)ancho * alto;
+    uint16_t width = atoi(argv[1]);
+    uint16_t height  = atoi(argv[2]);
+    size_t tam_estado = sizeof(Estado) + (size_t)width * height;
 
     // Abrir shared memory del estado (solo lectura)
     int fd_e = shm_open("/game_state", O_RDONLY, 0);
