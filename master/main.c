@@ -9,6 +9,7 @@
 #include "game_state.h"
 #include "game_sync.h"
 #include "master.h"
+#include <error_management.h>
 
 #define PERMISSIONS 0666
 #define MAPFLAG MAP_SHARED
@@ -19,17 +20,6 @@
 
 void printGameState(int8_t board[], uint16_t height, uint16_t width, int8_t players_count, bool state);
 void printBoard(int8_t board[], uint16_t height, uint16_t width); // Just for us
-
-void manage_errno(const char *file, const char *func, uint64_t line) {
-   switch (errno) {
-   case EACCES:
-      fprintf(stderr, "Access Error... File: %s\n Function: %s Line: %llu\n", file, func, line);
-      break;
-   case EEXIST:
-      fprintf(stderr, "Exist Error... File: %s\n Function: %s Line: %llu\n", file, func, line);
-      break;
-   }
-}
 
 int main(int argc, char *argv[]) {
    errno = 0;

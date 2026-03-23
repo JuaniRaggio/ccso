@@ -6,7 +6,7 @@
 #include <sys/fcntl.h>
 #include <semaphore.h>
 
-inline bool is_creator(int openFlags) {
+static inline bool is_creator(int openFlags) {
    return openFlags & O_CREAT;
 }
 
