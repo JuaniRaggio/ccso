@@ -8,6 +8,8 @@
 #include <unistd.h>
 #include <stdio.h>
 
+#include <game_sync.h>
+
 typedef void (*error_manager_t)();
 
 /*
