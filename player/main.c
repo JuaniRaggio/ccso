@@ -22,7 +22,8 @@ int main(int argc, char *argv[]) {
    uint16_t height = atoi(argv[2]);
    size_t tam_estado = sizeof(game_state_t) + (size_t)width * height;
 
-   game_state_t *state = createSharedMemory("/game_state", tam_estado, O_RDONLY, 0111, PROT_READ, MAP_SHARED, 0, ((error_manager_t) &manage_errno(__FILE__, __FUNCTION__, __LINE__)));
+   game_state_t *state = createSharedMemory("/game_state", tam_estado, O_RDONLY, 0111, PROT_READ, MAP_SHARED, 0,
+                                            ((error_manager_t)&manage_errno(__FILE__, __FUNCTION__, __LINE__)));
 
    // Abrir shared memory de sincronizacion (lectura/escritura para los semaforos)
    int32_t fd_sync = shm_open("/game_sync", O_RDWR, 0);

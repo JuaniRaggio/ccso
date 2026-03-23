@@ -12,5 +12,5 @@ void manage_errno(const char *file, const char *func, uint64_t line) {
 }
 
 void clear_error() {
-    errno = 0;
+   errno = 0;
 }
