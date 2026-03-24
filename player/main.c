@@ -58,38 +58,10 @@ int main(int argc, char *argv[]) {
    size_t totalSize = sizeof(game_state_t) + (size_t)width * height;
 
    game_state_t * gameState = createSharedMemory("/game_state", totalSize, O_RDONLY, 622, PROT_READ, MAP_SHARED, 0);
-   /*
-   // Abrir shared memory del estado (solo lectura)
-   int32_t fd_state = shm_open("/game_state", O_RDONLY, 0);
-   if (fd_state < 0) {
-      perror("shm_open /game_state");
-      return 1;
-   }
-   // Mapear el estado del juego en memoria, le pasamos el tamaño del estado, permisos, tipo de mapeo, fd y offset.
-   game_state_t *state = mmap(NULL, tam_estado, PROT_READ, MAP_SHARED, fd_state, 0);
-   if (state == MAP_FAILED) {
-      perror("mmap state");
-      return 1;
-   }
-   close(fd_state);
-   */
-
+   // We eshould check if its NULL?
    game_sync_t * gameSync = createSharedMemory("/game_sync", sizeof(game_sync_t), O_RDONLY, 622, PROT_READ, MAP_SHARED, 0);
-   
-   /*
-   // Abrir shared memory de sincronizacion (lectura/escritura para los semaforos)
-   int32_t fd_sync = shm_open("/game_sync", O_RDWR, 0);
-   if (fd_sync < 0) {
-      perror("shm_open /game_sync");
-      return 1;
-   }
-   game_sync_t *sync = mmap(NULL, sizeof(game_sync_t), PROT_READ | PROT_WRITE, MAP_SHARED, fd_sync, 0);
-   if (sync == MAP_FAILED) {
-      perror("mmap sync");
-      return 1;
-   }
-   close(fd_sync);
-   */
+   // We eshould check if its NULL?
+
 
    // Buscar mi indice por PID
    // El master hace fork->exec, puede que el PID todavia no este cargado
@@ -149,15 +121,3 @@ int main(int argc, char *argv[]) {
    munmap(gameSync, sizeof(game_sync_t));
    return 0;
 }
-
-// viejo main.c
-/*
-#include <stdio.h>
-
-#include <player_movement.h>
-
-int main(int argc, char *argv[]) {
-   printf("Player process started\n");
-   return 0;
-}
-*/
