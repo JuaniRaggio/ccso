@@ -56,10 +56,9 @@ int main(int argc, char *argv[]) {
    game_sync_t *sharedGameSync = createSharedMemory("/game_sync", sizeof(game_sync_t), O_CREAT | O_RDWR, PERMISSIONS,
                                                     PROTECTIONS, MAPFLAG, 0 /*, manage_errno*/);
 
-   player_t players[9] = {};                                          
+   player_t players[9] = {};
    initalizeGameState(sharedGameState, parameters.width, parameters.height, parameters.players_count, players);
 
    printGameState(sharedGameState->board, sharedGameState->height, sharedGameState->width,
                   sharedGameState->players_count, sharedGameState->state);
-
 }

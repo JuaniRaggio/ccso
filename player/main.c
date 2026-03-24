@@ -57,11 +57,11 @@ int main(int argc, char *argv[]) {
    uint16_t height = atoi(argv[2]);
    size_t totalSize = sizeof(game_state_t) + (size_t)width * height;
 
-   game_state_t * gameState = createSharedMemory("/game_state", totalSize, O_RDONLY, 622, PROT_READ, MAP_SHARED, 0);
+   game_state_t *gameState = createSharedMemory("/game_state", totalSize, O_RDONLY, 622, PROT_READ, MAP_SHARED, 0);
    // We eshould check if its NULL?
-   game_sync_t * gameSync = createSharedMemory("/game_sync", sizeof(game_sync_t), O_RDONLY, 622, PROT_READ, MAP_SHARED, 0);
+   game_sync_t *gameSync =
+       createSharedMemory("/game_sync", sizeof(game_sync_t), O_RDONLY, 622, PROT_READ, MAP_SHARED, 0);
    // We eshould check if its NULL?
-
 
    // Buscar mi indice por PID
    // El master hace fork->exec, puede que el PID todavia no este cargado
@@ -83,7 +83,8 @@ int main(int argc, char *argv[]) {
       return 1;
    }
 
-   fprintf(stderr, "I'm player %d\nInitial position: (%d,%d)\n", idx, gameState->players[idx].x, gameState->players[idx].y);
+   fprintf(stderr, "I'm player %d\nInitial position: (%d,%d)\n", idx, gameState->players[idx].x,
+           gameState->players[idx].y);
 
    // algo habría que cambiar, no conviene que se llame state.
 
@@ -104,7 +105,8 @@ int main(int argc, char *argv[]) {
       sem_post(&gameSync->C);
 
       // Decidir movimiento mirando el tablero
-      uint8_t mov = compute_next_move(gameState->board, width, height, gameState->players[idx].x, gameState->players[idx].y);
+      uint8_t mov =
+          compute_next_move(gameState->board, width, height, gameState->players[idx].x, gameState->players[idx].y);
 
       // --- Liberar lectura ---
       sem_wait(&gameSync->E);

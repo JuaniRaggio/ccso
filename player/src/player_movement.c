@@ -1,8 +1,8 @@
 #include <player_movement.h>
 
-//#ifdef NAIVE
+// #ifdef NAIVE
 
-int8_t compute_next_move(int8_t board[], uint16_t width, uint16_t height,  uint16_t x, uint16_t y) {
+int8_t compute_next_move(int8_t board[], uint16_t width, uint16_t height, uint16_t x, uint16_t y) {
    return rand() % 8;
 }
 
@@ -20,8 +20,7 @@ int8_t compute_next_move(int8_t board[], uint16_t width, uint16_t height,  uint1
 int8_t compute_next_move(int8_t board[], uint16_t width, uint16_t height,  uint16_t x, unit16_t y) {}
 
 */
-//#endif
-
+// #endif
 
 // Deltas para las 8 direcciones: 0=arriba, 1=arriba-der, 2=der, 3=abajo-der,
 //                                 4=abajo,  5=abajo-izq,  6=izq, 7=arriba-izq
