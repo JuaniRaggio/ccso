@@ -55,8 +55,10 @@ int main(int argc, char *argv[]) {
    }
    uint16_t width = atoi(argv[1]);
    uint16_t height = atoi(argv[2]);
-   size_t tam_estado = sizeof(game_state_t) + (size_t)width * height;
+   size_t totalSize = sizeof(game_state_t) + (size_t)width * height;
 
+   game_state_t * gameState = createSharedMemory("/game_state", totalSize, O_RDONLY, 622, PROT_READ, MAP_SHARED, 0);
+   /*
    // Abrir shared memory del estado (solo lectura)
    int32_t fd_state = shm_open("/game_state", O_RDONLY, 0);
    if (fd_state < 0) {
@@ -70,7 +72,11 @@ int main(int argc, char *argv[]) {
       return 1;
    }
    close(fd_state);
+   */
 
+   game_sync_t * gameSync = createSharedMemory("/game_sync", sizeof(game_sync_t), O_RDONLY, 622, PROT_READ, MAP_SHARED, 0);
+   
+   /*
    // Abrir shared memory de sincronizacion (lectura/escritura para los semaforos)
    int32_t fd_sync = shm_open("/game_sync", O_RDWR, 0);
    if (fd_sync < 0) {
@@ -83,6 +89,7 @@ int main(int argc, char *argv[]) {
       return 1;
    }
    close(fd_sync);
+   */
 
    // Buscar mi indice por PID
    // El master hace fork->exec, puede que el PID todavia no este cargado
@@ -90,8 +97,8 @@ int main(int argc, char *argv[]) {
    pid_t my_pid = getpid();
    int16_t idx = -1;
    for (int intento = 0; intento < 1000 && idx < 0; intento++) {
-      for (int i = 0; i < state->players_count; i++) {
-         if (state->players[i].player_id == my_pid) {
+      for (int i = 0; i < gameState->players_count; i++) {
+         if (gameState->players[i].player_id == my_pid) {
             idx = i;
             break;
          }
@@ -104,42 +111,42 @@ int main(int argc, char *argv[]) {
       return 1;
    }
 
-   fprintf(stderr, "I'm player %d\nInitial position: (%d,%d)\n", idx, state->players[idx].x, state->players[idx].y);
+   fprintf(stderr, "I'm player %d\nInitial position: (%d,%d)\n", idx, gameState->players[idx].x, gameState->players[idx].y);
 
    // algo habría que cambiar, no conviene que se llame state.
 
-   while (!state->state) { // se considera a state como juego_terminado
+   while (!gameState->state) { // se considera a state como juego_terminado
       // Esperar que el master me habilite para enviar un movimiento
-      sem_wait(&sync->G[idx]);
+      sem_wait(&gameSync->G[idx]);
 
-      if (state->state)
+      if (gameState->state)
          break;
 
       // --- Adquirir lectura (readers-writers sin inanicion del escritor) ---
-      sem_wait(&sync->C); // me bloqueo si hay un escritor esperando
-      sem_wait(&sync->E);
-      sync->F++;
-      if (sync->F == 1)
-         sem_wait(&sync->D); // primer lector bloquea escritores
-      sem_post(&sync->E);
-      sem_post(&sync->C);
+      sem_wait(&gameSync->C); // me bloqueo si hay un escritor esperando
+      sem_wait(&gameSync->E);
+      gameSync->F++;
+      if (gameSync->F == 1)
+         sem_wait(&gameSync->D); // primer lector bloquea escritores
+      sem_post(&gameSync->E);
+      sem_post(&gameSync->C);
 
       // Decidir movimiento mirando el tablero
-      uint8_t mov = compute_next_move(state, width, height, idx);
+      uint8_t mov = compute_next_move(gameState->board, width, height, gameState->players[idx].x, gameState->players[idx].y);
 
       // --- Liberar lectura ---
-      sem_wait(&sync->E);
-      sync->F--;
-      if (sync->F == 0)
-         sem_post(&sync->D); // ultimo lector libera escritores
-      sem_post(&sync->E);
+      sem_wait(&gameSync->E);
+      gameSync->F--;
+      if (gameSync->F == 0)
+         sem_post(&gameSync->D); // ultimo lector libera escritores
+      sem_post(&gameSync->E);
 
       // Enviar movimiento al master por stdout (que es el pipe)
       write(1, &mov, 1);
    }
 
-   munmap(state, tam_estado);
-   munmap(sync, sizeof(game_sync_t));
+   munmap(gameState, totalSize);
+   munmap(gameSync, sizeof(game_sync_t));
    return 0;
 }
 
