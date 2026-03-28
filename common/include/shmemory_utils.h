@@ -1,17 +1,15 @@
 #pragma once
 
+#include <error_management.h>
 #include <errno.h>
 #include <stddef.h>
 #include <stdint.h>
-#include <sys/_types/_off_t.h>
 #include <sys/mman.h>
 #include <sys/fcntl.h>
 #include <unistd.h>
 #include <stdio.h>
 
 #include <game_sync.h>
-
-typedef void (*error_manager_t)(void);
 
 typedef struct {
    const char *sharedMemoryName;

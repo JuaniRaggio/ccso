@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/fcntl.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/mman.h>
@@ -20,17 +21,34 @@ int main(int argc, char *argv[]) {
    }
    uint16_t width = atoi(argv[1]);
    uint16_t height = atoi(argv[2]);
-   size_t tam_estado = sizeof(game_state_t) + (size_t)width * height;
+   size_t totalSize = sizeof(game_state_t) + (size_t)width * height;
 
-   game_state_t *state = createSharedMemory("/game_state", tam_estado, O_RDONLY, 0111, PROT_READ, MAP_SHARED, 0,
-                                            ((error_manager_t)&manage_errno(__FILE__, __FUNCTION__, __LINE__)));
+   game_state_t *state = createSharedMemory(
+       &(shm_data_t){
+           .sharedMemoryName = game_state_memory_name,
+           .totalSize = totalSize,
+           .mapFlag = MAP_SHARED,
+           .openFlags = O_RDONLY,
+           .permissions = 0111,
+           .protections = PROT_READ,
+           .offset = 0,
+       },
+       manage_errno, __FILE__, __func__, __LINE__);
 
    // Abrir shared memory de sincronizacion (lectura/escritura para los semaforos)
-   int32_t fd_sync = shm_open("/game_sync", O_RDWR, 0);
-   if (fd_sync < 0) {
-      perror("shm_open /game_sync");
-      return 1;
-   }
+
+   game_sync_t *sync = createSharedMemory(
+       &(shm_data_t){
+           .sharedMemoryName = game_sync_memory_name,
+           .totalSize = sizeof(game_sync_t),
+           .mapFlag = MAP_SHARED,
+           .openFlags = O_RDWR,
+           .permissions = 0, // TODO ??
+           .protections = PROT_READ | PROT_WRITE,
+           .offset = 0,
+       },
+       manage_errno, __FILE__, __func__, __LINE__);
+
    game_sync_t *sync = mmap(NULL, sizeof(game_sync_t), PROT_READ | PROT_WRITE, MAP_SHARED, fd_sync, 0);
    if (sync == MAP_FAILED) {
       perror("mmap sync");
@@ -92,7 +110,7 @@ int main(int argc, char *argv[]) {
       write(1, &mov, 1);
    }
 
-   munmap(state, tam_estado);
+   munmap(state, totalSize);
    munmap(sync, sizeof(game_sync_t));
    return 0;
 }
