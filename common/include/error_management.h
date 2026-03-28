@@ -13,6 +13,6 @@ typedef enum {
    mapping_error,
 } error_code_t;
 
-void manage_errno(const char *file, const char *func, uint64_t line);
+void manage_errno(const char *file, const char *func, uint64_t line, error_code_t code);
 
 void clear_error();
