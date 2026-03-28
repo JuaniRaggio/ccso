@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 
+const char * const game_state_memory_name = "/game_state";
 #define MAX_PLAYERS 9
 #define MAX_NAME_LENGTH 16
 
