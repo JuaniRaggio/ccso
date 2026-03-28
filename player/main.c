@@ -14,7 +14,7 @@
 #include <shmemory_utils.h>
 #include <error_management.h>
 
-const uint64_t player_permissions = 0111;
+static const uint64_t player_permissions = 0111;
 
 int main(int argc, char *argv[]) {
    if (argc < 3) {
@@ -43,7 +43,7 @@ int main(int argc, char *argv[]) {
            .totalSize = sizeof(game_sync_t),
            .mapFlag = MAP_SHARED,
            .openFlags = O_RDWR,
-           .permissions = player_permissions, // TODO ??
+           .permissions = player_permissions,
            .protections = PROT_READ | PROT_WRITE,
            .offset = 0,
        },
