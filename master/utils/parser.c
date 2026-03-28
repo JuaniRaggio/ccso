@@ -1,53 +1,64 @@
-#include <parser.h>
-#include <stddef.h>
+#include <errno.h>
 #include <stdint.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <parser.h>
 
-static inline size_t get_offset(char flag) {
-   switch (flag) {
+// We expect compiler to put this in .rodata
+static const uint8_t default_base = 10;
+static const int8_t parsing_succeeded = -1;
+static const char *const allowed_flags = "w:h:d:t:s:v:p:";
+
+/*
+ * parse_argument expects that arguments are not destroyed before the program finishes, this limitation
+ * is produced by the fact we are not allocating memory to save paths
+ */
+static inline void parse_argument(int opt, parameters_t *parameters, parameter_status_t *status) {
+   switch (opt) {
+      char *endptr = NULL;
    case 'w':
-      return offsetof(parameters_t, width);
+      parameters->width = strtoull(optarg, &endptr, default_base);
+      goto integer_checking;
    case 'h':
-      return offsetof(parameters_t, height);
+      parameters->height = strtoull(optarg, &endptr, default_base);
+      goto integer_checking;
    case 'd':
-      return offsetof(parameters_t, delay);
+      parameters->delay = strtoull(optarg, &endptr, default_base);
+      goto integer_checking;
    case 't':
-      return offsetof(parameters_t, timeout);
+      parameters->timeout = strtoull(optarg, &endptr, default_base);
+      goto integer_checking;
    case 's':
-      return offsetof(parameters_t, seed);
+      parameters->seed = strtoull(optarg, &endptr, default_base);
+      goto integer_checking;
+
+   integer_checking:
+      *status |= endptr == NULL || *endptr != '\0' ? invalid_integer_type : success;
+      *status |= errno == ERANGE ? overflow : success;
+      break;
+
    case 'v':
-      return offsetof(parameters_t, view_path);
+      parameters->view_path = optarg;
+      break;
    case 'p':
-      return offsetof(parameters_t, players_paths);
-   }
-}
-
-static inline parameter_status_t parse_int(char argument[], uint64_t *out) {
-   uint64_t accum = 0;
-   for (int i = 0; argument[i]; ++i) {
-      if (argument[i] < '0' || argument[i] > '9') {
-         return invalid_integer_type;
+      if (parameters->players_count == MAX_PLAYERS) {
+         *status |= exceeded_player_limit;
+         break;
       }
-      accum += argument[i] - '0';
+      parameters->players_paths[parameters->players_count++] = optarg;
+      break;
+   case '?':
+   default:
+      *status |= unknown_optional_flag;
    }
-   *out = accum;
-}
-
-static inline parameter_status_t parse_argument(char flag, size_t offset, char *argument, parameters_t *parameters) {
-   if (flag == 'v' || flag == 'p') {
-      *(char *)((uint8_t *)parameters + offset) = argument;
-   }
-   return parse_int(argument, (uint64_t *)((uint8_t *)parameters + offset));
 }
 
 parameter_status_t parse(int argc, char *argv[], parameters_t *parameters) {
+   errno = 0;
    parameter_status_t status = success;
-   size_t last = 0;
-   for (int i = 1 /* skip program name */; i < argc && status == success; ++i) {
-      if (argv[i][0] == '-') {
-         last = get_offset(argv[i][1]);
-      } else if (last != 0) {
-         /* get_offset should never return 0 */
-         status |= parse_argument(argv[i - 1][1], last, argv[i], parameters);
-      }
+   int opt = 0;
+   while ((opt = getopt(argc, argv, allowed_flags)) != parsing_succeeded && status == success) {
+      parse_argument(opt, parameters, &status);
    }
+   return status;
 }
