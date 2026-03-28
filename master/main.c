@@ -13,10 +13,7 @@
 #include "shmemory_utils.h"
 #include <error_management.h>
 
-#define PERMISSIONS 0666
-
-// #define OPENFLAGS O_CREAT | O_RDWR Generates Confusission -> The master use
-// both of them, the other processes only use O_RDWR (ftruncate)
+static const uint64_t master_permissions = 0666;
 
 void printGameState(int8_t board[], uint16_t height, uint16_t width, int8_t players_count, bool state);
 void printBoard(int8_t board[], uint16_t height, uint16_t width); // Just for us
@@ -47,7 +44,7 @@ int main(int argc, char *argv[]) {
            .totalSize = totalSize,
            .protections = PROT_READ | PROT_WRITE,
            .mapFlag = MAP_SHARED,
-           .permissions = PERMISSIONS,
+           .permissions = master_permissions,
            .openFlags = O_CREAT | O_RDWR,
        },
        manage_errno, __FILE__, __func__, __LINE__);
@@ -56,7 +53,7 @@ int main(int argc, char *argv[]) {
        &(shm_data_t){
            .sharedMemoryName = "/game_sync",
            .totalSize = sizeof(game_sync_t),
-           .permissions = PERMISSIONS,
+           .permissions = master_permissions,
            .protections = PROT_READ | PROT_WRITE,
            .mapFlag = MAP_SHARED,
            .offset = 0,
@@ -64,7 +61,7 @@ int main(int argc, char *argv[]) {
        },
        manage_errno, __FILE__, __func__, __LINE__);
 
-   player_t players[9] = {};
+   player_t players[MAX_PLAYERS] = {};
    initalizeGameState(sharedGameState, parameters.width, parameters.height, parameters.players_count, players);
 
    printGameState(sharedGameState->board, sharedGameState->height, sharedGameState->width,

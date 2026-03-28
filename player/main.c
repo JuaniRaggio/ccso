@@ -14,6 +14,8 @@
 #include <shmemory_utils.h>
 #include <error_management.h>
 
+const uint64_t player_permissions = 0111;
+
 int main(int argc, char *argv[]) {
    if (argc < 3) {
       fprintf(stderr, "Use: %s <width> <height>\n", argv[0]);
@@ -23,38 +25,29 @@ int main(int argc, char *argv[]) {
    uint16_t height = atoi(argv[2]);
    size_t totalSize = sizeof(game_state_t) + (size_t)width * height;
 
-   game_state_t *state = createSharedMemory(
+   game_state_t *gameState = createSharedMemory(
        &(shm_data_t){
            .sharedMemoryName = game_state_memory_name,
            .totalSize = totalSize,
            .mapFlag = MAP_SHARED,
            .openFlags = O_RDONLY,
-           .permissions = 0111,
+           .permissions = player_permissions,
            .protections = PROT_READ,
            .offset = 0,
        },
        manage_errno, __FILE__, __func__, __LINE__);
 
-   // Abrir shared memory de sincronizacion (lectura/escritura para los semaforos)
-
-   game_sync_t *sync = createSharedMemory(
+   game_sync_t *gameSync = createSharedMemory(
        &(shm_data_t){
            .sharedMemoryName = game_sync_memory_name,
            .totalSize = sizeof(game_sync_t),
            .mapFlag = MAP_SHARED,
            .openFlags = O_RDWR,
-           .permissions = 0, // TODO ??
+           .permissions = player_permissions, // TODO ??
            .protections = PROT_READ | PROT_WRITE,
            .offset = 0,
        },
        manage_errno, __FILE__, __func__, __LINE__);
-
-   game_sync_t *sync = mmap(NULL, sizeof(game_sync_t), PROT_READ | PROT_WRITE, MAP_SHARED, fd_sync, 0);
-   if (sync == MAP_FAILED) {
-      perror("mmap sync");
-      return 1;
-   }
-   close(fd_sync);
 
    // Buscar mi indice por PID
    // El master hace fork->exec, puede que el PID todavia no este cargado
