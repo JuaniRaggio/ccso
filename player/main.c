@@ -1,6 +1,6 @@
-
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/fcntl.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/mman.h>
@@ -12,41 +12,7 @@
 #include <game_state.h>
 #include <game_sync.h>
 #include <shmemory_utils.h>
-
-// esta en game_state.h
-/*
-typedef struct {
-   char nombre[16];
-   unsigned int puntaje;
-   unsigned int mov_invalidos;
-   unsigned int mov_validos;
-   unsigned short x, y;
-   pid_t pid;
-   bool bloqueado;
-} Jugador;
-
-typedef struct {
-   unsigned short ancho;
-   unsigned short alto;
-   unsigned char cant_jugadores;
-   Jugador jugadores[9];
-   bool juego_terminado;
-   char tablero[];
-} Estado;
-*/
-
-// está en game_sync
-/*
-typedef struct {
-   sem_t A;
-   sem_t B;
-   sem_t C;
-   sem_t D;
-   sem_t E;
-   unsigned int F;
-   sem_t G[9];
-} Sync;
-*/
+#include <error_management.h>
 
 int main(int argc, char *argv[]) {
    if (argc < 3) {
@@ -57,11 +23,38 @@ int main(int argc, char *argv[]) {
    uint16_t height = atoi(argv[2]);
    size_t totalSize = sizeof(game_state_t) + (size_t)width * height;
 
-   game_state_t *gameState = createSharedMemory("/game_state", totalSize, O_RDONLY, 622, PROT_READ, MAP_SHARED, 0);
-   // We eshould check if its NULL?
-   game_sync_t *gameSync =
-       createSharedMemory("/game_sync", sizeof(game_sync_t), O_RDONLY, 622, PROT_READ, MAP_SHARED, 0);
-   // We eshould check if its NULL?
+   game_state_t *state = createSharedMemory(
+       &(shm_data_t){
+           .sharedMemoryName = game_state_memory_name,
+           .totalSize = totalSize,
+           .mapFlag = MAP_SHARED,
+           .openFlags = O_RDONLY,
+           .permissions = 0111,
+           .protections = PROT_READ,
+           .offset = 0,
+       },
+       manage_errno, __FILE__, __func__, __LINE__);
+
+   // Abrir shared memory de sincronizacion (lectura/escritura para los semaforos)
+
+   game_sync_t *sync = createSharedMemory(
+       &(shm_data_t){
+           .sharedMemoryName = game_sync_memory_name,
+           .totalSize = sizeof(game_sync_t),
+           .mapFlag = MAP_SHARED,
+           .openFlags = O_RDWR,
+           .permissions = 0, // TODO ??
+           .protections = PROT_READ | PROT_WRITE,
+           .offset = 0,
+       },
+       manage_errno, __FILE__, __func__, __LINE__);
+
+   game_sync_t *sync = mmap(NULL, sizeof(game_sync_t), PROT_READ | PROT_WRITE, MAP_SHARED, fd_sync, 0);
+   if (sync == MAP_FAILED) {
+      perror("mmap sync");
+      return 1;
+   }
+   close(fd_sync);
 
    // Buscar mi indice por PID
    // El master hace fork->exec, puede que el PID todavia no este cargado

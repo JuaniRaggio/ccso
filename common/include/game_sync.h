@@ -2,8 +2,9 @@
 
 #include <semaphore.h>
 
-typedef struct {
+const char *const game_sync_memory_name = "/game_sync";
 
+typedef struct {
    sem_t A;        // El máster le indica a la vista que hay cambios por imprimir
    sem_t B;        // La vista le indica al máster que terminó de imprimir
    sem_t C;        // Mutex para evitar inanición del máster al acceder al estado
@@ -11,5 +12,4 @@ typedef struct {
    sem_t E;        // Mutex para la siguiente variable
    unsigned int F; // Cantidad de jugadores leyendo el estado
    sem_t G[9];     // Le indican a cada jugador que puede enviar 1 movimiento
-
 } game_sync_t;
