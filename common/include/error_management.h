@@ -4,8 +4,6 @@
 #include <sys/errno.h>
 #include <sys/mman.h>
 
-typedef void (*error_manager_t)(const char *file, const char *func, uint64_t line);
-
 typedef enum {
    access_error = EACCES,
    range_error = ERANGE,
@@ -13,6 +11,6 @@ typedef enum {
    mapping_error,
 } error_code_t;
 
-void manage_errno(const char *file, const char *func, uint64_t line);
+typedef void (*error_manager_t)(const char *file, const char *func, uint64_t line, error_code_t code);
 
-void clear_error();
+void manage_error(const char *file, const char *func, uint64_t line, error_code_t code);
