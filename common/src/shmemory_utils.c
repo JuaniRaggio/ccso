@@ -10,7 +10,7 @@ static inline bool is_creator(int openFlags) {
 }
 
 void *createSharedMemory(shm_data_t *data, error_manager_t manage_error, const char *file, const char *func,
-                         uint64_t line){
+                         uint64_t line) {
    errno = 0;
 
    int fd = shm_open(data->sharedMemoryName, data->openFlags, data->permissions);

@@ -15,7 +15,6 @@ void manage_error(const char *file, const char *func, uint64_t line, error_code_
       break;
    case mapping_error:
       fprintf(stderr, "mmap failed...\n" _error_description, file, func, line);
-
    }
 }
 

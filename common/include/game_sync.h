@@ -2,7 +2,7 @@
 
 #include <semaphore.h>
 
-const char * const game_sync_memory_name = "/game_sync";
+const char *const game_sync_memory_name = "/game_sync";
 
 typedef struct {
    sem_t A;        // El máster le indica a la vista que hay cambios por imprimir
