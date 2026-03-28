@@ -35,7 +35,7 @@ int main(int argc, char *argv[]) {
            .protections = PROT_READ,
            .offset = 0,
        },
-       manage_errno, __FILE__, __func__, __LINE__);
+       manage_error, __FILE__, __func__, __LINE__);
 
    game_sync_t *gameSync = createSharedMemory(
        &(shm_data_t){
@@ -47,7 +47,7 @@ int main(int argc, char *argv[]) {
            .protections = PROT_READ | PROT_WRITE,
            .offset = 0,
        },
-       manage_errno, __FILE__, __func__, __LINE__);
+       manage_error, __FILE__, __func__, __LINE__);
 
    // Buscar mi indice por PID
    // El master hace fork->exec, puede que el PID todavia no este cargado

@@ -5,7 +5,7 @@
 
 #define _error_description "Error produced at File: %s\n Function: %s Line: %llu\n"
 
-void manage_errno(const char *file, const char *func, uint64_t line, error_code_t code) {
+void manage_error(const char *file, const char *func, uint64_t line, error_code_t code) {
    switch (code) {
    case access_error:
       fprintf(stderr, "Permission denied, access error...\n" _error_description, file, func, line);
@@ -18,8 +18,4 @@ void manage_errno(const char *file, const char *func, uint64_t line, error_code_
    default: /* We log every single error independently from its code */
       fprintf(stderr, "Unknown Error...\n" _error_description, file, func, line);
    }
-}
-
-void clear_error() {
-   errno = 0;
 }
