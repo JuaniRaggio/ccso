@@ -10,6 +10,8 @@
 #include <game_state.h>
 #include <game_sync.h>
 
+#include <game_sync.h>
+
 typedef void (*error_manager_t)();
 
 /*
