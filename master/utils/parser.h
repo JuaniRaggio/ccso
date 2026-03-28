@@ -1,7 +1,7 @@
 #pragma once
 
-#include <game_state.h>
 #include <stdint.h>
+#include <game_state.h>
 
 typedef struct {
    uint64_t players_count;
@@ -16,11 +16,12 @@ typedef struct {
 
 typedef enum {
    success = 0x0,
-   invalid_integer_type = success << 1,
-   invalid_view_path = invalid_integer_type << 1,
-   invalid_player_count = invalid_view_path << 1,
-   invalid_width_limit = invalid_player_count << 1,
-   invalid_height_limit = invalid_width_limit << 1,
+   invalid_integer_type = 0x1,
+   exceeded_player_limit = invalid_integer_type << 1,
+   unknown_optional_flag = exceeded_player_limit << 1,
+   overflow = unknown_optional_flag << 1,
 } parameter_status_t;
+
+static inline void parse_argument(int opt, parameters_t *parameters, parameter_status_t *status);
 
 parameter_status_t parse(int argc, char *argv[], parameters_t *parameters);
