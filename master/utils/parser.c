@@ -34,6 +34,7 @@ static inline void parse_argument(int opt, parameters_t *parameters, parameter_s
       goto integer_checking;
 
    integer_checking:
+      errno = 0;
       *current_parameter = strtoull(optarg, &endptr, default_base);
       *status |= endptr == NULL || *endptr != '\0' ? invalid_integer_type : success;
       *status |= errno == ERANGE ? overflow : success;
