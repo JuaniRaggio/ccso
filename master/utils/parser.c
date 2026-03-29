@@ -16,7 +16,7 @@ static const char *const allowed_flags = "w:h:d:t:s:v:p:";
 static inline void parse_argument(int opt, parameters_t *parameters, parameter_status_t *status) {
    switch (opt) {
       char *endptr;
-      uint64_t * current_parameter;
+      uint64_t *current_parameter;
    case 'w':
       current_parameter = &parameters->width;
       goto integer_checking;
