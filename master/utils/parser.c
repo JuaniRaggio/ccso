@@ -14,9 +14,9 @@ static const char *const allowed_flags = "w:h:d:t:s:v:p:";
  * is produced by the fact we are not allocating memory to save paths
  */
 static inline void parse_argument(int opt, parameters_t *parameters, parameter_status_t *status) {
+   char *endptr = NULL;
+   uint64_t *current_parameter = NULL;
    switch (opt) {
-      char *endptr;
-      uint64_t *current_parameter;
    case 'w':
       current_parameter = &parameters->width;
       goto integer_checking;
@@ -34,6 +34,7 @@ static inline void parse_argument(int opt, parameters_t *parameters, parameter_s
       goto integer_checking;
 
    integer_checking:
+      errno = 0;
       *current_parameter = strtoull(optarg, &endptr, default_base);
       *status |= endptr == NULL || *endptr != '\0' ? invalid_integer_type : success;
       *status |= errno == ERANGE ? overflow : success;

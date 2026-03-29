@@ -25,6 +25,9 @@ int main(int argc, char *argv[]) {
    uint16_t height = atoi(argv[2]);
    size_t totalSize = sizeof(game_state_t) + (size_t)width * height;
 
+   // TODO: usar tads para los sharedGameState y sync y unificar la inicializacion de parameters con la creacion de
+   // memoria
+
    game_state_t *gameState = createSharedMemory(
        &(shm_data_t){
            .sharedMemoryName = game_state_memory_name,
