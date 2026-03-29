@@ -1,3 +1,4 @@
+#include "error_management.h"
 #include <shmemory_utils.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -11,28 +12,25 @@ static inline bool is_creator(int openFlags) {
 
 void *createSharedMemory(shm_data_t *data, error_manager_t manage_error, const char *file, const char *func,
                          uint64_t line) {
-   errno = 0;
-
    int fd = shm_open(data->sharedMemoryName, data->openFlags, data->permissions);
    if (fd == -1) {
-      manage_error(file, func, line);
+      manage_error(file, func, line, errno);
       return NULL;
    }
 
    // O_CREAT means that you are the creator of a new shared memory object
    if (is_creator(data->openFlags) && ftruncate(fd, data->totalSize) == -1) {
-      manage_error(file, func, line);
-      close(fd);
-      return NULL;
+       manage_error(file, func, line, errno);
+       close(fd);
+       return NULL;
    }
 
    void *ptr = mmap(NULL, data->totalSize, data->protections, data->mapFlag, fd, data->offset);
    if (ptr == MAP_FAILED) {
-      manage_error(file, func, line);
-      close(fd);
-      return NULL;
+       manage_error(file, func, line, mapping_error);
+       close(fd);
+       return NULL;
    }
-
    close(fd);
    return ptr;
 }

@@ -15,6 +15,13 @@
 
 static const uint64_t master_permissions = 0666;
 
+// This should be on a ADT
+static const uint64_t default_width = 10;
+static const uint64_t default_heigh = 10;
+static const uint64_t default_delay = 200;
+static const uint64_t default_timeout = 10;
+static const char *const default_view_path = "";
+
 void printGameState(int8_t board[], uint16_t height, uint16_t width, int8_t players_count, bool state);
 void printBoard(int8_t board[], uint16_t height, uint16_t width); // Just for us
 
