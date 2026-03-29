@@ -15,24 +15,26 @@ static const char *const allowed_flags = "w:h:d:t:s:v:p:";
  */
 static inline void parse_argument(int opt, parameters_t *parameters, parameter_status_t *status) {
    switch (opt) {
-      char *endptr = NULL;
+      char *endptr;
+      uint64_t * current_parameter;
    case 'w':
-      parameters->width = strtoull(optarg, &endptr, default_base);
+      current_parameter = &parameters->width;
       goto integer_checking;
    case 'h':
-      parameters->height = strtoull(optarg, &endptr, default_base);
+      current_parameter = &parameters->height;
       goto integer_checking;
    case 'd':
-      parameters->delay = strtoull(optarg, &endptr, default_base);
+      current_parameter = &parameters->delay;
       goto integer_checking;
    case 't':
-      parameters->timeout = strtoull(optarg, &endptr, default_base);
+      current_parameter = &parameters->timeout;
       goto integer_checking;
    case 's':
-      parameters->seed = strtoull(optarg, &endptr, default_base);
+      current_parameter = &parameters->seed;
       goto integer_checking;
 
    integer_checking:
+      *current_parameter = strtoull(optarg, &endptr, default_base);
       *status |= endptr == NULL || *endptr != '\0' ? invalid_integer_type : success;
       *status |= errno == ERANGE ? overflow : success;
       break;
