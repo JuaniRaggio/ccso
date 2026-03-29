@@ -35,6 +35,8 @@ int main(int argc, char *argv[]) {
       // Manage errors using status
    }
 
+   // TODO: usar tads para los sharedGameState y sync y unificar la inicializacion de parameters con la creacion de memoria
+
    errno = 0;
    size_t totalSize = (sizeof(game_state_t) + sizeof(int8_t) * parameters.height * parameters.width);
    game_state_t *sharedGameState = createSharedMemory(
