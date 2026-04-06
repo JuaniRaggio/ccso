@@ -49,7 +49,7 @@ int main(int argc, char *argv[]) {
    size_t totalSize = (sizeof(game_state_t) + sizeof(int8_t) * parameters.height * parameters.width);
    game_state_t *sharedGameState = createSharedMemory(
        &(shm_data_t){
-           .sharedMemoryName = "/game_state",
+           .sharedMemoryName = game_state_memory_name,
            .offset = 0,
            .totalSize = totalSize,
            .protections = PROT_READ | PROT_WRITE,
@@ -61,7 +61,7 @@ int main(int argc, char *argv[]) {
 
    game_sync_t *sharedGameSync = createSharedMemory(
        &(shm_data_t){
-           .sharedMemoryName = "/game_sync",
+           .sharedMemoryName = game_sync_memory_name,
            .totalSize = sizeof(game_sync_t),
            .permissions = master_permissions,
            .protections = PROT_READ | PROT_WRITE,
