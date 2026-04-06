@@ -1,5 +1,18 @@
 #include <player_movement.h>
 
+
+// Que tanto suma la calidad de los jugadores?
+// No suma absolutamente nada, importante calidad de codigo y que
+// funcione
+//
+// Para la vista lo mismo
+//
+// Si suma como beneficio si gana el torneo
+//
+//
+// Podemos hacer un if que dependiendo de la cantidad de jugadores
+// se tome una strat u otra
+
 // #ifdef NAIVE
 
 int8_t compute_next_move(int8_t board[], uint16_t width, uint16_t height, uint16_t x, uint16_t y) {
