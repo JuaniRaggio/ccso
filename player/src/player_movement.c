@@ -126,8 +126,18 @@ int8_t compute_next_move(int8_t board[], uint16_t width, uint16_t height, uint16
 #elif defined(GREEDY_FLOOD)
 
 // Combina greedy + flood fill.
+#define SURVIVAL_NUM 3
+#define SURVIVAL_DEN 10
+
 int8_t compute_next_move(int8_t board[], uint16_t width, uint16_t height, uint16_t x, uint16_t y) {
    int floods[DIR_COUNT] = {0};
+   int8_t rewards[DIR_COUNT] = {0};
+   int valid[DIR_COUNT] = {0};
+   int max_flood = 0;
+
+   int best_dir = -1;
+   int8_t best_reward = 0;
+   return best_dir >= 0 ? best_dir : NO_VALID_MOVE;
 }
 
 #endif
