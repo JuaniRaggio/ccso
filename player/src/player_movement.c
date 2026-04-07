@@ -68,13 +68,53 @@ int8_t compute_next_move(int8_t board[], uint16_t width, uint16_t height, uint16
 #define LOOKAHEAD_DEPTH 3
 
 static int path_contains(int path_x[], int path_y[], int path_len, int x, int y) {
+   for (int p = 0; p < path_len; p++) {
+      if (path_x[p] == x && path_y[p] == y)
+         return 1;
+   }
+   return 0;
 }
 
 static int lookahead(int8_t board[], uint16_t width, uint16_t height, int cx, int cy, int depth,
                      int path_x[], int path_y[], int path_len) {
+   if (depth == 0)
+      return 0;
+   int best = 0;
+   for (int dir = 0; dir < 8; dir++) {
+      int nx, ny;
+      if (!is_free_neighbor(board, width, height, cx, cy, dir, &nx, &ny))
+         continue;
+      if (path_contains(path_x, path_y, path_len, nx, ny))
+         continue;
+      path_x[path_len] = nx;
+      path_y[path_len] = ny;
+      int val = board_at(board, width, nx, ny) +
+                lookahead(board, width, height, nx, ny, depth - 1, path_x, path_y, path_len + 1);
+      if (val > best)
+         best = val;
+   }
+   return best;
 }
 
 int8_t compute_next_move(int8_t board[], uint16_t width, uint16_t height, uint16_t x, uint16_t y) {
+   int best_dir = -1;
+   int best_val = 0;
+   int path_x[LOOKAHEAD_DEPTH + 1];
+   int path_y[LOOKAHEAD_DEPTH + 1];
+   for (int dir = 0; dir < 8; dir++) {
+      int nx, ny;
+      if (!is_free_neighbor(board, width, height, x, y, dir, &nx, &ny))
+         continue;
+      path_x[0] = nx;
+      path_y[0] = ny;
+      int val = board_at(board, width, nx, ny) +
+                lookahead(board, width, height, nx, ny, LOOKAHEAD_DEPTH - 1, path_x, path_y, 1);
+      if (val > best_val) {
+         best_val = val;
+         best_dir = dir;
+      }
+   }
+   return best_dir >= 0 ? best_dir : NO_VALID_MOVE;
 }
 
 #elif defined(FLOOD)
