@@ -50,7 +50,7 @@ int8_t compute_next_move(int8_t board[], uint16_t width, uint16_t height, uint16
 int8_t compute_next_move(int8_t board[], uint16_t width, uint16_t height, uint16_t x, uint16_t y) {
    int best_dir = -1;
    int8_t best_val = 0;
-   for (int dir = 0; dir < 8; dir++) {
+   for (int dir = 0; dir < DIR_COUNT; dir++) {
       int nx, ny;
       if (!is_free_neighbor(board, width, height, x, y, dir, &nx, &ny))
          continue;
@@ -82,7 +82,7 @@ static int lookahead(int8_t board[], uint16_t width, uint16_t height, int cx, in
    if (depth == 0)
       return 0;
    int best = 0;
-   for (int dir = 0; dir < 8; dir++) {
+   for (int dir = 0; dir < DIR_COUNT; dir++) {
       int nx, ny;
       if (!is_free_neighbor(board, width, height, cx, cy, dir, &nx, &ny))
          continue;
@@ -103,7 +103,7 @@ int8_t compute_next_move(int8_t board[], uint16_t width, uint16_t height, uint16
    int best_val = 0;
    int path_x[LOOKAHEAD_DEPTH + 1];
    int path_y[LOOKAHEAD_DEPTH + 1];
-   for (int dir = 0; dir < 8; dir++) {
+   for (int dir = 0; dir < DIR_COUNT; dir++) {
       int nx, ny;
       if (!is_free_neighbor(board, width, height, x, y, dir, &nx, &ny))
          continue;
@@ -136,7 +136,7 @@ int8_t decidir_movimiento(game_state_t *state, uint16_t width, uint16_t height, 
    int x = state->players[idx].x;
    int y = state->players[idx].y;
 
-   for (int dir = 0; dir < 8; dir++) {
+   for (int dir = 0; dir < DIR_COUNT; dir++) {
       int nx, ny;
       if (!is_free_neighbor(state->board, width, height, x, y, dir, &nx, &ny))
          continue;
