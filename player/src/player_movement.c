@@ -107,14 +107,8 @@ int8_t decidir_movimiento(game_state_t *state, uint16_t width, uint16_t height, 
       int nx, ny;
       if (!is_free_neighbor(state->board, width, height, x, y, dir, &nx, &ny))
          continue;
-
-      // Celda libre: valor entre 1 y 9
-      uint8_t cell = state->board[ny * width + nx];
-      if (cell >= 1 && cell <= 9)
-         return (uint8_t)dir;
+      return (uint8_t)dir;
    }
 
-   // Sin movimiento válido — mandamos algo inválido, el master lo ignora
-   // y eventualmente cierra el juego por timeout o bloqueado
-   return 0;
+   return NO_VALID_MOVE;
 }
