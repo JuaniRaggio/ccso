@@ -4,17 +4,6 @@
 static const int DX[] = {0, 1, 1, 1, 0, -1, -1, -1};
 static const int DY[] = {-1, -1, 0, 1, 1, 1, 0, -1};
 
-// Que tanto suma la calidad de los jugadores?
-// No suma absolutamente nada, importante calidad de codigo y que
-// funcione
-//
-// Para la vista lo mismo
-//
-// Si suma como beneficio si gana el torneo
-//
-//
-// Podemos hacer un if que dependiendo de la cantidad de jugadores
-// se tome una strat u otra
 #define NO_VALID_MOVE 0
 
 static inline int in_bounds(int x, int y, uint16_t width, uint16_t height) {
