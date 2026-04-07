@@ -90,10 +90,6 @@ int8_t compute_next_move(int8_t board[], uint16_t width, uint16_t height, uint16
 
 #elif defined(FLOOD)
 
-// Deltas para las 8 direcciones: 0=arriba, 1=arriba-der, 2=der, 3=abajo-der,
-//                                 4=abajo,  5=abajo-izq,  6=izq, 7=arriba-izq
-static const int DX[] = {0, 1, 1, 1, 0, -1, -1, -1};
-static const int DY[] = {-1, -1, 0, 1, 1, 1, 0, -1};
 #elif defined(GREEDY_FLOOD)
 
 // del mockup
