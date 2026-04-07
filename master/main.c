@@ -15,6 +15,13 @@
 
 static const uint64_t master_permissions = 0666;
 
+// This should be on a ADT
+static const uint64_t default_width = 10;
+static const uint64_t default_heigh = 10;
+static const uint64_t default_delay = 200;
+static const uint64_t default_timeout = 10;
+static const char *const default_view_path = "";
+
 void printGameState(int8_t board[], uint16_t height, uint16_t width, int8_t players_count, bool state);
 void printBoard(int8_t board[], uint16_t height, uint16_t width); // Just for us
 
@@ -42,7 +49,7 @@ int main(int argc, char *argv[]) {
    size_t totalSize = (sizeof(game_state_t) + sizeof(int8_t) * parameters.height * parameters.width);
    game_state_t *sharedGameState = createSharedMemory(
        &(shm_data_t){
-           .sharedMemoryName = "/game_state",
+           .sharedMemoryName = game_state_memory_name,
            .offset = 0,
            .totalSize = totalSize,
            .protections = PROT_READ | PROT_WRITE,
@@ -54,7 +61,7 @@ int main(int argc, char *argv[]) {
 
    game_sync_t *sharedGameSync = createSharedMemory(
        &(shm_data_t){
-           .sharedMemoryName = "/game_sync",
+           .sharedMemoryName = game_sync_memory_name,
            .totalSize = sizeof(game_sync_t),
            .permissions = master_permissions,
            .protections = PROT_READ | PROT_WRITE,

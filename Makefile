@@ -12,7 +12,7 @@ BUILD_DIR = build
 COMMON_INC = common/include
 
 # Player strategies
-STRATEGIES = naive bfs dfs minimax a_star
+STRATEGIES = naive greedy greedy_lookahead flood greedy_flood
 PLAYERS ?= $(STRATEGIES)
 
 # Source discovery (main.c at module root + sources in src/ and utils/)
@@ -64,7 +64,7 @@ clean:
 # Generate compile_flags.txt for clangd / IDEs
 compile_flags:
 	@printf "%s\n" "-Wall" "-g" "-I../common/include" "-Iinclude" "-Iutils" > master/compile_flags.txt
-	@printf "%s\n" "-Wall" "-g" "-I../common/include" "-Iinclude" "-DNAIVE" > player/compile_flags.txt
+	@printf "%s\n" "-Wall" "-g" "-I../common/include" "-Iinclude" "-DGREEDY_FLOOD" > player/compile_flags.txt
 	@printf "%s\n" "-Wall" "-g" "-I../common/include" "-Iinclude" > view/compile_flags.txt
 	@printf "%s\n" "-Wall" "-g" "-Iinclude" > common/compile_flags.txt
 	@echo "compile_flags.txt generated for all modules"

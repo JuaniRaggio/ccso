@@ -54,6 +54,7 @@ static inline void parse_argument(int opt, parameters_t *parameters, parameter_s
    default:
       *status |= unknown_optional_flag;
    }
+   // TODO: si no te pasan vista, no tiene sentido que te pasen delay
 }
 
 parameter_status_t parse(int argc, char *argv[], parameters_t *parameters) {

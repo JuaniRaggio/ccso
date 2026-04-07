@@ -24,6 +24,6 @@ typedef struct {
    uint16_t height;
    int8_t players_count;
    player_t players[MAX_PLAYERS];
-   bool state;
+   bool running;
    int8_t board[]; // tablero. fila-0, fila-1, ..., fila-n-1
 } game_state_t;

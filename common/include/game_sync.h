@@ -1,15 +1,17 @@
 #pragma once
 
+#include "game_state.h"
 #include <semaphore.h>
+#include <stdint.h>
 
 const char *const game_sync_memory_name = "/game_sync";
 
 typedef struct {
-   sem_t A;        // El máster le indica a la vista que hay cambios por imprimir
-   sem_t B;        // La vista le indica al máster que terminó de imprimir
-   sem_t C;        // Mutex para evitar inanición del máster al acceder al estado
-   sem_t D;        // Mutex para el estado del juego
-   sem_t E;        // Mutex para la siguiente variable
-   unsigned int F; // Cantidad de jugadores leyendo el estado
-   sem_t G[9];     // Le indican a cada jugador que puede enviar 1 movimiento
+   sem_t pending_changes_to_show; // El máster le indica a la vista que hay cambios por imprimir
+   sem_t printing;                // La vista le indica al máster que terminó de imprimir
+   sem_t master_writing;          // Mutex para evitar inanición del máster al acceder al estado
+   sem_t gamestate_mutex;
+   sem_t readers_count_mutex;
+   uint32_t readers_count; // Cantidad de jugadores leyendo el estado
+   sem_t player_may_send_movement[MAX_PLAYERS];
 } game_sync_t;

@@ -77,21 +77,21 @@ int main(int argc, char *argv[]) {
 
    // algo habría que cambiar, no conviene que se llame state.
 
-   while (!gameState->state) { // se considera a state como juego_terminado
+   while (!gameState->running) { // se considera a state como juego_terminado
       // Esperar que el master me habilite para enviar un movimiento
-      sem_wait(&gameSync->G[idx]);
+      sem_wait(&gameSync->player_may_send_movement[idx]);
 
-      if (gameState->state)
+      if (gameState->running)
          break;
 
       // --- Adquirir lectura (readers-writers sin inanicion del escritor) ---
-      sem_wait(&gameSync->C); // me bloqueo si hay un escritor esperando
-      sem_wait(&gameSync->E);
-      gameSync->F++;
-      if (gameSync->F == 1)
-         sem_wait(&gameSync->D); // primer lector bloquea escritores
-      sem_post(&gameSync->E);
-      sem_post(&gameSync->C);
+      sem_wait(&gameSync->master_writing); // me bloqueo si hay un escritor esperando
+      sem_wait(&gameSync->readers_count_mutex);
+      gameSync->readers_count++;
+      if (gameSync->readers_count == 1)
+         sem_wait(&gameSync->gamestate_mutex); // primer lector bloquea escritores
+      sem_post(&gameSync->readers_count_mutex);
+      sem_post(&gameSync->master_writing);
 
       // Decidir movimiento mirando el tablero
       uint8_t mov =

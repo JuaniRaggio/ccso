@@ -2,6 +2,18 @@
 #include <game_state.h>
 #include <stdint.h>
 
+typedef enum {
+   DIR_UP = 0,
+   DIR_UP_RIGHT = 1,
+   DIR_RIGHT = 2,
+   DIR_DOWN_RIGHT = 3,
+   DIR_DOWN = 4,
+   DIR_DOWN_LEFT = 5,
+   DIR_LEFT = 6,
+   DIR_UP_LEFT = 7,
+   DIR_COUNT = 8,
+} direction_t;
+
 /**
  * @brief: Calculates next move for player
  **/
