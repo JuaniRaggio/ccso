@@ -120,6 +120,19 @@ int8_t compute_next_move(int8_t board[], uint16_t width, uint16_t height, uint16
 #elif defined(FLOOD)
 
 int8_t compute_next_move(int8_t board[], uint16_t width, uint16_t height, uint16_t x, uint16_t y) {
+   int8_t best_dir = -1;
+   int32_t best_space = -1;
+   for (int8_t dir = 0; dir < DIR_COUNT; dir++) {
+      int16_t nx, ny;
+      if (!is_free_neighbor(board, width, height, x, y, dir, &nx, &ny))
+         continue;
+      int32_t space = flood_count(board, width, height, nx, ny);
+      if (space > best_space) {
+         best_space = space;
+         best_dir = dir;
+      }
+   }
+   return best_dir >= 0 ? best_dir : NO_VALID_MOVE;
 }
 
 #elif defined(GREEDY_FLOOD)
