@@ -42,7 +42,7 @@ static int flood_count(int8_t board[], uint16_t width, uint16_t height, int sx, 
 #ifdef NAIVE
 
 int8_t compute_next_move(int8_t board[], uint16_t width, uint16_t height, uint16_t x, uint16_t y) {
-   return rand() % 8;
+   return rand() % DIR_COUNT;
 }
 
 #elif defined(GREEDY)
@@ -127,7 +127,7 @@ int8_t compute_next_move(int8_t board[], uint16_t width, uint16_t height, uint16
 
 // Combina greedy + flood fill.
 int8_t compute_next_move(int8_t board[], uint16_t width, uint16_t height, uint16_t x, uint16_t y) {
-   int floods[8] = {0};
+   int floods[DIR_COUNT] = {0};
 }
 
 #endif
