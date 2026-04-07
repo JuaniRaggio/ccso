@@ -23,8 +23,8 @@ static inline void neighbor(int x, int y, int dir, int *nx, int *ny) {
    *ny = y + DY[dir];
 }
 
-static inline int is_free_neighbor(int8_t board[], uint16_t width, uint16_t height, int x, int y, int dir,
-                                   int *out_nx, int *out_ny) {
+static inline int is_free_neighbor(int8_t board[], uint16_t width, uint16_t height, int x, int y, int dir, int *out_nx,
+                                   int *out_ny) {
    neighbor(x, y, dir, out_nx, out_ny);
    return in_bounds(*out_nx, *out_ny, width, height) && is_free(board_at(board, width, *out_nx, *out_ny));
 }
@@ -77,8 +77,8 @@ static int path_contains(int path_x[], int path_y[], int path_len, int x, int y)
    return 0;
 }
 
-static int lookahead(int8_t board[], uint16_t width, uint16_t height, int cx, int cy, int depth,
-                     int path_x[], int path_y[], int path_len) {
+static int lookahead(int8_t board[], uint16_t width, uint16_t height, int cx, int cy, int depth, int path_x[],
+                     int path_y[], int path_len) {
    if (depth == 0)
       return 0;
    int best = 0;
