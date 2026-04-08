@@ -1,3 +1,4 @@
+#include "game.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/fcntl.h>
@@ -14,8 +15,6 @@
 #include <shmemory_utils.h>
 #include <error_management.h>
 
-static const uint64_t player_permissions = 0111;
-
 int main(int argc, char *argv[]) {
    if (argc < 3) {
       fprintf(stderr, "Use: %s <width> <height>\n", argv[0]);
@@ -28,29 +27,7 @@ int main(int argc, char *argv[]) {
    // TODO: usar tads para los sharedGameState y sync y unificar la inicializacion de parameters con la creacion de
    // memoria
 
-   game_state_t *gameState = createSharedMemory(
-       &(shm_data_t){
-           .sharedMemoryName = game_state_memory_name,
-           .totalSize = totalSize,
-           .mapFlag = MAP_SHARED,
-           .openFlags = O_RDONLY,
-           .permissions = player_permissions,
-           .protections = PROT_READ,
-           .offset = 0,
-       },
-       manage_error, __FILE__, __func__, __LINE__);
-
-   game_sync_t *gameSync = createSharedMemory(
-       &(shm_data_t){
-           .sharedMemoryName = game_sync_memory_name,
-           .totalSize = sizeof(game_sync_t),
-           .mapFlag = MAP_SHARED,
-           .openFlags = O_RDWR,
-           .permissions = player_permissions,
-           .protections = PROT_READ | PROT_WRITE,
-           .offset = 0,
-       },
-       manage_error, __FILE__, __func__, __LINE__);
+   game_t game = new_game(NULL, NULL, player);
 
    // Buscar mi indice por PID
    // El master hace fork->exec, puede que el PID todavia no este cargado
@@ -84,14 +61,13 @@ int main(int argc, char *argv[]) {
       if (gameState->running)
          break;
 
-      // --- Adquirir lectura (readers-writers sin inanicion del escritor) ---
-      sem_wait(&gameSync->master_writing); // me bloqueo si hay un escritor esperando
-      sem_wait(&gameSync->readers_count_mutex);
-      gameSync->readers_count++;
-      if (gameSync->readers_count == 1)
-         sem_wait(&gameSync->gamestate_mutex); // primer lector bloquea escritores
-      sem_post(&gameSync->readers_count_mutex);
+      sem_wait(&gameSync->master_writing);
       sem_post(&gameSync->master_writing);
+
+      sem_wait(&gameSync->readers_count_mutex);
+      if (++gameSync->readers_count == 1)
+         sem_wait(&gameSync->gamestate_mutex);
+      sem_post(&gameSync->readers_count_mutex);
 
       // Decidir movimiento mirando el tablero
       uint8_t mov =
@@ -99,8 +75,7 @@ int main(int argc, char *argv[]) {
 
       // --- Liberar lectura ---
       sem_wait(&gameSync->E);
-      gameSync->F--;
-      if (gameSync->F == 0)
+      if (--gameSync->F == 0)
          sem_post(&gameSync->D); // ultimo lector libera escritores
       sem_post(&gameSync->E);
 
