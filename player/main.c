@@ -61,7 +61,7 @@ int main(int argc, char *argv[]) {
       if (gameState->running)
          break;
 
-      sem_wait(&gameSync->master_writing); 
+      sem_wait(&gameSync->master_writing);
       sem_post(&gameSync->master_writing);
 
       sem_wait(&gameSync->readers_count_mutex);

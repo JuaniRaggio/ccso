@@ -102,7 +102,8 @@ static const shm_data_t entity_spec[total_entities][game_posible_memories] = {
 game_t new_game(char *argv[], int argc, entity_t who) {
 
    return (game_t){
-       .state = , .sync =, .reference_count =,
+       .state =
+           , .sync =, .reference_count =,
    };
 }
 
