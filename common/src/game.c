@@ -28,22 +28,22 @@ static const shm_data_t entity_spec[total_entities][game_posible_memories] = {
             [game_state] =
                 {
                     .sharedMemoryName = game_state_memory_name,
-                    .offset = 0,
-                    .totalSize = 1,
-                    .protections = PROT_READ | PROT_WRITE,
+                    .totalSize = 1, // TODO
                     .mapFlag = MAP_SHARED,
-                    .permissions = master_permissions,
                     .openFlags = O_CREAT | O_RDWR,
+                    .permissions = master_permissions,
+                    .protections = PROT_READ | PROT_WRITE,
+                    .offset = 0,
                 },
             [game_sync] =
                 {
                     .sharedMemoryName = game_sync_memory_name,
                     .totalSize = sizeof(game_sync_t),
+                    .mapFlag = MAP_SHARED,
+                    .openFlags = O_CREAT | O_RDWR,
                     .permissions = master_permissions,
                     .protections = PROT_READ | PROT_WRITE,
-                    .mapFlag = MAP_SHARED,
                     .offset = 0,
-                    .openFlags = O_CREAT | O_RDWR,
                 },
         },
 
@@ -52,7 +52,7 @@ static const shm_data_t entity_spec[total_entities][game_posible_memories] = {
             [game_state] =
                 {
                     .sharedMemoryName = game_state_memory_name,
-                    .totalSize = 1,
+                    .totalSize = 1, // TODO
                     .mapFlag = MAP_SHARED,
                     .openFlags = O_RDONLY,
                     .permissions = player_permissions,
@@ -75,19 +75,39 @@ static const shm_data_t entity_spec[total_entities][game_posible_memories] = {
     // TODO: Todavia no llegamos a crear memoria para las vistas
     [view] =
         {
-            [game_state] = {},
-            [game_sync] = {},
+            [game_state] =
+                {
+                    .sharedMemoryName = NULL,
+                    .totalSize = NULL, // TODO
+                    .mapFlag = NULL,
+                    .openFlags = NULL,
+                    .permissions = NULL,
+                    .protections = NULL,
+                    .offset = NULL,
+
+                },
+            [game_sync] =
+                {
+                    .sharedMemoryName = NULL,
+                    .totalSize = NULL, // TODO
+                    .mapFlag = NULL,
+                    .openFlags = NULL,
+                    .permissions = NULL,
+                    .protections = NULL,
+                    .offset = NULL,
+                },
         },
 };
 
 game_t new_game(char *argv[], int argc, entity_t who) {
-   game_t game = malloc(1 /* TODO complete this */);
-   game->reference_count = 1;
+
+   return (game_t){
+       .state = , .sync =, .reference_count =,
+   };
 }
 
 // === Inicializacion de player ===
 //     manage_error, __FILE__, __func__, __LINE__);
-
 // === Inicializacion de master ===
 // game_state_t *sharedGameState = createSharedMemory(
 //     manage_error, __FILE__, __func__, __LINE__);

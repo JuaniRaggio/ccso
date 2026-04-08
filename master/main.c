@@ -7,13 +7,12 @@
 #include <sys/mman.h>
 #include <time.h>
 #include <unistd.h>
+#include "game.h"
 #include "game_state.h"
 #include "game_sync.h"
 #include "master.h"
 #include "shmemory_utils.h"
 #include <error_management.h>
-
-static const uint64_t master_permissions = 0666;
 
 // This should be on a ADT
 static const uint64_t default_width = 10;
@@ -47,6 +46,9 @@ int main(int argc, char *argv[]) {
 
    errno = 0;
    size_t totalSize = (sizeof(game_state_t) + sizeof(int8_t) * parameters.height * parameters.width);
+
+   game_t game = game_init();
+
    game_state_t *sharedGameState = createSharedMemory(
        &(shm_data_t){
            .sharedMemoryName = game_state_memory_name,
