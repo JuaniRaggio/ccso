@@ -32,6 +32,41 @@ static inline bool is_free_neighbor(int8_t board[], uint16_t width, uint16_t hei
 #if defined(FLOOD) || defined(GREEDY_FLOOD)
 
 static int32_t flood_count(int8_t board[], uint16_t width, uint16_t height, int16_t sx, int16_t sy) {
+   int32_t total = width * height;
+   uint8_t *visited = calloc(total, sizeof(uint8_t));
+   if (!visited)
+      return 0;
+   int16_t *stack = malloc(total * 2 * sizeof(int16_t));
+   if (!stack) {
+      free(visited);
+      return 0;
+   }
+
+   int32_t top = 0;
+   stack[top++] = sx;
+   stack[top++] = sy;
+   visited[sy * width + sx] = 1;
+   int32_t count = 0;
+
+   while (top > 0) {
+      int16_t cy = stack[--top];
+      int16_t cx = stack[--top];
+      int16_t nx, ny;
+      for (int8_t d = 0; d < DIR_COUNT; d++) {
+         if (!is_free_neighbor(board, width, height, cx, cy, d, &nx, &ny))
+            continue;
+         int32_t idx = ny * width + nx;
+         if (visited[idx])
+            continue;
+         visited[idx] = 1;
+         count++;
+         stack[top++] = nx;
+         stack[top++] = ny;
+      }
+   }
+
+   free(stack);
+   free(visited);
    return count;
 }
 
@@ -147,8 +182,44 @@ int8_t compute_next_move(int8_t board[], uint16_t width, uint16_t height, uint16
    bool valid[DIR_COUNT] = {false};
    int32_t max_flood = 0;
 
+   for (int8_t dir = 0; dir < DIR_COUNT; dir++) {
+      int16_t nx, ny;
+      if (!is_free_neighbor(board, width, height, x, y, dir, &nx, &ny))
+         continue;
+      valid[dir] = true;
+      rewards[dir] = board_at(board, width, nx, ny);
+      floods[dir] = flood_count(board, width, height, nx, ny);
+      if (floods[dir] > max_flood)
+         max_flood = floods[dir];
+   }
+
+   int32_t threshold = max_flood * SURVIVAL_NUM / SURVIVAL_DEN;
    int8_t best_dir = -1;
    int8_t best_reward = 0;
+   int32_t best_flood = -1;
+
+   for (int8_t dir = 0; dir < DIR_COUNT; dir++) {
+      if (!valid[dir] || floods[dir] < threshold)
+         continue;
+      if (rewards[dir] > best_reward || (rewards[dir] == best_reward && floods[dir] > best_flood)) {
+         best_reward = rewards[dir];
+         best_flood = floods[dir];
+         best_dir = dir;
+      }
+   }
+
+   if (best_dir == -1) {
+      best_flood = -1;
+      for (int8_t dir = 0; dir < DIR_COUNT; dir++) {
+         if (!valid[dir])
+            continue;
+         if (floods[dir] > best_flood) {
+            best_flood = floods[dir];
+            best_dir = dir;
+         }
+      }
+   }
+
    return best_dir >= 0 ? best_dir : NO_VALID_MOVE;
 }
 
