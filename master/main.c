@@ -27,12 +27,12 @@ void printBoard(int8_t board[], uint16_t height, uint16_t width); // Just for us
 int main(int argc, char *argv[]) {
    errno = 0;
    parameters_t parameters = (parameters_t){
-       .width = 10,
-       .height = 10,
-       .delay = 200,
-       .timeout = 10,
+       .width = default_width,
+       .height = default_heigh,
+       .delay = default_delay,
+       .timeout = default_timeout,
        .seed = time(NULL),
-       .view_path = "",
+       .view_path = default_view_path,
    };
 
    parameter_status_t status = parse(argc, argv, &parameters);
@@ -47,7 +47,7 @@ int main(int argc, char *argv[]) {
    errno = 0;
    size_t totalSize = (sizeof(game_state_t) + sizeof(int8_t) * parameters.height * parameters.width);
 
-   game_t game = game_init();
+   game_t game = new_game();
 
    game_state_t *sharedGameState = createSharedMemory(
        &(shm_data_t){
