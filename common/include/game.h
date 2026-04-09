@@ -4,6 +4,7 @@
 #include "game_state.h"
 #include "game_sync.h"
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdint.h>
 #include <sys/_types/_pid_t.h>
 
@@ -11,7 +12,7 @@ typedef struct {
     game_state_t *state;
     game_sync_t *sync;
 
-    size_t reference_count;
+    size_t shm_total_size;
 } game_t;
 
 typedef enum {
@@ -50,6 +51,9 @@ static const uint64_t default_timeout = 10;
 game_t _new_game(entity_t who, game_params_t game_parameters);
 
 game_t game_connect(uint32_t w, uint32_t h);
-bool is_player_ingame(game_t *game, pid_t player_id);
 void game_disconnect(game_t *);
 void game_end(game_t *);
+
+uint_fast8_t players_ingame(game_t *game);
+bool is_player_ingame(game_t *game, pid_t player_id);
+

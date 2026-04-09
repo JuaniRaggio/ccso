@@ -17,17 +17,20 @@ typedef enum {
 } memory_t;
 
 // game's users shouldn't care about this values
-
 static const uint64_t master_permissions = 0666;
 static const uint64_t player_permissions = 0111;
 
+static const size_t uninitialized_size = 0;
+
+//> IMPORTANT: totalSize is not compile-time computable for game_state
+//> since it's value depends on width & height => When entity_spec is
+//> used, you need to override this value on the copy
 static const shm_data_t entity_spec[total_entities][game_posible_memories] = {
     [master] =
         {
             [game_state] =
                 {
                     .sharedMemoryName = game_state_memory_name,
-                    .totalSize = 1, // TODO
                     .mapFlag = MAP_SHARED,
                     .openFlags = O_CREAT | O_RDWR,
                     .permissions = master_permissions,
@@ -37,7 +40,6 @@ static const shm_data_t entity_spec[total_entities][game_posible_memories] = {
             [game_sync] =
                 {
                     .sharedMemoryName = game_sync_memory_name,
-                    .totalSize = sizeof(game_sync_t),
                     .mapFlag = MAP_SHARED,
                     .openFlags = O_CREAT | O_RDWR,
                     .permissions = master_permissions,
@@ -51,7 +53,6 @@ static const shm_data_t entity_spec[total_entities][game_posible_memories] = {
             [game_state] =
                 {
                     .sharedMemoryName = game_state_memory_name,
-                    .totalSize = 1, // TODO
                     .mapFlag = MAP_SHARED,
                     .openFlags = O_RDONLY,
                     .permissions = player_permissions,
@@ -61,8 +62,6 @@ static const shm_data_t entity_spec[total_entities][game_posible_memories] = {
             [game_sync] =
                 {
                     .sharedMemoryName = game_sync_memory_name,
-                    .totalSize =
-                        sizeof(game_sync_t), // TODO: Podriamos usar tambien la estrategia de struct de size variable
                     .mapFlag = MAP_SHARED,
                     .openFlags = O_RDWR,
                     .permissions = player_permissions,
@@ -77,18 +76,15 @@ static const shm_data_t entity_spec[total_entities][game_posible_memories] = {
             [game_state] =
                 {
                     .sharedMemoryName = NULL,
-                    .totalSize = NULL, // TODO
                     .mapFlag = NULL,
                     .openFlags = NULL,
                     .permissions = NULL,
                     .protections = NULL,
                     .offset = NULL,
-
                 },
             [game_sync] =
                 {
                     .sharedMemoryName = NULL,
-                    .totalSize = NULL, // TODO
                     .mapFlag = NULL,
                     .openFlags = NULL,
                     .permissions = NULL,
@@ -98,15 +94,32 @@ static const shm_data_t entity_spec[total_entities][game_posible_memories] = {
         },
 };
 
-game_t _new_game(entity_t who, error_manager_t manage_error, const char *file, const char *func, uint64_t line) {
-    if (who >= total_entities) {
-        manage_error(file, func, line, entity_error);
-    }
+static void init_game_state(game_t *game) {}
 
+static void init_game_sync(game_t *game) {}
+
+static void init_game(game_t *game) {
+    init_game_state(game);
+    init_game_sync(game);
+}
+
+game_t _new_game(entity_t who, game_params_t game_parameters) {
+    if (who >= total_entities) {
+        game_parameters.manage_error(game_parameters.file, game_parameters.func, game_parameters.line, entity_error);
+    }
+    size_t state_size = sizeof(game_state_t) + game_parameters.width * game_parameters.height;
+    size_t sync_size = sizeof(game_sync_t);
     game_t game = {
-        .state = createSharedMemory(&entity_spec[who][game_state], manage_error, file, func, line),
-        .sync = createSharedMemory(&entity_spec[who][game_sync], manage_error, file, func, line),
+        .state = createSharedMemory(&entity_spec[who][game_state], state_size, game_parameters.manage_error,
+                                    game_parameters.file, game_parameters.func, game_parameters.line),
+        .sync = createSharedMemory(&entity_spec[who][game_sync], sync_size, game_parameters.manage_error,
+                                   game_parameters.file, game_parameters.func, game_parameters.line),
+        .shm_total_size = state_size + sync_size,
     };
+
+    if (who == master) {
+        init_game(&game);
+    }
 
     return game;
 }
