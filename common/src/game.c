@@ -4,6 +4,7 @@
 #include "shmemory_utils.h"
 #include <errno.h>
 #include <game.h>
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <sys/fcntl.h>
@@ -112,15 +113,6 @@ game_t new_game(entity_t who, error_manager_t manage_error, const char *file, co
    };
 }
 
-// === Inicializacion de player ===
-//     manage_error, __FILE__, __func__, __LINE__);
-// === Inicializacion de master ===
-// game_state_t *sharedGameState = createSharedMemory(
-//     manage_error, __FILE__, __func__, __LINE__);
-//
-// game_sync_t *sharedGameSync = createSharedMemory(
-//     manage_error, __FILE__, __func__, __LINE__);
-
 game_t game_connect(uint32_t w, uint32_t h) {}
 
 void game_disconnect(game_t *game) {
@@ -143,3 +135,16 @@ void delete_game(game_t *game) {
 }
 
 void game_end(game_t *) {}
+
+uint_fast8_t players_ingame(game_t * game) {
+    return game->state->players_count;
+}
+
+bool is_player_ingame(game_t *game, pid_t player_id) {
+    for (uint_fast8_t idx = 0; idx < players_ingame(game); idx++) {
+        if (game->state->players[idx].player_id == player_id) {
+            return true;
+        }
+    }
+    return false;
+}

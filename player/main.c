@@ -27,7 +27,7 @@ int main(int argc, char *argv[]) {
    game_t game = new_game(player, manage_error, __FILE__, __func__, __LINE__);
 
    pid_t my_pid = getpid();
-   if (!is_player(&game, my_pid)) {
+   if (!is_player_ingame(&game, my_pid)) {
    }
 
    if (idx < 0) {
