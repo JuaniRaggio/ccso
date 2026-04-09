@@ -136,15 +136,15 @@ void delete_game(game_t *game) {
 
 void game_end(game_t *) {}
 
-uint_fast8_t players_ingame(game_t * game) {
-    return game->state->players_count;
+uint_fast8_t players_ingame(game_t *game) {
+   return game->state->players_count;
 }
 
 bool is_player_ingame(game_t *game, pid_t player_id) {
-    for (uint_fast8_t idx = 0; idx < players_ingame(game); idx++) {
-        if (game->state->players[idx].player_id == player_id) {
-            return true;
-        }
-    }
-    return false;
+   for (uint_fast8_t idx = 0; idx < players_ingame(game); idx++) {
+      if (game->state->players[idx].player_id == player_id) {
+         return true;
+      }
+   }
+   return false;
 }
