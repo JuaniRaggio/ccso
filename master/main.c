@@ -49,30 +49,6 @@ int main(int argc, char *argv[]) {
 
    game_t game = new_game();
 
-   game_state_t *sharedGameState = createSharedMemory(
-       &(shm_data_t){
-           .sharedMemoryName = game_state_memory_name,
-           .offset = 0,
-           .totalSize = totalSize,
-           .protections = PROT_READ | PROT_WRITE,
-           .mapFlag = MAP_SHARED,
-           .permissions = master_permissions,
-           .openFlags = O_CREAT | O_RDWR,
-       },
-       manage_error, __FILE__, __func__, __LINE__);
-
-   game_sync_t *sharedGameSync = createSharedMemory(
-       &(shm_data_t){
-           .sharedMemoryName = game_sync_memory_name,
-           .totalSize = sizeof(game_sync_t),
-           .permissions = master_permissions,
-           .protections = PROT_READ | PROT_WRITE,
-           .mapFlag = MAP_SHARED,
-           .offset = 0,
-           .openFlags = O_CREAT | O_RDWR,
-       },
-       manage_error, __FILE__, __func__, __LINE__);
-
    player_t players[MAX_PLAYERS] = {};
    initalizeGameState(sharedGameState, parameters.width, parameters.height, parameters.players_count, players);
 
