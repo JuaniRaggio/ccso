@@ -24,14 +24,8 @@ int main(int argc, char *argv[]) {
    uint16_t height = atoi(argv[2]);
    size_t totalSize = sizeof(game_state_t) + (size_t)width * height;
 
-   // TODO: usar tads para los sharedGameState y sync y unificar la inicializacion de parameters con la creacion de
-   // memoria
+   game_t game = new_game(player, manage_error, __FILE__, __func__, __LINE__);
 
-   game_t game = new_game(NULL, NULL, player);
-
-   // Buscar mi indice por PID
-   // El master hace fork->exec, puede que el PID todavia no este cargado
-   // en la shm cuando arrancamos, por eso reintentamos un poco
    pid_t my_pid = getpid();
    int16_t idx = -1;
    for (int intento = 0; intento < 1000 && idx < 0; intento++) {
@@ -44,6 +38,7 @@ int main(int argc, char *argv[]) {
       if (idx < 0)
          usleep(1000); // esperar 1ms y reintentar
    }
+
    if (idx < 0) {
       fprintf(stderr, " PID %d not found in players' list.\n", my_pid);
       return 1;
