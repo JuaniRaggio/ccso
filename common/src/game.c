@@ -1,8 +1,11 @@
+#include "error_management.h"
 #include "game_state.h"
 #include "game_sync.h"
 #include "shmemory_utils.h"
+#include <errno.h>
 #include <game.h>
 #include <stddef.h>
+#include <stdint.h>
 #include <sys/fcntl.h>
 #include <sys/mman.h>
 
@@ -99,11 +102,13 @@ static const shm_data_t entity_spec[total_entities][game_posible_memories] = {
         },
 };
 
-game_t new_game(char *argv[], int argc, entity_t who) {
-
+game_t new_game(entity_t who, error_manager_t manage_error, const char *file, const char *func, uint64_t line) {
+   if (who >= total_entities) {
+      manage_error(file, func, line, ERANGE);
+   }
    return (game_t){
-       .state =
-           , .sync =, .reference_count =,
+       .state = createSharedMemory(&entity_spec[who][game_state], manage_error, file, func, line),
+       .sync = createSharedMemory(&entity_spec[who][game_sync], manage_error, file, func, line),
    };
 }
 
@@ -118,7 +123,11 @@ game_t new_game(char *argv[], int argc, entity_t who) {
 
 game_t game_connect(uint32_t w, uint32_t h) {}
 
-void game_disconnect(game_t game) {
+void game_disconnect(game_t *game) {
+   if (game == NULL) {
+      // TODO manage error
+      return;
+   }
    shm_unlink(game_state_memory_name);
    shm_unlink(game_sync_memory_name);
 
@@ -129,8 +138,10 @@ void game_disconnect(game_t game) {
    game->sync = NULL;
 }
 
-void delete_game(game_t game) {
+void delete_game(game_t *game) {
    game_disconnect(game);
 }
 
-void game_end(game_t);
+void game_end(game_t *) {
+
+}
