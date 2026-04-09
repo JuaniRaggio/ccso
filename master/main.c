@@ -25,33 +25,33 @@ void printGameState(int8_t board[], uint16_t height, uint16_t width, int8_t play
 void printBoard(int8_t board[], uint16_t height, uint16_t width); // Just for us
 
 int main(int argc, char *argv[]) {
-   errno = 0;
-   parameters_t parameters = (parameters_t){
-       .width = default_width,
-       .height = default_heigh,
-       .delay = default_delay,
-       .timeout = default_timeout,
-       .seed = time(NULL),
-       .view_path = default_view_path,
-   };
+    errno = 0;
+    parameters_t parameters = (parameters_t){
+        .width = default_width,
+        .height = default_heigh,
+        .delay = default_delay,
+        .timeout = default_timeout,
+        .seed = time(NULL),
+        .view_path = default_view_path,
+    };
 
-   parameter_status_t status = parse(argc, argv, &parameters);
+    parameter_status_t status = parse(argc, argv, &parameters);
 
-   if (status != success) {
-      // Manage errors using status
-   }
+    if (status != success) {
+        // Manage errors using status
+    }
 
-   // TODO: usar tads para los sharedGameState y sync y unificar la inicializacion de parameters con la creacion de
-   // memoria
+    // TODO: usar tads para los sharedGameState y sync y unificar la inicializacion de parameters con la creacion de
+    // memoria
 
-   errno = 0;
-   size_t totalSize = (sizeof(game_state_t) + sizeof(int8_t) * parameters.height * parameters.width);
+    errno = 0;
+    size_t totalSize = (sizeof(game_state_t) + sizeof(int8_t) * parameters.height * parameters.width);
 
-   game_t game = new_game();
+    game_t game = new_game();
 
-   player_t players[MAX_PLAYERS] = {};
-   initalizeGameState(sharedGameState, parameters.width, parameters.height, parameters.players_count, players);
+    player_t players[MAX_PLAYERS] = {};
+    initalizeGameState(sharedGameState, parameters.width, parameters.height, parameters.players_count, players);
 
-   printGameState(sharedGameState->board, sharedGameState->height, sharedGameState->width,
-                  sharedGameState->players_count, sharedGameState->state);
+    printGameState(sharedGameState->board, sharedGameState->height, sharedGameState->width,
+                   sharedGameState->players_count, sharedGameState->state);
 }

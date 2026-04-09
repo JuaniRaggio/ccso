@@ -16,13 +16,13 @@
 #include <game_sync.h>
 
 typedef struct {
-   const char *sharedMemoryName;
-   size_t totalSize;
-   int openFlags;
-   int permissions;
-   int protections;
-   int mapFlag;
-   off_t offset;
+    const char *sharedMemoryName;
+    size_t totalSize;
+    int openFlags;
+    int permissions;
+    int protections;
+    int mapFlag;
+    off_t offset;
 } shm_data_t;
 
 /*

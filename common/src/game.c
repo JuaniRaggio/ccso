@@ -11,9 +11,9 @@
 #include <sys/mman.h>
 
 typedef enum {
-   game_state,
-   game_sync,
-   game_posible_memories,
+    game_state,
+    game_sync,
+    game_posible_memories,
 } memory_t;
 
 // game's users shouldn't care about this values
@@ -104,47 +104,47 @@ static const shm_data_t entity_spec[total_entities][game_posible_memories] = {
 };
 
 game_t new_game(entity_t who, error_manager_t manage_error, const char *file, const char *func, uint64_t line) {
-   if (who >= total_entities) {
-      manage_error(file, func, line, ERANGE);
-   }
-   return (game_t){
-       .state = createSharedMemory(&entity_spec[who][game_state], manage_error, file, func, line),
-       .sync = createSharedMemory(&entity_spec[who][game_sync], manage_error, file, func, line),
-   };
+    if (who >= total_entities) {
+        manage_error(file, func, line, ERANGE);
+    }
+    return (game_t){
+        .state = createSharedMemory(&entity_spec[who][game_state], manage_error, file, func, line),
+        .sync = createSharedMemory(&entity_spec[who][game_sync], manage_error, file, func, line),
+    };
 }
 
 game_t game_connect(uint32_t w, uint32_t h) {}
 
 void game_disconnect(game_t *game) {
-   if (game == NULL) {
-      // TODO manage error
-      return;
-   }
-   shm_unlink(game_state_memory_name);
-   shm_unlink(game_sync_memory_name);
+    if (game == NULL) {
+        // TODO manage error
+        return;
+    }
+    shm_unlink(game_state_memory_name);
+    shm_unlink(game_sync_memory_name);
 
-   // Ownership of this memory depends on how many references are left
-   if (--game->reference_count == 0) {
-   }
-   game->state = NULL;
-   game->sync = NULL;
+    // Ownership of this memory depends on how many references are left
+    if (--game->reference_count == 0) {
+    }
+    game->state = NULL;
+    game->sync = NULL;
 }
 
 void delete_game(game_t *game) {
-   game_disconnect(game);
+    game_disconnect(game);
 }
 
 void game_end(game_t *) {}
 
 uint_fast8_t players_ingame(game_t *game) {
-   return game->state->players_count;
+    return game->state->players_count;
 }
 
 bool is_player_ingame(game_t *game, pid_t player_id) {
-   for (uint_fast8_t idx = 0; idx < players_ingame(game); idx++) {
-      if (game->state->players[idx].player_id == player_id) {
-         return true;
-      }
-   }
-   return false;
+    for (uint_fast8_t idx = 0; idx < players_ingame(game); idx++) {
+        if (game->state->players[idx].player_id == player_id) {
+            return true;
+        }
+    }
+    return false;
 }

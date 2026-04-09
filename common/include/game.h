@@ -8,17 +8,17 @@
 #include <sys/_types/_pid_t.h>
 
 typedef struct {
-   game_state_t *state;
-   game_sync_t *sync;
+    game_state_t *state;
+    game_sync_t *sync;
 
-   size_t reference_count;
+    size_t reference_count;
 } game_t;
 
 typedef enum {
-   master,
-   player,
-   view,
-   total_entities,
+    master,
+    player,
+    view,
+    total_entities,
 } entity_t;
 
 game_t new_game(entity_t who, error_manager_t manage_error, const char *file, const char *func, uint64_t line);
