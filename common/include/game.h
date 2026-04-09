@@ -21,7 +21,34 @@ typedef enum {
     total_entities,
 } entity_t;
 
-game_t new_game(entity_t who, error_manager_t manage_error, const char *file, const char *func, uint64_t line);
+typedef struct {
+    uint16_t width;
+    uint16_t height;
+    error_manager_t manage_error;
+    const char *file;
+    const char *func;
+    uint64_t line;
+} game_params_t;
+
+static const char *const default_view_path = "";
+static const uint64_t default_width = 10;
+static const uint64_t default_heigh = 10;
+static const uint64_t default_delay = 200;
+static const uint64_t default_timeout = 10;
+
+#define new_game(who, ...)                                                                                             \
+    _new_game((who), (game_params_t){                                                                                  \
+                         .width = default_width,                                                                       \
+                         .height = default_heigh,                                                                      \
+                         .manage_error = manage_error,                                                                 \
+                         .file = __FILE__,                                                                             \
+                         .func = __func__,                                                                             \
+                         .line = __LINE__,                                                                             \
+                         __VA_ARGS__,                                                                                  \
+                     })
+
+game_t _new_game(entity_t who, game_params_t game_parameters);
+
 game_t game_connect(uint32_t w, uint32_t h);
 bool is_player_ingame(game_t *game, pid_t player_id);
 void game_disconnect(game_t *);

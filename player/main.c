@@ -24,7 +24,7 @@ int main(int argc, char *argv[]) {
     uint16_t height = atoi(argv[2]);
     size_t totalSize = sizeof(game_state_t) + (size_t)width * height;
 
-    game_t game = new_game(player, manage_error, __FILE__, __func__, __LINE__);
+    game_t game = new_game(player);
 
     pid_t my_pid = getpid();
     if (!is_player_ingame(&game, my_pid)) {

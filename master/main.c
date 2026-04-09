@@ -9,7 +9,6 @@
 #include <unistd.h>
 #include "game.h"
 #include "game_state.h"
-#include "game_sync.h"
 #include "master.h"
 #include "shmemory_utils.h"
 #include <error_management.h>
@@ -47,7 +46,7 @@ int main(int argc, char *argv[]) {
     errno = 0;
     size_t totalSize = (sizeof(game_state_t) + sizeof(int8_t) * parameters.height * parameters.width);
 
-    game_t game = new_game();
+    game_t game = new_game(master);
 
     player_t players[MAX_PLAYERS] = {};
     initalizeGameState(sharedGameState, parameters.width, parameters.height, parameters.players_count, players);

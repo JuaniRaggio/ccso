@@ -8,6 +8,7 @@ typedef enum {
     access_error = EACCES,
     range_error = ERANGE,
     file_exists_error = EEXIST,
+    entity_error,
     mapping_error,
 } error_code_t;
 

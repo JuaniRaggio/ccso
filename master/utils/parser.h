@@ -10,8 +10,8 @@ typedef struct {
     uint64_t height;
     uint64_t delay;
     uint64_t timeout;
-    char *view_path;
-    char *players_paths[MAX_PLAYERS];
+    const char *view_path;
+    const char *players_paths[MAX_PLAYERS];
 } parameters_t;
 
 typedef enum {

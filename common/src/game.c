@@ -17,11 +17,6 @@ typedef enum {
 } memory_t;
 
 // game's users shouldn't care about this values
-static const char *const default_view_path = "";
-static const uint64_t default_width = 10;
-static const uint64_t default_heigh = 10;
-static const uint64_t default_delay = 200;
-static const uint64_t default_timeout = 10;
 
 static const uint64_t master_permissions = 0666;
 static const uint64_t player_permissions = 0111;
@@ -103,14 +98,17 @@ static const shm_data_t entity_spec[total_entities][game_posible_memories] = {
         },
 };
 
-game_t new_game(entity_t who, error_manager_t manage_error, const char *file, const char *func, uint64_t line) {
+game_t _new_game(entity_t who, error_manager_t manage_error, const char *file, const char *func, uint64_t line) {
     if (who >= total_entities) {
-        manage_error(file, func, line, ERANGE);
+        manage_error(file, func, line, entity_error);
     }
-    return (game_t){
+
+    game_t game = {
         .state = createSharedMemory(&entity_spec[who][game_state], manage_error, file, func, line),
         .sync = createSharedMemory(&entity_spec[who][game_sync], manage_error, file, func, line),
     };
+
+    return game;
 }
 
 game_t game_connect(uint32_t w, uint32_t h) {}
