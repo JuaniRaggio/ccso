@@ -10,8 +10,8 @@ static inline bool is_creator(int openFlags) {
     return openFlags & O_CREAT;
 }
 
-void *createSharedMemory(const shm_data_t *data, size_t shm_size, error_manager_t manage_error, const char *file, const char *func,
-                         uint64_t line) {
+void *createSharedMemory(const shm_data_t *data, size_t shm_size, error_manager_t manage_error, const char *file,
+                         const char *func, uint64_t line) {
     int fd = shm_open(data->sharedMemoryName, data->openFlags, data->permissions);
     if (fd == -1) {
         manage_error(file, func, line, errno);

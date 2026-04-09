@@ -56,4 +56,3 @@ void game_end(game_t *);
 
 uint_fast8_t players_ingame(game_t *game);
 bool is_player_ingame(game_t *game, pid_t player_id);
-
