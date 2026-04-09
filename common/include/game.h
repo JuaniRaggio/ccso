@@ -19,7 +19,7 @@ typedef enum {
    total_entities,
 } entity_t;
 
-game_t new_game(entity_t who, error_manager_t manage_error, const char * file, const char * func, uint64_t line);
+game_t new_game(entity_t who, error_manager_t manage_error, const char *file, const char *func, uint64_t line);
 game_t game_connect(uint32_t w, uint32_t h);
 void game_disconnect(game_t *);
 void game_end(game_t *);

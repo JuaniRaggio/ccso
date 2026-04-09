@@ -142,6 +142,4 @@ void delete_game(game_t *game) {
    game_disconnect(game);
 }
 
-void game_end(game_t *) {
-
-}
+void game_end(game_t *) {}
