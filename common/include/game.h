@@ -23,6 +23,6 @@ typedef enum {
 
 game_t new_game(entity_t who, error_manager_t manage_error, const char *file, const char *func, uint64_t line);
 game_t game_connect(uint32_t w, uint32_t h);
-bool is_player(game_t * game, pid_t player_id);
+bool is_player(game_t *game, pid_t player_id);
 void game_disconnect(game_t *);
 void game_end(game_t *);
