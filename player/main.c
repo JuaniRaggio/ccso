@@ -27,16 +27,7 @@ int main(int argc, char *argv[]) {
    game_t game = new_game(player, manage_error, __FILE__, __func__, __LINE__);
 
    pid_t my_pid = getpid();
-   int16_t idx = -1;
-   for (int intento = 0; intento < 1000 && idx < 0; intento++) {
-      for (int i = 0; i < gameState->players_count; i++) {
-         if (gameState->players[i].player_id == my_pid) {
-            idx = i;
-            break;
-         }
-      }
-      if (idx < 0)
-         usleep(1000); // esperar 1ms y reintentar
+   if (!is_player(&game, my_pid)) {
    }
 
    if (idx < 0) {
