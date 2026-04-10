@@ -60,8 +60,7 @@ void view_cleanup(view_t *view) {
     endwin();
 }
 
-static void draw_hex_cell(WINDOW *win, int16_t col, int16_t row,
-                          int8_t value, int8_t player_idx) {
+static void draw_hex_cell(WINDOW *win, int16_t col, int16_t row, int8_t value, int8_t player_idx) {
     int16_t sx = col * (HEX_CELL_WIDTH - HEX_CELL_OVERLAP);
 
     int16_t row_slot = HEX_CELL_BASE_HEIGHT + HEX_MAX_ELEVATION;
