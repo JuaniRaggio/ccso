@@ -1,7 +1,7 @@
 #pragma once
 
-#define COLOR_BOARD   10
-#define COLOR_EMPTY   11
+#define COLOR_BOARD 10
+#define COLOR_EMPTY 11
 
 #include <game_state.h>
 #include <game_sync.h>
@@ -16,25 +16,16 @@ static const int16_t PANEL_WIDTH = 28;
 static const int16_t PANEL_HEIGHT = 5; // border + face/score + last move + delay + border
 
 static const char *const PLAYER_FACES[] = {
-    "[^_^]",
-    "[o_O]",
-    "[>_<]",
-    "[-_-]",
-    "[T_T]",
-    "[=_=]",
-    "[*_*]",
-    "[@_@]",
-    "[!_!]",
+    "[^_^]", "[o_O]", "[>_<]", "[-_-]", "[T_T]", "[=_=]", "[*_*]", "[@_@]", "[!_!]",
 };
 
 static const char *const DIR_NAMES[] = {
-    "UP", "UP-RIGHT", "RIGHT", "DOWN-RIGHT",
-    "DOWN", "DOWN-LEFT", "LEFT", "UP-LEFT",
+    "UP", "UP-RIGHT", "RIGHT", "DOWN-RIGHT", "DOWN", "DOWN-LEFT", "LEFT", "UP-LEFT",
 };
 
 typedef struct {
-    WINDOW *board_win;   // window for the hex grid
-    WINDOW *panel_win;   // window for player info panels
+    WINDOW *board_win; // window for the hex grid
+    WINDOW *panel_win; // window for player info panels
     int16_t term_rows;
     int16_t term_cols;
 } view_t;
