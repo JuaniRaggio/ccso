@@ -33,19 +33,19 @@ void game_sync_reader_exit(game_sync_t *sync) {
 }
 
 void game_sync_notify_view(game_sync_t *sync) {
-    sem_post(&sync->pending_changes_to_show);
+    sem_post(&sync->view_may_render);
 }
 
 void game_sync_wait_view_done(game_sync_t *sync) {
-    sem_wait(&sync->printing);
+    sem_wait(&sync->view_rendered);
 }
 
 void game_sync_view_wait_frame(game_sync_t *sync) {
-    sem_wait(&sync->pending_changes_to_show);
+    sem_wait(&sync->view_may_render);
 }
 
 void game_sync_view_frame_done(game_sync_t *sync) {
-    sem_post(&sync->printing);
+    sem_post(&sync->view_rendered);
 }
 
 void game_sync_player_wait_turn(game_sync_t *sync, uint8_t player_idx) {

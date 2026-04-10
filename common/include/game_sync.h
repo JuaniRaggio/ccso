@@ -17,8 +17,8 @@ static const uint32_t SEM_UNLOCKED = 1;
 const char *const game_sync_memory_name = "/game_sync";
 
 typedef struct {
-    sem_t pending_changes_to_show;
-    sem_t printing;
+    sem_t view_may_render;
+    sem_t view_rendered;
     sem_t master_writing;
     sem_t gamestate_mutex;
     sem_t readers_count_mutex;
