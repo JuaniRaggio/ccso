@@ -45,6 +45,20 @@ void view_cleanup(view_t *view) {
     endwin();
 }
 
+void view_draw_board(view_t *view, game_state_t *state) {
+    werase(view->board_win);
+
+    for (uint16_t row = 0; row < state->height; row++) {
+        for (uint16_t col = 0; col < state->width; col++) {
+            int8_t value = state->board[row * state->width + col];
+            int8_t pidx = player_at(state, col, row);
+            draw_hex_cell(view->board_win, (int16_t)col, (int16_t)row, value, pidx);
+        }
+    }
+
+    wrefresh(view->board_win);
+}
+
 static void draw_player_panel(WINDOW *win, int16_t panel_row,
                               player_t *player, int8_t idx) {
     int16_t y = panel_row * PANEL_HEIGHT;
