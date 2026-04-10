@@ -11,13 +11,13 @@
   
   _Se traduce todo usando shm_overview / mmap / unmap, probablemente se vea en la clase de memoria compartida_
 
-# AI - Player types
+# AI - Player strategies
 
-- Navie (random no checks)
-- BFS
-- DFS
-- Minimax
-- A\*
+- Naive (random, no checks)
+- Greedy (highest adjacent reward)
+- Greedy Lookahead (tree search, depth 3)
+- Flood (flood fill, maximizes reachable area)
+- Greedy Flood (greedy + survival threshold via flood fill)
 
 ## Take into account
 
