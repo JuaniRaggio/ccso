@@ -14,7 +14,6 @@
 #include "shmemory_utils.h"
 #include <error_management.h>
 
-
 void printGameState(int8_t board[], uint16_t height, uint16_t width, int8_t players_count, bool state);
 void printBoard(int8_t board[], uint16_t height, uint16_t width); // Just for us
 
