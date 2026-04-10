@@ -15,7 +15,11 @@ void manage_error(const char *file, const char *func, uint64_t line, error_code_
         break;
     case mapping_error:
         fprintf(stderr, "mmap failed...\n" _error_description, file, func, line);
-    default: /* We log every single error independently from its code */
+        break;
+    case connection_error:
+        fprintf(stderr, "Failed to connect to shared memory...\n" _error_description, file, func, line);
+        break;
+    default:
         fprintf(stderr, "Unknown Error...\n" _error_description, file, func, line);
     }
 }

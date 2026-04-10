@@ -10,6 +10,7 @@ typedef enum {
     file_exists_error = EEXIST,
     invalid_argument_error = EINVAL,
     mapping_error,
+    connection_error,
 } error_code_t;
 
 typedef void (*error_manager_t)(const char *file, const char *func, uint64_t line, error_code_t code);
