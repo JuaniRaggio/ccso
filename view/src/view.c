@@ -59,8 +59,7 @@ void view_draw_board(view_t *view, game_state_t *state) {
     wrefresh(view->board_win);
 }
 
-static void draw_player_panel(WINDOW *win, int16_t panel_row,
-                              player_t *player, int8_t idx) {
+static void draw_player_panel(WINDOW *win, int16_t panel_row, player_t *player, int8_t idx) {
     int16_t y = panel_row * PANEL_HEIGHT;
     int16_t color = idx + COLOR_PAIR_OFFSET;
 
@@ -80,15 +79,13 @@ static void draw_player_panel(WINDOW *win, int16_t panel_row,
     mvwprintw(win, y, label_start, "%s", label);
 
     // Row 1: face + score
-    mvwprintw(win, y + 1, 0, "| %s  Score: %-6u      |",
-              PLAYER_FACES[idx % MAX_PLAYERS], player->score);
+    mvwprintw(win, y + 1, 0, "| %s  Score: %-6u      |", PLAYER_FACES[idx % MAX_PLAYERS], player->score);
 
     // Row 2: current position on the board
     mvwprintw(win, y + 2, 0, "| Pos: (%-3u, %-3u)        |", player->x, player->y);
 
     // Row 3: valid/invalid move counts
-    mvwprintw(win, y + 3, 0, "| Moves: %-5uv %-5ui   |",
-              player->valid_moves, player->invalid_moves);
+    mvwprintw(win, y + 3, 0, "| Moves: %-5uv %-5ui   |", player->valid_moves, player->invalid_moves);
 
     // Bottom border
     mvwprintw(win, y + 4, 0, "+");
@@ -109,7 +106,6 @@ void view_draw_panels(view_t *view, game_state_t *state) {
 
     wrefresh(view->panel_win);
 }
-
 
 void view_draw_all(view_t *view, game_state_t *state) {
     view_draw_board(view, state);

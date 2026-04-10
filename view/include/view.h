@@ -11,8 +11,8 @@
 static const int16_t HEX_CELL_WIDTH = 5;
 static const int16_t HEX_CELL_BASE_HEIGHT = 3;
 static const int16_t HEX_MAX_ELEVATION = 4;
-static const int16_t HEX_CELL_OVERLAP = 1;     // adjacent cells share 1 column
-static const int16_t HEX_STAGGER_DIVISOR = 2;  // odd columns shift down by half a slot
+static const int16_t HEX_CELL_OVERLAP = 1;    // adjacent cells share 1 column
+static const int16_t HEX_STAGGER_DIVISOR = 2; // odd columns shift down by half a slot
 
 static const int16_t HEX_TOP_LINE = 0;
 static const int16_t HEX_BODY_LINE = 1;
