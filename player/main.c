@@ -14,6 +14,7 @@
 #include <game_state.h>
 #include <game_sync.h>
 #include <player_movement.h>
+#include <player.h>
 #include <shmemory_utils.h>
 
 static volatile sig_atomic_t should_exit = 0;
@@ -37,49 +38,15 @@ int main(int argc, char *argv[]) {
     game_t game = new_game(player);
 
     pid_t my_pid = getpid();
-    if (!is_player_ingame(&game, my_pid)) {
+    uint16_t idx = is_player_ingame(&game, my_pid);
+    if (idx) {
+      //crear error para este caso
     }
-
-    if (idx < 0) {
-        fprintf(stderr, " PID %d not found in players' list.\n", my_pid);
-        return 1;
-    }
-
-    fprintf(stderr, "I'm player %d\nInitial position: (%d,%d)\n", idx, gameState->players[idx].x,
-            gameState->players[idx].y);
-
-    // algo habría que cambiar, no conviene que se llame state.
-
-    while (!gameState->running) { // se considera a state como juego_terminado
-        // Esperar que el master me habilite para enviar un movimiento
-        sem_wait(&gameSync->player_may_send_movement[idx]);
-
-        if (gameState->running)
-            break;
-
-        sem_wait(&gameSync->master_writing);
-        sem_post(&gameSync->master_writing);
-
-        sem_wait(&gameSync->readers_count_mutex);
-        if (++gameSync->readers_count == 1)
-            sem_wait(&gameSync->gamestate_mutex);
-        sem_post(&gameSync->readers_count_mutex);
-
-        // Decidir movimiento mirando el tablero
-        uint8_t mov =
-            compute_next_move(gameState->board, width, height, gameState->players[idx].x, gameState->players[idx].y);
-
-        // --- Liberar lectura ---
-        sem_wait(&gameSync->E);
-        if (--gameSync->F == 0)
-            sem_post(&gameSync->D); // ultimo lector libera escritores
-        sem_post(&gameSync->E);
-
-        // Enviar movimiento al master por stdout (que es el pipe)
-        write(1, &mov, 1);
-    }
-
-    munmap(gameState, totalSize);
-    munmap(gameSync, sizeof(game_sync_t));
+    idx--;
+      
+    start_playing(&game, idx);
+    
+    munmap(game.state, totalSize);
+    munmap(game.sync, sizeof(game_sync_t));
     return 0;
 }
