@@ -119,8 +119,8 @@ game_t _new_game(entity_t who, game_params_t game_parameters) {
 
 game_t game_connect(uint32_t w, uint32_t h) {}
 
-void game_disconnect(game_t * game) 
-    // TODO: Que hacemos con esto? es lo que mencionaba victoria creo
+void game_disconnect(game_t *game)
+// TODO: Que hacemos con esto? es lo que mencionaba victoria creo
 {
     if (game == NULL) {
         manage_error(__FILE__, __func__, __LINE__, invalid_argument_error);
