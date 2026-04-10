@@ -38,3 +38,9 @@ typedef struct {
     int16_t term_rows;
     int16_t term_cols;
 } view_t;
+
+void view_init(view_t *view);
+void view_cleanup(view_t *view);
+void view_draw_board(view_t *view, game_state_t *state);
+void view_draw_panels(view_t *view, game_state_t *state);
+void view_draw_all(view_t *view, game_state_t *state);
