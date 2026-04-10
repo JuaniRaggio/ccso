@@ -1,9 +1,7 @@
 /.lesshst
 /.viminfo
 /build/
-/common/compile_flags.txt
-/common/compile_flags.txt
-/master/compile_flags.txt
+compile_flags.txt
 /ChompChamps
 /ChompChamps-2
 .bash_history

@@ -1,4 +1,0 @@
--Wall
--g
--I../common/include
--Iinclude
