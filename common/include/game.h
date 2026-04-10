@@ -6,7 +6,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
-#include <sys/_types/_pid_t.h>
+#include <time.h>
 
 typedef struct {
     game_state_t *state;
@@ -23,12 +23,13 @@ typedef enum {
 } entity_t;
 
 typedef struct {
-    uint16_t width;
-    uint16_t height;
     error_manager_t manage_error;
     const char *file;
     const char *func;
     uint64_t line;
+    uint64_t seed;
+    uint16_t width;
+    uint16_t height;
 } game_params_t;
 
 static const char *const default_view_path = "";
@@ -39,12 +40,13 @@ static const uint64_t default_timeout = 10;
 
 #define new_game(who, ...)                                                                                             \
     _new_game((who), (game_params_t){                                                                                  \
-                         .width = default_width,                                                                       \
-                         .height = default_heigh,                                                                      \
                          .manage_error = manage_error,                                                                 \
                          .file = __FILE__,                                                                             \
                          .func = __func__,                                                                             \
                          .line = __LINE__,                                                                             \
+                         .seed = time(NULL),                                                                           \
+                         .width = default_width,                                                                       \
+                         .height = default_heigh,                                                                      \
                          __VA_ARGS__,                                                                                  \
                      })
 
@@ -56,4 +58,3 @@ void game_end(game_t *);
 
 uint_fast8_t players_ingame(game_t *game);
 bool is_player_ingame(game_t *game, pid_t player_id);
-

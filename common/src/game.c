@@ -9,6 +9,7 @@
 #include <stdint.h>
 #include <sys/fcntl.h>
 #include <sys/mman.h>
+#include <time.h>
 
 typedef enum {
     game_state,
@@ -21,6 +22,7 @@ static const uint64_t master_permissions = 0666;
 static const uint64_t player_permissions = 0111;
 
 static const size_t uninitialized_size = 0;
+
 
 //> IMPORTANT: totalSize is not compile-time computable for game_state
 //> since it's value depends on width & height => When entity_spec is
@@ -94,33 +96,25 @@ static const shm_data_t entity_spec[total_entities][game_posible_memories] = {
         },
 };
 
-static void init_game_state(game_t *game) {}
-
-static void init_game_sync(game_t *game) {}
-
-static void init_game(game_t *game) {
-    init_game_state(game);
-    init_game_sync(game);
+static game_t game_create_shared_memory(entity_t who, game_params_t *game_parameters) {
+    static const size_t sync_size = sizeof(game_sync_t);
+    size_t state_size = sizeof(game_state_t) + game_parameters->width * game_parameters->height;
+    return (game_t){
+        .state = createSharedMemory(&entity_spec[who][game_state], state_size, game_parameters->manage_error,
+                                    game_parameters->file, game_parameters->func, game_parameters->line),
+        .sync = createSharedMemory(&entity_spec[who][game_sync], sync_size, game_parameters->manage_error,
+                                   game_parameters->file, game_parameters->func, game_parameters->line),
+        .shm_total_size = state_size + sync_size,
+    };
 }
 
 game_t _new_game(entity_t who, game_params_t game_parameters) {
     if (who >= total_entities) {
-        game_parameters.manage_error(game_parameters.file, game_parameters.func, game_parameters.line, entity_error);
-    }
-    size_t state_size = sizeof(game_state_t) + game_parameters.width * game_parameters.height;
-    size_t sync_size = sizeof(game_sync_t);
-    game_t game = {
-        .state = createSharedMemory(&entity_spec[who][game_state], state_size, game_parameters.manage_error,
-                                    game_parameters.file, game_parameters.func, game_parameters.line),
-        .sync = createSharedMemory(&entity_spec[who][game_sync], sync_size, game_parameters.manage_error,
-                                   game_parameters.file, game_parameters.func, game_parameters.line),
-        .shm_total_size = state_size + sync_size,
-    };
-
-    if (who == master) {
-        init_game(&game);
+        game_parameters.manage_error(game_parameters.file, game_parameters.func, game_parameters.line,
+                                     invalid_argument_error);
     }
 
+    game_t game = game_create_shared_memory(who, &game_parameters);
     return game;
 }
 
