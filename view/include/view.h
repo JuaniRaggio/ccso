@@ -16,15 +16,15 @@ static const int16_t PANEL_WIDTH = 28;
 static const int16_t PANEL_HEIGHT = 5; // border + face/score + last move + delay + border
 
 static const char *const PLAYER_FACES[] = {
-    "(:)",
-    "(;)",
-    "(:P",
-    "(>)",
-    "(<)",
-    "(:O",
-    "(:|",
-    "(:D",
-    "(:/",
+    "[^_^]",
+    "[o_O]",
+    "[>_<]",
+    "[-_-]",
+    "[T_T]",
+    "[=_=]",
+    "[*_*]",
+    "[@_@]",
+    "[!_!]",
 };
 
 static const char *const DIR_NAMES[] = {
