@@ -52,11 +52,12 @@ $(VIEW_BIN): $(VIEW_SRCS) $(COMMON_SRCS)
 	$(CC) $(CFLAGS) -I$(COMMON_INC) -Iview/include $^ -o $@ $(LDFLAGS) -lncurses
 
 # Build player paths from PLAYERS variable for run target
-PLAYER_RUN_BINS = $(addprefix ./$(BUILD_DIR)/player-,$(PLAYERS))
+# Parser expects one -p flag per player binary
+PLAYER_RUN_ARGS = $(foreach p,$(PLAYERS),-p ./$(BUILD_DIR)/player-$(p))
 PLAYER_RUN_TARGETS = $(addprefix $(BUILD_DIR)/player-,$(PLAYERS))
 
 run: $(MASTER_BIN) $(PLAYER_RUN_TARGETS) $(VIEW_BIN)
-	./$(MASTER_BIN) -v ./$(VIEW_BIN) -p $(PLAYER_RUN_BINS)
+	./$(MASTER_BIN) -v ./$(VIEW_BIN) $(PLAYER_RUN_ARGS)
 
 clean:
 	rm -rf $(BUILD_DIR)
