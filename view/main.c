@@ -8,7 +8,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+static volatile sig_atomic_t should_exit = 0;
+
+static void signal_handler(int32_t sig) {
+    (void)sig;
+    should_exit = 1;
+}
+
 int main(int argc, char *argv[]) {
+    signal(SIGINT, signal_handler);
+    signal(SIGTERM, signal_handler);
+
     game_t game = new_game(view);
 
 
