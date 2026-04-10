@@ -20,8 +20,8 @@ static void init_board(game_state_t *state, uint16_t width, uint16_t height) {
 }
 
 static void init_sync(game_sync_t *sync) {
-    sem_init(&sync->pending_changes_to_show, SEM_SHARED_BETWEEN_PROCESSES, SEM_LOCKED);
-    sem_init(&sync->printing, SEM_SHARED_BETWEEN_PROCESSES, SEM_LOCKED);
+    sem_init(&sync->view_may_render, SEM_SHARED_BETWEEN_PROCESSES, SEM_LOCKED);
+    sem_init(&sync->view_rendered, SEM_SHARED_BETWEEN_PROCESSES, SEM_LOCKED);
     sem_init(&sync->master_writing, SEM_SHARED_BETWEEN_PROCESSES, SEM_UNLOCKED);
     sem_init(&sync->gamestate_mutex, SEM_SHARED_BETWEEN_PROCESSES, SEM_UNLOCKED);
     sem_init(&sync->readers_count_mutex, SEM_SHARED_BETWEEN_PROCESSES, SEM_UNLOCKED);
