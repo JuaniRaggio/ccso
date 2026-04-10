@@ -43,5 +43,45 @@ void view_cleanup(view_t *view) {
     }
     endwin();
 }
+static void draw_player_panel(WINDOW *win, int16_t panel_row, player_t *player, int8_t idx) {
+    int16_t y = panel_row * PANEL_HEIGHT;
+    int16_t color = idx + 1;
+
+    wattron(win, COLOR_PAIR(color));
+
+    mvwprintw(win, y, 0, "+");
+    for (int16_t i = 1; i < PANEL_WIDTH - 1; i++) {
+        mvwaddch(win, y, i, '-');
+    }
+    mvwaddch(win, y, PANEL_WIDTH - 1, '+');
+
+    char label[32];
+    snprintf(label, sizeof(label), " P%d: %.10s ", idx, player->name);
+    int16_t label_start = (PANEL_WIDTH - (int16_t)strlen(label)) / 2;
+    mvwprintw(win, y, label_start, "%s", label);
+
+    mvwprintw(win, y + 1, 0, "| %s  Score: %-6u      |", PLAYER_FACES[idx % MAX_PLAYERS], player->score);
+
+    mvwprintw(win, y + 2, 0, "| Pos: (%-3u, %-3u)        |", player->x, player->y);
+
+    mvwprintw(win, y + 3, 0, "| Moves: %-5uv %-5ui   |", player->valid_moves, player->invalid_moves);
+
+    mvwprintw(win, y + 4, 0, "+");
+    for (int16_t i = 1; i < PANEL_WIDTH - 1; i++) {
+        mvwaddch(win, y + 4, i, '-');
+    }
+    mvwaddch(win, y + 4, PANEL_WIDTH - 1, '+');
+
+    wattroff(win, COLOR_PAIR(color));
 }
+
+void view_draw_panels(view_t *view, game_state_t *state) {
+    werase(view->panel_win);
+
+    for (int8_t i = 0; i < state->players_count; i++) {
+        draw_player_panel(view->panel_win, i, &state->players[i], i);
+    }
+
+    wrefresh(view->panel_win);
 }
+
