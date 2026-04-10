@@ -49,7 +49,7 @@ $(MASTER_BIN): $(MASTER_SRCS) $(COMMON_SRCS)
 
 $(VIEW_BIN): $(VIEW_SRCS) $(COMMON_SRCS)
 	@mkdir -p $(BUILD_DIR)
-	$(CC) $(CFLAGS) -I$(COMMON_INC) -Iview/include $^ -o $@ $(LDFLAGS)
+	$(CC) $(CFLAGS) -I$(COMMON_INC) -Iview/include $^ -o $@ $(LDFLAGS) -lncurses
 
 # Build player paths from PLAYERS variable for run target
 PLAYER_RUN_BINS = $(addprefix ./$(BUILD_DIR)/player-,$(PLAYERS))
