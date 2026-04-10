@@ -43,9 +43,11 @@ void view_cleanup(view_t *view) {
     }
     endwin();
 }
-static void draw_player_panel(WINDOW *win, int16_t panel_row, player_t *player, int8_t idx) {
+
+static void draw_player_panel(WINDOW *win, int16_t panel_row,
+                              player_t *player, int8_t idx) {
     int16_t y = panel_row * PANEL_HEIGHT;
-    int16_t color = idx + 1;
+    int16_t color = idx + COLOR_PAIR_OFFSET;
 
     wattron(win, COLOR_PAIR(color));
 
