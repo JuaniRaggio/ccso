@@ -33,6 +33,21 @@ void view_init(view_t *view) {
         COLOR_RED,  COLOR_GREEN, COLOR_YELLOW, COLOR_BLUE,  COLOR_MAGENTA,
         COLOR_CYAN, COLOR_WHITE, COLOR_RED,    COLOR_GREEN,
     };
+    for (int16_t i = 0; i < MAX_PLAYERS; i++) {
+        init_pair(i + COLOR_PAIR_OFFSET, player_colors[i], COLOR_BLACK);
+    }
+    init_pair(COLOR_BOARD, COLOR_WHITE, COLOR_BLACK);
+    init_pair(COLOR_EMPTY, COLOR_BLACK, COLOR_BLACK);
+
+    getmaxyx(stdscr, view->term_rows, view->term_cols);
+
+    int16_t board_width = view->term_cols - PANEL_WIDTH - 1;
+    if (board_width < MIN_BOARD_WIDTH) {
+        board_width = view->term_cols;
+    }
+
+    view->board_win = newwin(view->term_rows, board_width, 0, 0);
+    view->panel_win = newwin(view->term_rows, PANEL_WIDTH, 0, board_width + 1);
 }
 
 void view_cleanup(view_t *view) {
