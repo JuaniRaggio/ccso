@@ -3,6 +3,7 @@
 #include <game_state.h>
 #include <game_sync.h>
 #include <ncurses.h>
+#include <signal.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
