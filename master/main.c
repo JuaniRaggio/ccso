@@ -12,7 +12,6 @@
 #include "game_init.h"
 #include "game_state.h"
 #include "master.h"
-#include "shmemory_utils.h"
 #include <error_management.h>
 
 void printGameState(int8_t board[], uint16_t height, uint16_t width, int8_t players_count, bool state);
