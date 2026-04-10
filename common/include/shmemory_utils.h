@@ -28,7 +28,7 @@ typedef struct {
  * @brief creates and maps shared memory to it's return value
  *        uses errno for error management and returns NULL
  */
-void *createSharedMemory(const shm_data_t *data, size_t shm_size, error_manager_t manage_error, const char *file, const char *func,
-                         uint64_t line);
+void *createSharedMemory(const shm_data_t *data, size_t shm_size, error_manager_t manage_error, const char *file,
+                         const char *func, uint64_t line);
 
 void initalizeGameSync(game_sync_t *sharedGameSync);
