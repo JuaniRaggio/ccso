@@ -23,7 +23,6 @@ static const uint64_t player_permissions = 0111;
 
 static const size_t uninitialized_size = 0;
 
-
 //> IMPORTANT: totalSize is not compile-time computable for game_state
 //> since it's value depends on width & height => When entity_spec is
 //> used, you need to override this value on the copy
