@@ -5,10 +5,10 @@
 #include <string.h>
 
 static inline int16_t elevation(int8_t cell_value) {
-    if (cell_value < 1 || cell_value > 9) {
+    if (cell_value < MIN_CELL_VALUE || cell_value > MAX_CELL_VALUE) {
         return 0;
     }
-    return (int16_t)((cell_value - 1) * HEX_MAX_ELEVATION / 8);
+    return (int16_t)((cell_value - MIN_CELL_VALUE) * HEX_MAX_ELEVATION / CELL_VALUE_RANGE);
 }
 
 static int8_t player_at(game_state_t *state, uint16_t col, uint16_t row) {
@@ -17,7 +17,7 @@ static int8_t player_at(game_state_t *state, uint16_t col, uint16_t row) {
             return i;
         }
     }
-    return -1;
+    return NO_PLAYER;
 }
 
 void view_init(view_t *view) {
@@ -55,16 +55,18 @@ static void draw_player_panel(WINDOW *win, int16_t panel_row, player_t *player, 
     }
     mvwaddch(win, y, PANEL_WIDTH - 1, '+');
 
-    char label[32];
+    char label[LABEL_BUFFER_SIZE];
     snprintf(label, sizeof(label), " P%d: %.10s ", idx, player->name);
     int16_t label_start = (PANEL_WIDTH - (int16_t)strlen(label)) / 2;
     mvwprintw(win, y, label_start, "%s", label);
 
-    mvwprintw(win, y + 1, 0, "| %s  Score: %-6u      |", PLAYER_FACES[idx % MAX_PLAYERS], player->score);
+    mvwprintw(win, y + 1, 0, "| %s  Score: %-6u      |",
+              PLAYER_FACES[idx % MAX_PLAYERS], player->score);
 
     mvwprintw(win, y + 2, 0, "| Pos: (%-3u, %-3u)        |", player->x, player->y);
 
-    mvwprintw(win, y + 3, 0, "| Moves: %-5uv %-5ui   |", player->valid_moves, player->invalid_moves);
+    mvwprintw(win, y + 3, 0, "| Moves: %-5uv %-5ui   |",
+              player->valid_moves, player->invalid_moves);
 
     mvwprintw(win, y + 4, 0, "+");
     for (int16_t i = 1; i < PANEL_WIDTH - 1; i++) {
@@ -85,3 +87,8 @@ void view_draw_panels(view_t *view, game_state_t *state) {
     wrefresh(view->panel_win);
 }
 
+
+void view_draw_all(view_t *view, game_state_t *state) {
+    view_draw_board(view, state);
+    view_draw_panels(view, state);
+}
