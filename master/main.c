@@ -1,3 +1,4 @@
+#include <signal.h>
 #include <stdint.h>
 #include <stdbool.h>
 #include <parser.h>
@@ -17,7 +18,16 @@
 void printGameState(int8_t board[], uint16_t height, uint16_t width, int8_t players_count, bool state);
 void printBoard(int8_t board[], uint16_t height, uint16_t width); // Just for us
 
+static volatile sig_atomic_t should_exit = 0;
+
+static void signal_handler(int32_t sig) {
+    (void)sig;
+    should_exit = 1;
+}
+
 int main(int argc, char *argv[]) {
+    signal(SIGINT, signal_handler);
+    signal(SIGTERM, signal_handler);
     errno = 0;
     parameters_t parameters = (parameters_t){
         .width = default_width,
