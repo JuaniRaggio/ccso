@@ -62,6 +62,54 @@ void view_cleanup(view_t *view) {
 
 static void draw_hex_cell(WINDOW *win, int16_t col, int16_t row,
                           int8_t value, int8_t player_idx) {
+    int16_t sx = col * (HEX_CELL_WIDTH - HEX_CELL_OVERLAP);
+
+    int16_t row_slot = HEX_CELL_BASE_HEIGHT + HEX_MAX_ELEVATION;
+    int16_t sy_base = row * row_slot;
+
+    if (col % 2 != 0) {
+        sy_base += row_slot / HEX_STAGGER_DIVISOR;
+    }
+
+    int16_t elev = elevation(value);
+    int16_t sy = sy_base - elev;
+    if (sy < 0) {
+        sy = 0;
+    }
+
+    int16_t color_pair;
+    if (player_idx != NO_PLAYER) {
+        color_pair = player_idx + COLOR_PAIR_OFFSET;
+    } else if (value <= 0) {
+        color_pair = COLOR_EMPTY;
+    } else {
+        color_pair = COLOR_BOARD;
+    }
+
+    wattron(win, COLOR_PAIR(color_pair));
+
+    // Elevation pillars above the hex body
+    for (int16_t e = 0; e < elev; e++) {
+        mvwprintw(win, sy + e, sx, "|   |");
+    }
+
+    // Hex shape: top, body, bottom
+    mvwprintw(win, sy + elev + HEX_TOP_LINE, sx, "/---\\");
+    if (value > 0) {
+        mvwprintw(win, sy + elev + HEX_BODY_LINE, sx, "| %d |", value);
+    } else {
+        mvwprintw(win, sy + elev + HEX_BODY_LINE, sx, "|   |");
+    }
+    mvwprintw(win, sy + elev + HEX_BOTTOM_LINE, sx, "\\---/");
+
+    // Player marker overwrites the cell value
+    if (player_idx != NO_PLAYER) {
+        wattron(win, A_BOLD);
+        mvwprintw(win, sy + elev + HEX_BODY_LINE, sx + HEX_BODY_TEXT_OFFSET, "P%d", player_idx);
+        wattroff(win, A_BOLD);
+    }
+
+    wattroff(win, COLOR_PAIR(color_pair));
 }
 
 void view_draw_board(view_t *view, game_state_t *state) {
