@@ -26,9 +26,18 @@ int main(int argc, char *argv[]) {
     view_init(&view);
 
     while (!should_exit && game.state->running) {
+        sem_wait(&game.sync->pending_changes_to_show);
         if (should_exit || !game.state->running) {
             break;
         }
+        int32_t ch = getch();
+        if (ch == KEY_RESIZE) {
+            view_cleanup(&view);
+            view_init(&view);
+        }
+
+        view_draw_all(&view, game.state);
+        sem_post(&game.sync->printing);
     }
 
     view_cleanup(&view);
