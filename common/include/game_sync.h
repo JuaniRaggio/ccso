@@ -19,3 +19,20 @@ typedef struct {
     uint32_t readers_count; // Cantidad de jugadores leyendo el estado
     sem_t player_may_send_movement[MAX_PLAYERS];
 } game_sync_t;
+
+void game_sync_writer_enter(game_sync_t *sync);
+void game_sync_writer_exit(game_sync_t *sync);
+
+void game_sync_reader_enter(game_sync_t *sync);
+void game_sync_reader_exit(game_sync_t *sync);
+
+void game_sync_notify_view(game_sync_t *sync);
+
+void game_sync_wait_view_done(game_sync_t *sync);
+
+void game_sync_view_wait_frame(game_sync_t *sync);
+
+void game_sync_view_frame_done(game_sync_t *sync);
+
+void game_sync_player_wait_turn(game_sync_t *sync, uint8_t player_idx);
+void game_sync_player_grant_turn(game_sync_t *sync, uint8_t player_idx);
