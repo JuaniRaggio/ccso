@@ -20,14 +20,14 @@ static void init_board(game_state_t *state, uint16_t width, uint16_t height) {
 }
 
 static void init_sync(game_sync_t *sync) {
-    sem_init(&sync->pending_changes_to_show, 1, 0);
-    sem_init(&sync->printing, 1, 0);
-    sem_init(&sync->master_writing, 1, 1);
-    sem_init(&sync->gamestate_mutex, 1, 1);
-    sem_init(&sync->readers_count_mutex, 1, 1);
+    sem_init(&sync->pending_changes_to_show, SEM_SHARED_BETWEEN_PROCESSES, SEM_LOCKED);
+    sem_init(&sync->printing, SEM_SHARED_BETWEEN_PROCESSES, SEM_LOCKED);
+    sem_init(&sync->master_writing, SEM_SHARED_BETWEEN_PROCESSES, SEM_UNLOCKED);
+    sem_init(&sync->gamestate_mutex, SEM_SHARED_BETWEEN_PROCESSES, SEM_UNLOCKED);
+    sem_init(&sync->readers_count_mutex, SEM_SHARED_BETWEEN_PROCESSES, SEM_UNLOCKED);
     sync->readers_count = 0;
     for (uint8_t i = 0; i < MAX_PLAYERS; i++) {
-        sem_init(&sync->player_may_send_movement[i], 1, 1);
+        sem_init(&sync->player_may_send_movement[i], SEM_SHARED_BETWEEN_PROCESSES, SEM_UNLOCKED);
     }
 }
 

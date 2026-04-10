@@ -4,6 +4,10 @@
 #include <semaphore.h>
 #include <stdint.h>
 
+static const int32_t SEM_SHARED_BETWEEN_PROCESSES = 1;
+static const uint32_t SEM_LOCKED = 0;
+static const uint32_t SEM_UNLOCKED = 1;
+
 const char *const game_sync_memory_name = "/game_sync";
 
 typedef struct {

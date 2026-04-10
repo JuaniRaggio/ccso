@@ -40,14 +40,14 @@ static const uint64_t default_timeout = 10;
 
 #define new_game(who, ...)                                                                                             \
     _new_game((who), (game_params_t){                                                                                  \
-                         .manage_error = manage_error,                                                                 \
+                         .manage_error = (manage_error),                                                               \
                          .file = __FILE__,                                                                             \
                          .func = __func__,                                                                             \
                          .line = __LINE__,                                                                             \
-                         .seed = time(NULL),                                                                           \
-                         .width = default_width,                                                                       \
-                         .height = default_heigh,                                                                      \
-                         __VA_ARGS__,                                                                                  \
+                         .seed = (time(NULL)),                                                                         \
+                         .width = (default_width),                                                                     \
+                         .height = (default_heigh),                                                                    \
+                         __VA_ARGS__ /* WARNING: trailing comma brakes this trick */                                   \
                      })
 
 game_t _new_game(entity_t who, game_params_t game_parameters);
