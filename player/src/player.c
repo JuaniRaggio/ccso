@@ -7,30 +7,6 @@
 #include <game_sync.h>
 #include <player_movement.h>
 
-// get reading
-void start_reading_board(game_sync_t *sync) {
-    sem_wait(sync->master_writing);
-    sem_post(sync->master_writing);
-
-    sem_wait(sync->readers_count_mutex);
-    if (++sync->readers_count == 1) {
-        sem_wait(sync->gamestate_mutex);
-    }
-    sem_post(sync->readers_count_mutex);
-    return;
-}
-
-// free reading
-void stop_reading_bord(game_sync_t *sync) {
-    sem_wait(sync->readers_count_mutex);
-    sync->readers_count--;
-    if (sync->readers_count == 0) {
-        sem_post(sync->gamestate_mutex);
-    }
-    sem_post(sync->readers_count_mutex);
-    return;
-}
-
 void start_playing(game_t *game, uint16_t idx) {
     while (game->state->running) {
         // Waiting for the master to allow reading
