@@ -34,6 +34,7 @@ void view_init(view_t *view) {
         COLOR_CYAN, COLOR_WHITE, COLOR_RED,    COLOR_GREEN,
     };
 }
+
 void view_cleanup(view_t *view) {
     if (view->board_win != NULL) {
         delwin(view->board_win);
@@ -51,25 +52,31 @@ static void draw_player_panel(WINDOW *win, int16_t panel_row,
 
     wattron(win, COLOR_PAIR(color));
 
+    // Top border
     mvwprintw(win, y, 0, "+");
     for (int16_t i = 1; i < PANEL_WIDTH - 1; i++) {
         mvwaddch(win, y, i, '-');
     }
     mvwaddch(win, y, PANEL_WIDTH - 1, '+');
 
+    // Player label centered on the top border
     char label[LABEL_BUFFER_SIZE];
     snprintf(label, sizeof(label), " P%d: %.10s ", idx, player->name);
     int16_t label_start = (PANEL_WIDTH - (int16_t)strlen(label)) / 2;
     mvwprintw(win, y, label_start, "%s", label);
 
+    // Row 1: face + score
     mvwprintw(win, y + 1, 0, "| %s  Score: %-6u      |",
               PLAYER_FACES[idx % MAX_PLAYERS], player->score);
 
+    // Row 2: current position on the board
     mvwprintw(win, y + 2, 0, "| Pos: (%-3u, %-3u)        |", player->x, player->y);
 
+    // Row 3: valid/invalid move counts
     mvwprintw(win, y + 3, 0, "| Moves: %-5uv %-5ui   |",
               player->valid_moves, player->invalid_moves);
 
+    // Bottom border
     mvwprintw(win, y + 4, 0, "+");
     for (int16_t i = 1; i < PANEL_WIDTH - 1; i++) {
         mvwaddch(win, y + 4, i, '-');

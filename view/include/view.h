@@ -31,7 +31,7 @@ static const int16_t COLOR_PAIR_OFFSET = 1;
 
 static const int8_t NO_PLAYER = -1;
 
-static const int16_t LABEL_BUFFER_SIZE = 32;
+#define LABEL_BUFFER_SIZE 32
 
 static const char *const PLAYER_FACES[] = {
     "[^_^]", "[o_O]", "[>_<]", "[-_-]", "[T_T]", "[=_=]", "[*_*]", "[@_@]", "[!_!]",
