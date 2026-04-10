@@ -13,8 +13,7 @@ void start_reading_board(game_sync_t * sync){
     sem_post(sync->master_writing);
 
     sem_wait(sync->readers_count_mutex);
-    if (sync->readers_count == 0) {
-        sync->readers_count++;
+    if (++sync->readers_count == 1) {
         sem_wait(sync->gamestate_mutex);
     }
     sem_post(sync->readers_count_mutex);
