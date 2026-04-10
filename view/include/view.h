@@ -32,3 +32,9 @@ static const char *const DIR_NAMES[] = {
     "DOWN", "DOWN-LEFT", "LEFT", "UP-LEFT",
 };
 
+typedef struct {
+    WINDOW *board_win;   // window for the hex grid
+    WINDOW *panel_win;   // window for player info panels
+    int16_t term_rows;
+    int16_t term_cols;
+} view_t;
