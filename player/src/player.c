@@ -7,7 +7,7 @@
 #include <game_sync.h>
 #include <player_movement.h>
 
-//ocupamos lectura
+//get reading 
 void start_reading_board(game_sync_t * sync){
     sem_wait(sync->master_writing);
     sem_post(sync->master_writing);
@@ -21,7 +21,7 @@ void start_reading_board(game_sync_t * sync){
     return;
 }
 
-//liberamos lectura
+//free reading
 void stop_reading_bord(game_sync_t * sync){
     sem_wait(sync->readers_count_mutex);
     sync->readers_count--;
