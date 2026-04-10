@@ -22,7 +22,6 @@ int main(int argc, char *argv[]) {
 
     game_t game = new_game(view);
 
-
     view_t view;
     view_init(&view);
 

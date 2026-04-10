@@ -44,5 +44,4 @@ void view_cleanup(view_t *view) {
     endwin();
 }
 }
-
 }
