@@ -119,11 +119,14 @@ game_t _new_game(entity_t who, game_params_t game_parameters) {
 
 game_t game_connect(uint32_t w, uint32_t h) {}
 
-void game_disconnect(game_t *game) {
+void game_disconnect(game_t * game) 
+    // TODO: Que hacemos con esto? es lo que mencionaba victoria creo
+{
     if (game == NULL) {
-        // TODO manage error
+        manage_error(__FILE__, __func__, __LINE__, invalid_argument_error);
         return;
     }
+
     shm_unlink(game_state_memory_name);
     shm_unlink(game_sync_memory_name);
 
@@ -144,11 +147,11 @@ uint_fast8_t players_ingame(game_t *game) {
     return game->state->players_count;
 }
 
-uint16_t is_player_ingame(game_t *game, pid_t player_id) {
+bool is_player_ingame(game_t *game, pid_t player_id) {
     for (uint_fast8_t idx = 0; idx < players_ingame(game); idx++) {
         if (game->state->players[idx].player_id == player_id) {
-            return idx;
+            return true;
         }
     }
-    return 0;
+    return false;
 }
