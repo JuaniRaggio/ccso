@@ -16,74 +16,60 @@
 #include <error_management.h>
 
 int main(int argc, char *argv[]) {
-   if (argc < 3) {
-      fprintf(stderr, "Use: %s <width> <height>\n", argv[0]);
-      return 1;
-   }
-   uint16_t width = atoi(argv[1]);
-   uint16_t height = atoi(argv[2]);
-   size_t totalSize = sizeof(game_state_t) + (size_t)width * height;
+    if (argc < 3) {
+        fprintf(stderr, "Use: %s <width> <height>\n", argv[0]);
+        return 1;
+    }
+    uint16_t width = atoi(argv[1]);
+    uint16_t height = atoi(argv[2]);
+    size_t totalSize = sizeof(game_state_t) + (size_t)width * height;
 
-   // TODO: usar tads para los sharedGameState y sync y unificar la inicializacion de parameters con la creacion de
-   // memoria
+    game_t game = new_game(player);
 
-   game_t game = new_game(NULL, NULL, player);
+    pid_t my_pid = getpid();
+    if (!is_player_ingame(&game, my_pid)) {
+    }
 
-   // Buscar mi indice por PID
-   // El master hace fork->exec, puede que el PID todavia no este cargado
-   // en la shm cuando arrancamos, por eso reintentamos un poco
-   pid_t my_pid = getpid();
-   int16_t idx = -1;
-   for (int intento = 0; intento < 1000 && idx < 0; intento++) {
-      for (int i = 0; i < gameState->players_count; i++) {
-         if (gameState->players[i].player_id == my_pid) {
-            idx = i;
+    if (idx < 0) {
+        fprintf(stderr, " PID %d not found in players' list.\n", my_pid);
+        return 1;
+    }
+
+    fprintf(stderr, "I'm player %d\nInitial position: (%d,%d)\n", idx, gameState->players[idx].x,
+            gameState->players[idx].y);
+
+    // algo habría que cambiar, no conviene que se llame state.
+
+    while (!gameState->running) { // se considera a state como juego_terminado
+        // Esperar que el master me habilite para enviar un movimiento
+        sem_wait(&gameSync->player_may_send_movement[idx]);
+
+        if (gameState->running)
             break;
-         }
-      }
-      if (idx < 0)
-         usleep(1000); // esperar 1ms y reintentar
-   }
-   if (idx < 0) {
-      fprintf(stderr, " PID %d not found in players' list.\n", my_pid);
-      return 1;
-   }
 
-   fprintf(stderr, "I'm player %d\nInitial position: (%d,%d)\n", idx, gameState->players[idx].x,
-           gameState->players[idx].y);
+        sem_wait(&gameSync->master_writing);
+        sem_post(&gameSync->master_writing);
 
-   // algo habría que cambiar, no conviene que se llame state.
+        sem_wait(&gameSync->readers_count_mutex);
+        if (++gameSync->readers_count == 1)
+            sem_wait(&gameSync->gamestate_mutex);
+        sem_post(&gameSync->readers_count_mutex);
 
-   while (!gameState->running) { // se considera a state como juego_terminado
-      // Esperar que el master me habilite para enviar un movimiento
-      sem_wait(&gameSync->player_may_send_movement[idx]);
+        // Decidir movimiento mirando el tablero
+        uint8_t mov =
+            compute_next_move(gameState->board, width, height, gameState->players[idx].x, gameState->players[idx].y);
 
-      if (gameState->running)
-         break;
+        // --- Liberar lectura ---
+        sem_wait(&gameSync->E);
+        if (--gameSync->F == 0)
+            sem_post(&gameSync->D); // ultimo lector libera escritores
+        sem_post(&gameSync->E);
 
-      sem_wait(&gameSync->master_writing);
-      sem_post(&gameSync->master_writing);
+        // Enviar movimiento al master por stdout (que es el pipe)
+        write(1, &mov, 1);
+    }
 
-      sem_wait(&gameSync->readers_count_mutex);
-      if (++gameSync->readers_count == 1)
-         sem_wait(&gameSync->gamestate_mutex);
-      sem_post(&gameSync->readers_count_mutex);
-
-      // Decidir movimiento mirando el tablero
-      uint8_t mov =
-          compute_next_move(gameState->board, width, height, gameState->players[idx].x, gameState->players[idx].y);
-
-      // --- Liberar lectura ---
-      sem_wait(&gameSync->E);
-      if (--gameSync->F == 0)
-         sem_post(&gameSync->D); // ultimo lector libera escritores
-      sem_post(&gameSync->E);
-
-      // Enviar movimiento al master por stdout (que es el pipe)
-      write(1, &mov, 1);
-   }
-
-   munmap(gameState, totalSize);
-   munmap(gameSync, sizeof(game_sync_t));
-   return 0;
+    munmap(gameState, totalSize);
+    munmap(gameSync, sizeof(game_sync_t));
+    return 0;
 }
