@@ -1,0 +1,33 @@
+name: Tests
+
+on:
+  push:
+    branches:
+      - '**'
+    paths:
+      - '**/*.c'
+      - '**/*.h'
+      - Makefile
+      - .github/workflows/tests.yml
+  pull_request:
+    branches:
+      - '**'
+    paths:
+      - '**/*.c'
+      - '**/*.h'
+      - Makefile
+      - .github/workflows/tests.yml
+
+jobs:
+  unit-tests:
+    name: Run CuTest suite in course container
+    runs-on: ubuntu-latest
+    container:
+      image: agodio/itba-so-multiarch:3.1
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build and run unit tests
+        run: make test
