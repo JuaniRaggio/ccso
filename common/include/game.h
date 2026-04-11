@@ -24,9 +24,7 @@ typedef enum {
 
 typedef struct {
     error_manager_t manage_error;
-    const char *file;
-    const char *func;
-    uint64_t line;
+    trace_t caller;
     uint64_t seed;
     uint16_t width;
     uint16_t height;
@@ -41,9 +39,7 @@ static const uint64_t default_timeout = 10;
 #define new_game(who, ...)                                                                                             \
     _new_game((who), (game_params_t){                                                                                  \
                          .manage_error = (manage_error),                                                               \
-                         .file = __FILE__,                                                                             \
-                         .func = __func__,                                                                             \
-                         .line = __LINE__,                                                                             \
+                         .caller = HERE,                                                                               \
                          .seed = (time(NULL)),                                                                         \
                          .width = (default_width),                                                                     \
                          .height = (default_heigh),                                                                    \
