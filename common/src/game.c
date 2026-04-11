@@ -76,21 +76,21 @@ static const shm_data_t entity_spec[total_entities][game_posible_memories] = {
         {
             [game_state] =
                 {
-                    .sharedMemoryName = NULL,
-                    .mapFlag = NULL,
-                    .openFlags = NULL,
-                    .permissions = NULL,
-                    .protections = NULL,
-                    .offset = NULL,
+                    .sharedMemoryName = game_state_memory_name,
+                    .mapFlag = MAP_SHARED,
+                    .openFlags = O_RDONLY,
+                    .permissions = player_permissions,
+                    .protections = PROT_READ,
+                    .offset = 0,
                 },
             [game_sync] =
                 {
-                    .sharedMemoryName = NULL,
-                    .mapFlag = NULL,
-                    .openFlags = NULL,
-                    .permissions = NULL,
-                    .protections = NULL,
-                    .offset = NULL,
+                    .sharedMemoryName = game_sync_memory_name,
+                    .mapFlag = MAP_SHARED,
+                    .openFlags = O_RDWR,
+                    .permissions = player_permissions,
+                    .protections = PROT_READ | PROT_WRITE,
+                    .offset = 0,
                 },
         },
 };
@@ -131,7 +131,7 @@ void game_disconnect(game_t *game)
     shm_unlink(game_sync_memory_name);
 
     // Ownership of this memory depends on how many references are left
-    if (--game->reference_count == 0) {
+    if (-- game->shm_total_size == 0) {
     }
     game->state = NULL;
     game->sync = NULL;

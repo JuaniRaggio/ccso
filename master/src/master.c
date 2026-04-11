@@ -11,7 +11,7 @@
 #include <game_state.h>
 #include <game_sync.h>
 #include "master.h"
-
+/*
 void printGameState(int8_t board[], uint16_t height, uint16_t width, int8_t players_count, bool state) {
 
     printf("WIDTH: %d\nHEIGHT: %d\nPLAYER COUNT: %d\nSTATE: %d\n\nBOARD:\n", width, height, players_count, state);
@@ -60,5 +60,6 @@ void printGameSync(game_sync_t *sync) {
 
     fprintf(stderr, "=================\n\n");
 }
+*/
 
 // ------------------------------------------------------------------------------------------------------------------

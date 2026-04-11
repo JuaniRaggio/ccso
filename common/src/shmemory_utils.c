@@ -35,13 +35,14 @@ void *createSharedMemory(const shm_data_t *data, size_t shm_size, error_manager_
     return ptr;
 }
 
+/*
 void initalizeGameSync(game_sync_t *sharedGameSync) {
 
     /*
     ** The 2nd paramter = 1, means that the Semaphore is shared between processes. If it was 0, the semaphore would only
     ** works between threats from the same process
     ** The 3rd parameter (usually 0 or 1) is the initial value of the Semaphore
-    */
+    *//*
 
     // Sems for synchronization: master <-> view
     sem_init(&sharedGameSync->A, 1, 0); // starts bloqued
@@ -60,3 +61,4 @@ void initalizeGameSync(game_sync_t *sharedGameSync) {
         sem_init(&sharedGameSync->G[i], 1, 1);
     }
 }
+*/
