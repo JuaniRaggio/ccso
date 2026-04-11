@@ -9,7 +9,6 @@
 #define READ 0
 #define WRITE 1
 
-
 void createPipes(int pipes[][2], int playersCount);
 
 void forkPlayers(int pipes[][2], int playersCount, game_state_t *game_state);
