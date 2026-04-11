@@ -29,18 +29,18 @@ static const shm_data_t entity_spec[total_entities][game_posible_memories] = {
         {
             [game_state] =
                 {
-                    .sharedMemoryName = game_state_memory_name,
-                    .mapFlag = MAP_SHARED,
-                    .openFlags = O_CREAT | O_RDWR,
+                    .shared_memory_name = game_state_memory_name,
+                    .map_flag = MAP_SHARED,
+                    .open_flags = O_CREAT | O_RDWR,
                     .permissions = shm_create_mode,
                     .protections = PROT_READ | PROT_WRITE,
                     .offset = 0,
                 },
             [game_sync] =
                 {
-                    .sharedMemoryName = game_sync_memory_name,
-                    .mapFlag = MAP_SHARED,
-                    .openFlags = O_CREAT | O_RDWR,
+                    .shared_memory_name = game_sync_memory_name,
+                    .map_flag = MAP_SHARED,
+                    .open_flags = O_CREAT | O_RDWR,
                     .permissions = shm_create_mode,
                     .protections = PROT_READ | PROT_WRITE,
                     .offset = 0,
@@ -51,18 +51,18 @@ static const shm_data_t entity_spec[total_entities][game_posible_memories] = {
         {
             [game_state] =
                 {
-                    .sharedMemoryName = game_state_memory_name,
-                    .mapFlag = MAP_SHARED,
-                    .openFlags = O_RDONLY,
+                    .shared_memory_name = game_state_memory_name,
+                    .map_flag = MAP_SHARED,
+                    .open_flags = O_RDONLY,
                     .permissions = shm_unused_mode,
                     .protections = PROT_READ,
                     .offset = 0,
                 },
             [game_sync] =
                 {
-                    .sharedMemoryName = game_sync_memory_name,
-                    .mapFlag = MAP_SHARED,
-                    .openFlags = O_RDWR,
+                    .shared_memory_name = game_sync_memory_name,
+                    .map_flag = MAP_SHARED,
+                    .open_flags = O_RDWR,
                     .permissions = shm_unused_mode,
                     .protections = PROT_READ | PROT_WRITE,
                     .offset = 0,
@@ -73,18 +73,18 @@ static const shm_data_t entity_spec[total_entities][game_posible_memories] = {
         {
             [game_state] =
                 {
-                    .sharedMemoryName = game_state_memory_name,
-                    .mapFlag = MAP_SHARED,
-                    .openFlags = O_RDONLY,
+                    .shared_memory_name = game_state_memory_name,
+                    .map_flag = MAP_SHARED,
+                    .open_flags = O_RDONLY,
                     .permissions = shm_unused_mode,
                     .protections = PROT_READ,
                     .offset = 0,
                 },
             [game_sync] =
                 {
-                    .sharedMemoryName = game_sync_memory_name,
-                    .mapFlag = MAP_SHARED,
-                    .openFlags = O_RDWR,
+                    .shared_memory_name = game_sync_memory_name,
+                    .map_flag = MAP_SHARED,
+                    .open_flags = O_RDWR,
                     .permissions = shm_unused_mode,
                     .protections = PROT_READ | PROT_WRITE,
                     .offset = 0,
@@ -96,18 +96,17 @@ static game_t game_create_shared_memory(entity_t who, game_params_t *game_parame
     static const size_t sync_size = sizeof(game_sync_t);
     size_t state_size = sizeof(game_state_t) + game_parameters->width * game_parameters->height;
     return (game_t){
-        .state = createSharedMemory(&entity_spec[who][game_state], state_size, game_parameters->manage_error,
-                                    game_parameters->file, game_parameters->func, game_parameters->line),
-        .sync = createSharedMemory(&entity_spec[who][game_sync], sync_size, game_parameters->manage_error,
-                                   game_parameters->file, game_parameters->func, game_parameters->line),
+        .state = _create_shm(&entity_spec[who][game_state], state_size, game_parameters->manage_error,
+                             game_parameters->caller),
+        .sync = _create_shm(&entity_spec[who][game_sync], sync_size, game_parameters->manage_error,
+                            game_parameters->caller),
         .shm_total_size = state_size + sync_size,
     };
 }
 
 game_t _new_game(entity_t who, game_params_t game_parameters) {
     if (who >= total_entities) {
-        game_parameters.manage_error(game_parameters.file, game_parameters.func, game_parameters.line,
-                                     invalid_argument_error);
+        game_parameters.manage_error(HERE, game_parameters.caller, invalid_argument_error);
     }
     game_t game = game_create_shared_memory(who, &game_parameters);
     if (who == master) {
@@ -116,28 +115,13 @@ game_t _new_game(entity_t who, game_params_t game_parameters) {
     return game;
 }
 
-game_t game_connect(uint32_t w, uint32_t h) {}
-
-void game_disconnect(game_t *game)
-// TODO: Que hacemos con esto? es lo que mencionaba victoria creo
-{
-    if (game == NULL) {
-        manage_error(__FILE__, __func__, __LINE__, invalid_argument_error);
+void game_disconnect(game_t *game) {
+    if (game == NULL || game->state == NULL) {
+        manage_error(HERE, TRACE_NONE, invalid_argument_error);
         return;
     }
-
-    shm_unlink(game_state_memory_name);
-    shm_unlink(game_sync_memory_name);
-
-    // Ownership of this memory depends on how many references are left
-    if (--game->shm_total_size == 0) {
-    }
-    game->state = NULL;
-    game->sync = NULL;
-}
-
-void delete_game(game_t *game) {
-    game_disconnect(game);
+    destroy_shm(game->state, sizeof(game_state_t) + game->state->width * game->state->height);
+    destroy_shm(game->sync, sizeof(game_sync_t));
 }
 
 void game_end(game_t *) {}

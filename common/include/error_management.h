@@ -13,6 +13,15 @@ typedef enum {
     connection_error,
 } error_code_t;
 
-typedef void (*error_manager_t)(const char *file, const char *func, uint64_t line, error_code_t code);
+typedef struct {
+    const char *file;
+    const char *func;
+    uint64_t line;
+} trace_t;
 
-void manage_error(const char *file, const char *func, uint64_t line, error_code_t code);
+#define HERE ((trace_t){__FILE__, __func__, __LINE__})
+#define TRACE_NONE ((trace_t){NULL, NULL, 0})
+
+typedef error_code_t (*error_manager_t)(trace_t internal, trace_t caller, error_code_t code);
+
+error_code_t manage_error(trace_t internal, trace_t caller, error_code_t code);

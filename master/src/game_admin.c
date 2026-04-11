@@ -1,4 +1,5 @@
 #include "error_management.h"
+#include "game.h"
 #include <game_admin.h>
 #include <game_state.h>
 #include <game_sync.h>
@@ -27,19 +28,32 @@ void game_state_init(game_t *game, uint16_t width, uint16_t height, uint64_t see
     board_init(game->state, width, height, players);
 }
 
-bool game_register_player(game_t *game, size_t idx, pid_t pid, const char name[MAX_NAME_LENGTH]) {
+bool game_register_player(player_t current_players[MAX_PLAYERS], size_t idx,
+                          player_registration_requirements_t to_register) {
     // If player at index already exists, we override it
-    if (idx >= MAX_PLAYERS || name == NULL || name[0] == '\0') {
-        manage_error(__FILE__, __func__, __LINE__, invalid_argument_error);
+    if (idx >= MAX_PLAYERS || to_register.name[0] == '\0') {
+        manage_error(HERE, TRACE_NONE, invalid_argument_error);
         return false;
     }
-    game->state->players[idx] = (player_t){
-        .player_id = pid,
+    current_players[idx] = (player_t){
+        .player_id = to_register.player_pid,
         .state = true,
         .invalid_moves = 0,
         .valid_moves = 0,
     };
-    strncpy(game->state->players[idx].name, name, MAX_NAME_LENGTH - 1);
-    game->state->players[idx].name[MAX_NAME_LENGTH - 1] = '\0'; // JIC
+    strncpy(current_players[idx].name, to_register.name, MAX_NAME_LENGTH - 1);
+    current_players[idx].name[MAX_NAME_LENGTH - 1] = '\0'; // JIC
     return true;
+}
+
+size_t game_register_all(player_t current_players[MAX_PLAYERS],
+                         player_registration_requirements_t to_register[MAX_PLAYERS]) {
+    size_t registered = 0;
+    if (to_register == NULL) {
+        return manage_error(HERE, TRACE_NONE, invalid_argument_error);
+    }
+    for (uint_fast8_t i = 0; i < MAX_PLAYERS; ++i) {
+        registered += game_register_player(current_players, i, to_register[i]) ? 1 : 0;
+    }
+    return registered;
 }

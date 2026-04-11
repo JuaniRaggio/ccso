@@ -38,14 +38,9 @@ int main(int argc, char *argv[]) {
 
     pid_t my_pid = getpid();
     uint16_t idx = is_player_ingame(&game, my_pid);
-    if (idx) {
-        // crear error para este caso
-    }
-    idx--;
 
     start_playing(&game, idx);
 
-    munmap(game.state, totalSize);
-    munmap(game.sync, sizeof(game_sync_t));
+    game_disconnect(&game);
     return 0;
 }

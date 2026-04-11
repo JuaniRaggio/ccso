@@ -1,0 +1,21 @@
+CCSO - ChompChamps Sistemas Operativos
+Copyright 2026 Juan Ignacio Raggio
+
+This product is licensed under the Apache License, Version 2.0.
+See the LICENSE file at the root of this repository for details.
+
+================================================================================
+Third-party software
+================================================================================
+
+This product includes software developed by third parties. Each third-party
+component is distributed under its own license. The original license files are
+preserved alongside the vendored source in their respective directories.
+
+--------------------------------------------------------------------------------
+CuTest - C Unit Testing Framework
+--------------------------------------------------------------------------------
+Location: tests/vendor/cutest/
+Copyright (c) 2003 Asim Jalis
+License:  Zlib License
+See:      tests/vendor/cutest/LICENSE
