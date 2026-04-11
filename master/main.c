@@ -48,5 +48,4 @@ int main(int argc, char *argv[]) {
 
     player_t players[MAX_PLAYERS] = {};
     const bool has_view = parameters.view_path != NULL;
-
 }
