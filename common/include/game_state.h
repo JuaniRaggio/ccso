@@ -16,7 +16,7 @@ typedef struct {
     uint16_t x;      // Random
     uint16_t y;      // Random
     pid_t player_id; //> Each player will be a separate process
-    bool state;
+    bool state;      //> True means alive
 } player_t;
 
 typedef struct {

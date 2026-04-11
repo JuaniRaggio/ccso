@@ -9,7 +9,7 @@
 #include <time.h>
 #include <unistd.h>
 #include "game.h"
-#include "game_init.h"
+#include "game_admin.h"
 #include "game_state.h"
 #include <error_management.h>
 
@@ -43,7 +43,6 @@ int main(int argc, char *argv[]) {
 
     errno = 0;
     game_t game = new_game(master, .height = parameters.height, .width = parameters.width, .seed = parameters.seed);
-    game_sync_init(game.sync);
     game_state_init(&game, parameters.width, parameters.height, parameters.seed, parameters.players_count);
 
     player_t players[MAX_PLAYERS] = {};
