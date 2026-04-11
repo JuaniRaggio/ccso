@@ -109,7 +109,11 @@ game_t _new_game(entity_t who, game_params_t game_parameters) {
         game_parameters.manage_error(game_parameters.file, game_parameters.func, game_parameters.line,
                                      invalid_argument_error);
     }
-    return game_create_shared_memory(who, &game_parameters);
+    game_t game = game_create_shared_memory(who, &game_parameters);
+    if (who == master) {
+        game_sync_init(game.sync);
+    }
+    return game;
 }
 
 game_t game_connect(uint32_t w, uint32_t h) {}
