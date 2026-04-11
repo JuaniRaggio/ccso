@@ -16,10 +16,7 @@
  * them. CuSuiteDelete only frees non-NULL entries, therefore no test case
  * is double freed.
  */
-int32_t main(int32_t argc, char *argv[]) {
-    (void)argc;
-    (void)argv;
-
+int32_t main(void) {
     CuSuite *root = CuSuiteNew();
 
     CuSuite *parser_suite = parser_get_suite();
