@@ -29,7 +29,7 @@ void printBoard(int8_t board[], uint16_t height, uint16_t width) {
     printf("\n");
     return;
 }
-
+/*
 void printGameSync(game_sync_t *sync) {
 
     int val;
@@ -60,5 +60,6 @@ void printGameSync(game_sync_t *sync) {
 
     fprintf(stderr, "=================\n\n");
 }
+*/
 
 // ------------------------------------------------------------------------------------------------------------------

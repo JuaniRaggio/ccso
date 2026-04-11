@@ -126,7 +126,7 @@ void game_disconnect(game_t *game)
     shm_unlink(game_sync_memory_name);
 
     // Ownership of this memory depends on how many references are left
-    if (--game->reference_count == 0) {
+    if (--game->shm_total_size == 0) {
     }
     game->state = NULL;
     game->sync = NULL;
