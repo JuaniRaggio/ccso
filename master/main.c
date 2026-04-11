@@ -11,7 +11,6 @@
 #include "game.h"
 #include "game_init.h"
 #include "game_state.h"
-#include "master.h"
 #include <error_management.h>
 
 void printGameState(int8_t board[], uint16_t height, uint16_t width, int8_t players_count, bool state);
@@ -20,7 +19,6 @@ void printBoard(int8_t board[], uint16_t height, uint16_t width); // Just for us
 static volatile sig_atomic_t should_exit = 0;
 
 static void signal_handler(int32_t sig) {
-    (void)sig;
     should_exit = 1;
 }
 
@@ -49,8 +47,6 @@ int main(int argc, char *argv[]) {
     game_state_init(&game, parameters.width, parameters.height, parameters.seed, parameters.players_count);
 
     player_t players[MAX_PLAYERS] = {};
-    initalizeGameState(sharedGameState, parameters.width, parameters.height, parameters.players_count, players);
+    const bool has_view = parameters.view_path != NULL;
 
-    printGameState(sharedGameState->board, sharedGameState->height, sharedGameState->width,
-                   sharedGameState->players_count, sharedGameState->state);
 }
