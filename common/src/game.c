@@ -97,9 +97,9 @@ static game_t game_create_shared_memory(entity_t who, game_params_t *game_parame
     size_t state_size = sizeof(game_state_t) + game_parameters->width * game_parameters->height;
     return (game_t){
         .state = _create_shm(&entity_spec[who][game_state], state_size, game_parameters->manage_error,
-                             game_parameters->file, game_parameters->func, game_parameters->line),
+                             game_parameters->caller),
         .sync = _create_shm(&entity_spec[who][game_sync], sync_size, game_parameters->manage_error,
-                            game_parameters->file, game_parameters->func, game_parameters->line),
+                            game_parameters->caller),
         .shm_total_size = state_size + sync_size,
     };
 }
