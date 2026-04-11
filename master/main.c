@@ -15,7 +15,6 @@
 #include "pipes.h"
 #include <error_management.h>
 
-
 void printGameState(int8_t board[], uint16_t height, uint16_t width, int8_t players_count, bool state);
 void printBoard(int8_t board[], uint16_t height, uint16_t width); // Just for us
 
@@ -53,9 +52,9 @@ int main(int argc, char *argv[]) {
     // Checkea errores y crea las memorias compartidas
     game_t game = new_game(master);
 
+
     game_sync_init(game.sync);
     game_init(&game, parameters.width, parameters.height, parameters.seed, parameters.players_count , parameters.players_paths);
-
 
 
 //  -----------------------------------------------------------------------------------------------
@@ -66,17 +65,16 @@ int main(int argc, char *argv[]) {
 
     createPipes(pipes, players_count);
     forkPlayers(pipes, players_count, game.state);
-    closePipes(pipes, WRITE , players_count); // Cierro todos los writes-ends del master
+    closePipes(pipes, WRITE, players_count); // Cierro todos los writes-ends del master
 
-// ------------------------------------------------------------------------------------------------
+    // ------------------------------------------------------------------------------------------------
 
     /*
-    IDEA: crear un masterSet y ahi cargar todos los filesDescriptors. Para el SELECT, usar el readFds, ya que el select lo
-    cambia (deja unicamente los que tienen algo para leer), entonces en la proxima iteracion, lo unico que deberiamos hacer
-    es readFds = masterSet
+    IDEA: crear un masterSet y ahi cargar todos los filesDescriptors. Para el SELECT, usar el readFds, ya que el select
+    lo cambia (deja unicamente los que tienen algo para leer), entonces en la proxima iteracion, lo unico que deberiamos
+    hacer es readFds = masterSet
     */
     int maxFd;
-    fd_set masterSet, readFds; //Creo dos cjto de fileDescriptors
+    fd_set masterSet, readFds; // Creo dos cjto de fileDescriptors
     initFdSet(&masterSet, pipes, players_count, &maxFd);
-
 }
