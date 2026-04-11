@@ -19,9 +19,7 @@ typedef enum {
 
 // game's users shouldn't care about this values
 static const uint64_t shm_create_mode = 0666;
-static const uint64_t shm_unused_mode = 0111;
-
-static const size_t uninitialized_size = 0;
+static const uint64_t shm_unused_mode = 0;
 
 //> IMPORTANT: totalSize is not compile-time computable for game_state
 //> since it's value depends on width & height => When entity_spec is
