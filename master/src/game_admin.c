@@ -53,6 +53,6 @@ size_t game_register_all(player_t current_players[MAX_PLAYERS], player_registrat
     for (uint_fast8_t i = 0; i < MAX_PLAYERS; ++i) {
         registered += game_register_player(current_players, i, to_register[i]) ? 1:0;
     }
-    return registered
+    return registered;
 }
 
