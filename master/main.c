@@ -38,13 +38,15 @@ int main(int argc, char *argv[]) {
     parameter_status_t status = parse(argc, argv, &parameters);
 
     if (status != success) {
-        // Manage errors using status
+        manage_error(__FILE__, __func__, __LINE__, invalid_argument_error);
     }
 
     errno = 0;
     game_t game = new_game(master, .height = parameters.height, .width = parameters.width, .seed = parameters.seed);
     game_state_init(&game, parameters.width, parameters.height, parameters.seed, parameters.players_count);
 
-    player_t players[MAX_PLAYERS] = {};
     const bool has_view = parameters.view_path != NULL;
+    if (has_view) {
+        // TODO: make view process
+    }
 }
