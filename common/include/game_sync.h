@@ -44,4 +44,4 @@ void game_sync_player_wait_turn(game_sync_t *sync, uint8_t player_idx);
 void game_sync_player_grant_turn(game_sync_t *sync, uint8_t player_idx);
 
 void game_sync_init(game_sync_t *sync);
-void game_sync_destroy(game_sync_t * sync);
+void game_sync_destroy(game_sync_t *sync);
