@@ -13,6 +13,6 @@ typedef enum {
     connection_error,
 } error_code_t;
 
-typedef void (*error_manager_t)(const char *file, const char *func, uint64_t line, error_code_t code);
+typedef error_code_t (*error_manager_t)(const char *file, const char *func, uint64_t line, error_code_t code);
 
 error_code_t manage_error(const char *file, const char *func, uint64_t line, error_code_t code);
