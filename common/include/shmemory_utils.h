@@ -29,14 +29,12 @@ typedef struct {
  * directly. Top-level callers should use the create_shm / destroy_shm macros
  * so that __FILE__ / __func__ / __LINE__ are captured at the call site.
  */
-void *_create_shm(const shm_data_t *data, size_t shm_size, error_manager_t manage_error, const char *file,
-                  const char *func, uint64_t line);
+void *_create_shm(const shm_data_t *data, size_t shm_size, error_manager_t manage_error, trace_t caller);
 
-void _destroy_shm(void *ptr, size_t shm_size, error_manager_t manage_error, const char *file, const char *func,
-                  uint64_t line);
+void _destroy_shm(void *ptr, size_t shm_size, error_manager_t manage_error, trace_t caller);
 
 #define create_shm(data, shm_size) \
-    _create_shm((data), (shm_size), manage_error, __FILE__, __func__, __LINE__)
+    _create_shm((data), (shm_size), manage_error, HERE)
 
 #define destroy_shm(ptr, shm_size) \
-    _destroy_shm((ptr), (shm_size), manage_error, __FILE__, __func__, __LINE__)
+    _destroy_shm((ptr), (shm_size), manage_error, HERE)
