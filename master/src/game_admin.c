@@ -32,7 +32,7 @@ bool game_register_player(player_t current_players[MAX_PLAYERS], size_t idx,
                           player_registration_requirements_t to_register) {
     // If player at index already exists, we override it
     if (idx >= MAX_PLAYERS || to_register.name[0] == '\0') {
-        manage_error(__FILE__, __func__, __LINE__, invalid_argument_error);
+        manage_error(HERE, TRACE_NONE, invalid_argument_error);
         return false;
     }
     current_players[idx] = (player_t){
@@ -50,7 +50,7 @@ size_t game_register_all(player_t current_players[MAX_PLAYERS],
                          player_registration_requirements_t to_register[MAX_PLAYERS]) {
     size_t registered = 0;
     if (to_register == NULL) {
-        return manage_error(__FILE__, __func__, __LINE__, invalid_argument_error);
+        return manage_error(HERE, TRACE_NONE, invalid_argument_error);
     }
     for (uint_fast8_t i = 0; i < MAX_PLAYERS; ++i) {
         registered += game_register_player(current_players, i, to_register[i]) ? 1 : 0;

@@ -106,8 +106,7 @@ static game_t game_create_shared_memory(entity_t who, game_params_t *game_parame
 
 game_t _new_game(entity_t who, game_params_t game_parameters) {
     if (who >= total_entities) {
-        game_parameters.manage_error(game_parameters.file, game_parameters.func, game_parameters.line,
-                                     invalid_argument_error);
+        game_parameters.manage_error(HERE, game_parameters.caller, invalid_argument_error);
     }
     game_t game = game_create_shared_memory(who, &game_parameters);
     if (who == master) {
@@ -118,7 +117,7 @@ game_t _new_game(entity_t who, game_params_t game_parameters) {
 
 void game_disconnect(game_t *game) {
     if (game == NULL || game->state == NULL) {
-        manage_error(__FILE__, __func__, __LINE__, invalid_argument_error);
+        manage_error(HERE, TRACE_NONE, invalid_argument_error);
         return;
     }
     destroy_shm(game->state, sizeof(game_state_t) + game->state->width * game->state->height);

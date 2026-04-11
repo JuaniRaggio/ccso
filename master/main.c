@@ -38,7 +38,7 @@ int main(int argc, char *argv[]) {
     parameter_status_t status = parse(argc, argv, &parameters);
 
     if (status != success) {
-        manage_error(__FILE__, __func__, __LINE__, invalid_argument_error);
+        manage_error(HERE, TRACE_NONE, invalid_argument_error);
     }
 
     errno = 0;
