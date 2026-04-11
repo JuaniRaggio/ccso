@@ -133,8 +133,7 @@ static void test_multiple_readers_only_first_takes_mutex(CuTest *tc) {
 
     game_sync_reader_exit(sync);
     CuAssertIntEquals(tc, 2, (int)sync->readers_count);
-    CuAssertIntEquals_Msg(tc, "mutex released only by last reader", (int)SEM_LOCKED,
-                          sem_value(&sync->gamestate_mutex));
+    CuAssertIntEquals_Msg(tc, "mutex released only by last reader", (int)SEM_LOCKED, sem_value(&sync->gamestate_mutex));
 
     game_sync_reader_exit(sync);
     CuAssertIntEquals(tc, 1, (int)sync->readers_count);
