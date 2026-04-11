@@ -29,7 +29,7 @@ PLAYER_BINS = $(addprefix $(BUILD_DIR)/player-,$(STRATEGIES))
 # Map strategy name to -D flag (uppercase)
 strategy_flag = $(shell echo $(1) | tr 'a-z' 'A-Z')
 
-.PHONY: all players run clean compile_flags $(addprefix player-,$(STRATEGIES))
+.PHONY: all players run clean compile_flags test $(addprefix player-,$(STRATEGIES))
 
 all: $(MASTER_BIN) players $(VIEW_BIN)
 
@@ -62,10 +62,48 @@ run: $(MASTER_BIN) $(PLAYER_RUN_TARGETS) $(VIEW_BIN)
 clean:
 	rm -rf $(BUILD_DIR)
 
+# ==== Tests (CuTest) ====
+TEST_DIR         = tests
+CUTEST_DIR       = $(TEST_DIR)/vendor/cutest
+TEST_UNIT_DIR    = $(TEST_DIR)/unit
+TEST_INCLUDE_DIR = $(TEST_DIR)/include
+TEST_BUILD_DIR   = $(BUILD_DIR)/tests
+
+# CuTest library + every unit test translation unit + test_main entrypoint.
+TEST_SRCS = $(CUTEST_DIR)/CuTest.c \
+            $(wildcard $(TEST_UNIT_DIR)/*.c)
+
+# Only the project sources actually exercised by the tests. We deliberately
+# avoid linking master/main.c (its own main collides with test_main) and
+# anything under master/src that is currently known to have compile errors
+# unrelated to the units under test.
+TEST_PROJECT_SRCS = master/utils/parser.c common/src/error_management.c
+
+TEST_BIN = $(TEST_BUILD_DIR)/run_tests
+
+TEST_INCLUDES = -I$(CUTEST_DIR) -I$(TEST_INCLUDE_DIR) -I$(COMMON_INC) -Imaster/include -Imaster/utils
+
+# common/include/game_state.h defines game_state_memory_name at file scope
+# with an explicit initializer, so every translation unit that includes it
+# emits its own external definition. Since the real build only links one
+# master TU, the collision does not surface, but the test binary links
+# many. We cannot modify project headers, so we let the linker accept the
+# duplicates. The symbols are all initialized to the same string literal,
+# so picking any of them is correct.
+TEST_LDFLAGS = $(LDFLAGS) -Wl,--allow-multiple-definition
+
+$(TEST_BIN): $(TEST_SRCS) $(TEST_PROJECT_SRCS)
+	@mkdir -p $(TEST_BUILD_DIR)
+	$(CC) $(CFLAGS) $(TEST_INCLUDES) $^ -o $@ $(TEST_LDFLAGS)
+
+test: $(TEST_BIN)
+	./$(TEST_BIN)
+
 # Generate compile_flags.txt for clangd / IDEs
 compile_flags:
 	@printf "%s\n" "-Wall" "-g" "-I../common/include" "-Iinclude" "-Iutils" > master/compile_flags.txt
 	@printf "%s\n" "-Wall" "-g" "-I../common/include" "-Iinclude" "-DGREEDY_FLOOD" > player/compile_flags.txt
 	@printf "%s\n" "-Wall" "-g" "-I../common/include" "-Iinclude" > view/compile_flags.txt
 	@printf "%s\n" "-Wall" "-g" "-Iinclude" > common/compile_flags.txt
+	@printf "%s\n" "-Wall" "-g" "-Ivendor/cutest" "-Iinclude" "-I../common/include" "-I../master/include" "-I../master/utils" > tests/compile_flags.txt
 	@echo "compile_flags.txt generated for all modules"
