@@ -75,7 +75,6 @@ void game_sync_destroy(game_sync_t *sync) {
     sem_destroy(&sync->master_writing);
     sem_destroy(&sync->gamestate_mutex);
     sem_destroy(&sync->readers_count_mutex);
-    sync->readers_count = 0;
     for (uint8_t i = 0; i < MAX_PLAYERS; i++) {
         sem_destroy(&sync->player_may_send_movement[i]);
     }
