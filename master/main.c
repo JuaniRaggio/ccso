@@ -10,7 +10,6 @@
 #include <unistd.h>
 #include "game.h"
 #include "game_admin.h"
-#include "game_state.h"
 #include <error_management.h>
 
 void printGameState(int8_t board[], uint16_t height, uint16_t width, int8_t players_count, bool state);
