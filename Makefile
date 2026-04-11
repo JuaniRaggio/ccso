@@ -76,8 +76,12 @@ TEST_SRCS = $(CUTEST_DIR)/CuTest.c \
 # Only the project sources actually exercised by the tests. We deliberately
 # avoid linking master/main.c (its own main collides with test_main) and
 # anything under master/src that is currently known to have compile errors
-# unrelated to the units under test.
-TEST_PROJECT_SRCS = master/utils/parser.c common/src/error_management.c
+# unrelated to the units under test. common/src/game_sync.c is pulled in so
+# the game_sync unit tests can exercise the writer/reader/view/player
+# helpers over an in-process game_sync_t.
+TEST_PROJECT_SRCS = master/utils/parser.c \
+                    common/src/error_management.c \
+                    common/src/game_sync.c
 
 TEST_BIN = $(TEST_BUILD_DIR)/run_tests
 
