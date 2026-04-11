@@ -3,24 +3,35 @@
 #include <stdio.h>
 #include <sys/mman.h>
 
-#define _error_description "Error produced at File: %s\n Function: %s Line: %llu\n"
-
-error_code_t manage_error(const char *file, const char *func, uint64_t line, error_code_t code) {
+static const char *description_for(error_code_t code) {
     switch (code) {
     case access_error:
-        fprintf(stderr, "Permission denied, access error...\n" _error_description, file, func, line);
-        break;
+        return "Permission denied, access error";
     case file_exists_error:
-        fprintf(stderr, "File Exists Error...\n" _error_description, file, func, line);
-        break;
+        return "File Exists Error";
     case mapping_error:
-        fprintf(stderr, "mmap failed...\n" _error_description, file, func, line);
-        break;
+        return "mmap failed";
     case connection_error:
-        fprintf(stderr, "Failed to connect to shared memory...\n" _error_description, file, func, line);
-        break;
+        return "Failed to connect to shared memory";
+    case invalid_argument_error:
+        return "Invalid argument";
+    case range_error:
+        return "Value out of range";
     default:
-        fprintf(stderr, "Unknown Error...\n" _error_description, file, func, line);
+        return "Unknown Error";
     }
+}
+
+static void print_frame(const char *label, trace_t frame) {
+    if (frame.file == NULL) {
+        return;
+    }
+    fprintf(stderr, "  %s: %s:%s:%llu\n", label, frame.file, frame.func, (unsigned long long)frame.line);
+}
+
+error_code_t manage_error(trace_t internal, trace_t caller, error_code_t code) {
+    fprintf(stderr, "Error: %s\n", description_for(code));
+    print_frame("internal", internal);
+    print_frame("caller  ", caller);
     return code;
 }
