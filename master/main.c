@@ -48,9 +48,5 @@ int main(int argc, char *argv[]) {
     game_sync_init(game.sync);
     game_state_init(&game, parameters.width, parameters.height, parameters.seed, parameters.players_count);
 
-    player_t players[MAX_PLAYERS] = {};
-    initalizeGameState(sharedGameState, parameters.width, parameters.height, parameters.players_count, players);
 
-    printGameState(sharedGameState->board, sharedGameState->height, sharedGameState->width,
-                   sharedGameState->players_count, sharedGameState->state);
 }
