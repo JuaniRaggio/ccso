@@ -32,7 +32,7 @@ typedef struct {
     uint16_t height;
 } game_params_t;
 
-static const char *const default_view_path = "";
+static const char *const default_view_path = NULL;
 static const uint64_t default_width = 10;
 static const uint64_t default_heigh = 10;
 static const uint64_t default_delay = 200;
