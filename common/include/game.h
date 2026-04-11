@@ -52,7 +52,6 @@ static const uint64_t default_timeout = 10;
 
 game_t _new_game(entity_t who, game_params_t game_parameters);
 
-game_t game_connect(uint32_t w, uint32_t h);
 void game_disconnect(game_t *);
 void game_end(game_t *);
 
