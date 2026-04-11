@@ -47,6 +47,4 @@ int main(int argc, char *argv[]) {
     game_t game = new_game(master, .height = parameters.height, .width = parameters.width, .seed = parameters.seed);
     game_sync_init(game.sync);
     game_state_init(&game, parameters.width, parameters.height, parameters.seed, parameters.players_count);
-
-
 }
