@@ -45,7 +45,8 @@ CuString *CuStringNew(void) {
 }
 
 void CuStringDelete(CuString *str) {
-    if (!str) return;
+    if (!str)
+        return;
     free(str->buffer);
     free(str);
 }
@@ -116,7 +117,8 @@ CuTest *CuTestNew(const char *name, TestFunction function) {
 }
 
 void CuTestDelete(CuTest *t) {
-    if (!t) return;
+    if (!t)
+        return;
     free(t->name);
     free(t);
 }
@@ -139,7 +141,8 @@ static void CuFailInternal(CuTest *tc, const char *file, int line, CuString *str
 
     tc->failed = 1;
     tc->message = string->buffer;
-    if (tc->jumpBuf != NULL) longjmp(*(tc->jumpBuf), 0);
+    if (tc->jumpBuf != NULL)
+        longjmp(*(tc->jumpBuf), 0);
 }
 
 void CuFail_Line(CuTest *tc, const char *file, int line, const char *message2, const char *message) {
@@ -155,15 +158,15 @@ void CuFail_Line(CuTest *tc, const char *file, int line, const char *message2, c
 }
 
 void CuAssert_Line(CuTest *tc, const char *file, int line, const char *message, int condition) {
-    if (condition) return;
+    if (condition)
+        return;
     CuFail_Line(tc, file, line, NULL, message);
 }
 
-void CuAssertStrEquals_LineMsg(CuTest *tc, const char *file, int line, const char *message,
-                               const char *expected, const char *actual) {
+void CuAssertStrEquals_LineMsg(CuTest *tc, const char *file, int line, const char *message, const char *expected,
+                               const char *actual) {
     CuString string;
-    if ((expected == NULL && actual == NULL) ||
-        (expected != NULL && actual != NULL && strcmp(expected, actual) == 0)) {
+    if ((expected == NULL && actual == NULL) || (expected != NULL && actual != NULL && strcmp(expected, actual) == 0)) {
         return;
     }
 
@@ -180,26 +183,28 @@ void CuAssertStrEquals_LineMsg(CuTest *tc, const char *file, int line, const cha
     CuFailInternal(tc, file, line, &string);
 }
 
-void CuAssertIntEquals_LineMsg(CuTest *tc, const char *file, int line, const char *message,
-                               int expected, int actual) {
+void CuAssertIntEquals_LineMsg(CuTest *tc, const char *file, int line, const char *message, int expected, int actual) {
     char buf[STRING_MAX];
-    if (expected == actual) return;
+    if (expected == actual)
+        return;
     sprintf(buf, "expected <%d> but was <%d>", expected, actual);
     CuFail_Line(tc, file, line, message, buf);
 }
 
-void CuAssertDblEquals_LineMsg(CuTest *tc, const char *file, int line, const char *message,
-                               double expected, double actual, double delta) {
+void CuAssertDblEquals_LineMsg(CuTest *tc, const char *file, int line, const char *message, double expected,
+                               double actual, double delta) {
     char buf[STRING_MAX];
-    if (fabs(expected - actual) <= delta) return;
+    if (fabs(expected - actual) <= delta)
+        return;
     sprintf(buf, "expected <%f> but was <%f>", expected, actual);
     CuFail_Line(tc, file, line, message, buf);
 }
 
-void CuAssertPtrEquals_LineMsg(CuTest *tc, const char *file, int line, const char *message,
-                               void *expected, void *actual) {
+void CuAssertPtrEquals_LineMsg(CuTest *tc, const char *file, int line, const char *message, void *expected,
+                               void *actual) {
     char buf[STRING_MAX];
-    if (expected == actual) return;
+    if (expected == actual)
+        return;
     sprintf(buf, "expected pointer <0x%p> but was <0x%p>", expected, actual);
     CuFail_Line(tc, file, line, message, buf);
 }
@@ -288,7 +293,7 @@ void CuSuiteDetails(CuSuite *testSuite, CuString *details) {
         }
         CuStringAppend(details, "\n!!!FAILURES!!!\n");
 
-        CuStringAppendFormat(details, "Runs: %d ",   testSuite->count);
+        CuStringAppendFormat(details, "Runs: %d ", testSuite->count);
         CuStringAppendFormat(details, "Passes: %d ", testSuite->count - testSuite->failCount);
         CuStringAppendFormat(details, "Fails: %d\n", testSuite->failCount);
     }

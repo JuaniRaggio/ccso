@@ -85,11 +85,8 @@ static void test_parse_width_and_height(CuTest *tc) {
  */
 static void test_parse_delay_timeout_seed(CuTest *tc) {
     reset_getopt();
-    char *argv[] = {(char *)"master",
-                    (char *)"-d", (char *)"500",
-                    (char *)"-t", (char *)"15",
-                    (char *)"-s", (char *)"42",
-                    NULL};
+    char *argv[] = {(char *)"master", (char *)"-d", (char *)"500", (char *)"-t",
+                    (char *)"15",     (char *)"-s", (char *)"42",  NULL};
     int32_t argc = 7;
 
     parameters_t parameters = make_default_parameters();
@@ -123,11 +120,8 @@ static void test_parse_view_path(CuTest *tc) {
  */
 static void test_parse_multiple_players(CuTest *tc) {
     reset_getopt();
-    char *argv[] = {(char *)"master",
-                    (char *)"-p", (char *)"./build/player-a",
-                    (char *)"-p", (char *)"./build/player-b",
-                    (char *)"-p", (char *)"./build/player-c",
-                    NULL};
+    char *argv[] = {(char *)"master",           (char *)"-p", (char *)"./build/player-a", (char *)"-p",
+                    (char *)"./build/player-b", (char *)"-p", (char *)"./build/player-c", NULL};
     int32_t argc = 7;
 
     parameters_t parameters = make_default_parameters();
@@ -150,8 +144,7 @@ static void test_parse_max_players_exact(CuTest *tc) {
     argv[0] = (char *)"master";
 
     static const char *const paths[MAX_PLAYERS] = {
-        "./p0", "./p1", "./p2", "./p3", "./p4",
-        "./p5", "./p6", "./p7", "./p8",
+        "./p0", "./p1", "./p2", "./p3", "./p4", "./p5", "./p6", "./p7", "./p8",
     };
     for (int32_t i = 0; i < MAX_PLAYERS; i++) {
         argv[1 + i * 2] = (char *)"-p";
@@ -241,8 +234,7 @@ static void test_parse_unknown_flag(CuTest *tc) {
  */
 static void test_parse_overflow(CuTest *tc) {
     reset_getopt();
-    char *argv[] = {(char *)"master", (char *)"-w",
-                    (char *)"999999999999999999999999999999999999999", NULL};
+    char *argv[] = {(char *)"master", (char *)"-w", (char *)"999999999999999999999999999999999999999", NULL};
     int32_t argc = 3;
 
     parameters_t parameters = make_default_parameters();
@@ -259,14 +251,22 @@ static void test_parse_mixed_valid(CuTest *tc) {
     reset_getopt();
     char *argv[] = {
         (char *)"master",
-        (char *)"-w", (char *)"15",
-        (char *)"-h", (char *)"20",
-        (char *)"-d", (char *)"250",
-        (char *)"-t", (char *)"5",
-        (char *)"-s", (char *)"7",
-        (char *)"-v", (char *)"./build/view",
-        (char *)"-p", (char *)"./build/player-naive",
-        (char *)"-p", (char *)"./build/player-greedy",
+        (char *)"-w",
+        (char *)"15",
+        (char *)"-h",
+        (char *)"20",
+        (char *)"-d",
+        (char *)"250",
+        (char *)"-t",
+        (char *)"5",
+        (char *)"-s",
+        (char *)"7",
+        (char *)"-v",
+        (char *)"./build/view",
+        (char *)"-p",
+        (char *)"./build/player-naive",
+        (char *)"-p",
+        (char *)"./build/player-greedy",
         NULL,
     };
     int32_t argc = sizeof(argv) / sizeof(argv[0]) - 1;
