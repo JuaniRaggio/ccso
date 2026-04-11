@@ -29,7 +29,7 @@ PLAYER_BINS = $(addprefix $(BUILD_DIR)/player-,$(STRATEGIES))
 # Map strategy name to -D flag (uppercase)
 strategy_flag = $(shell echo $(1) | tr 'a-z' 'A-Z')
 
-.PHONY: all players run clean compile_flags test $(addprefix player-,$(STRATEGIES))
+.PHONY: all players run clean compile_flags test memcheck $(addprefix player-,$(STRATEGIES))
 
 all: $(MASTER_BIN) players $(VIEW_BIN)
 
@@ -102,6 +102,17 @@ $(TEST_BIN): $(TEST_SRCS) $(TEST_PROJECT_SRCS)
 
 test: $(TEST_BIN)
 	./$(TEST_BIN)
+
+# Run the unit test binary under Valgrind with strict leak checking.
+# --error-exitcode=1 makes the target fail if valgrind reports any error
+# or leak, so CI can gate on it without extra parsing.
+memcheck: $(TEST_BIN)
+	valgrind --leak-check=full \
+	         --show-leak-kinds=all \
+	         --errors-for-leak-kinds=all \
+	         --track-origins=yes \
+	         --error-exitcode=1 \
+	         ./$(TEST_BIN)
 
 # Generate compile_flags.txt for clangd / IDEs
 compile_flags:

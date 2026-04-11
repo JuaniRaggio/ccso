@@ -1,0 +1,33 @@
+name: Memcheck
+
+on:
+  push:
+    branches:
+      - '**'
+    paths:
+      - '**/*.c'
+      - '**/*.h'
+      - Makefile
+      - .github/workflows/memcheck.yml
+  pull_request:
+    branches:
+      - '**'
+    paths:
+      - '**/*.c'
+      - '**/*.h'
+      - Makefile
+      - .github/workflows/memcheck.yml
+
+jobs:
+  valgrind:
+    name: Run Valgrind against CuTest suite
+    runs-on: ubuntu-latest
+    container:
+      image: agodio/itba-so-multiarch:3.1
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run memcheck
+        run: make memcheck
