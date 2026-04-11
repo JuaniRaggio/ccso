@@ -70,7 +70,7 @@ void game_sync_init(game_sync_t *sync) {
     }
 }
 
-void game_sync_destroy(game_sync_t * sync) {
+void game_sync_destroy(game_sync_t *sync) {
     sem_init(&sync->view_may_render, SEM_SHARED_BETWEEN_PROCESSES, SEM_LOCKED);
     sem_init(&sync->view_rendered, SEM_SHARED_BETWEEN_PROCESSES, SEM_LOCKED);
     sem_init(&sync->master_writing, SEM_SHARED_BETWEEN_PROCESSES, SEM_UNLOCKED);
