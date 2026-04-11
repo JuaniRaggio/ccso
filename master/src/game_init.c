@@ -27,8 +27,8 @@ static void init_board(game_state_t *state, uint16_t width, uint16_t height, int
     }
 }
 
-
-void game_init(game_t *game, uint16_t width, uint16_t height, uint64_t seed, int8_t players_count, const char * players[]) {
+void game_init(game_t *game, uint16_t width, uint16_t height, uint64_t seed, int8_t players_count,
+               const char *players[]) {
     srandom(seed);
-    init_board(game->state, width, height, players_count,players);
+    init_board(game->state, width, height, players_count, players);
 }

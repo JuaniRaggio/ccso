@@ -52,12 +52,11 @@ int main(int argc, char *argv[]) {
     // Checkea errores y crea las memorias compartidas
     game_t game = new_game(master);
 
-
     game_sync_init(game.sync);
-    game_init(&game, parameters.width, parameters.height, parameters.seed, parameters.players_count , parameters.players_paths);
+    game_init(&game, parameters.width, parameters.height, parameters.seed, parameters.players_count,
+              parameters.players_paths);
 
-
-//  -----------------------------------------------------------------------------------------------
+    //  -----------------------------------------------------------------------------------------------
 
     // Creamos los pipes, los procesos hijos, cargamos cada player y lo corremos
     int pipes[MAX_PLAYERS][2], players_count;
