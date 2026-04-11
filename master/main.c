@@ -50,7 +50,7 @@ int main(int argc, char *argv[]) {
     size_t totalSize = (sizeof(game_state_t) + sizeof(int8_t) * parameters.height * parameters.width);
 
     game_t game = new_game(master);
-
+    game_sync_init(game.sync);
     game_init(&game, parameters.width, parameters.height, parameters.seed);
 
     player_t players[MAX_PLAYERS] = {};

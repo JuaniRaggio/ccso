@@ -22,5 +22,4 @@ static void init_board(game_state_t *state, uint16_t width, uint16_t height) {
 void game_init(game_t *game, uint16_t width, uint16_t height, uint64_t seed) {
     srandom(seed);
     init_board(game->state, width, height);
-    game_sync_init(game->sync);
 }
