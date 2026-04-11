@@ -43,15 +43,10 @@ int main(int argc, char *argv[]) {
         // Manage errors using status
     }
 
-    // TODO: usar tads para los sharedGameState y sync y unificar la inicializacion de parameters con la creacion de
-    // memoria
-
     errno = 0;
-    size_t totalSize = (sizeof(game_state_t) + sizeof(int8_t) * parameters.height * parameters.width);
-
-    game_t game = new_game(master);
+    game_t game = new_game(master, .height = parameters.height, .width = parameters.width, .seed = parameters.seed);
     game_sync_init(game.sync);
-    game_init(&game, parameters.width, parameters.height, parameters.seed);
+    game_state_init(&game, parameters.width, parameters.height, parameters.seed, parameters.players_count);
 
     player_t players[MAX_PLAYERS] = {};
     initalizeGameState(sharedGameState, parameters.width, parameters.height, parameters.players_count, players);

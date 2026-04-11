@@ -18,8 +18,8 @@ typedef enum {
 } memory_t;
 
 // game's users shouldn't care about this values
-static const uint64_t master_permissions = 0666;
-static const uint64_t player_permissions = 0111;
+static const uint64_t shm_create_mode = 0666;
+static const uint64_t shm_unused_mode = 0111;
 
 static const size_t uninitialized_size = 0;
 
@@ -34,7 +34,7 @@ static const shm_data_t entity_spec[total_entities][game_posible_memories] = {
                     .sharedMemoryName = game_state_memory_name,
                     .mapFlag = MAP_SHARED,
                     .openFlags = O_CREAT | O_RDWR,
-                    .permissions = master_permissions,
+                    .permissions = shm_create_mode,
                     .protections = PROT_READ | PROT_WRITE,
                     .offset = 0,
                 },
@@ -43,7 +43,7 @@ static const shm_data_t entity_spec[total_entities][game_posible_memories] = {
                     .sharedMemoryName = game_sync_memory_name,
                     .mapFlag = MAP_SHARED,
                     .openFlags = O_CREAT | O_RDWR,
-                    .permissions = master_permissions,
+                    .permissions = shm_create_mode,
                     .protections = PROT_READ | PROT_WRITE,
                     .offset = 0,
                 },
@@ -56,7 +56,7 @@ static const shm_data_t entity_spec[total_entities][game_posible_memories] = {
                     .sharedMemoryName = game_state_memory_name,
                     .mapFlag = MAP_SHARED,
                     .openFlags = O_RDONLY,
-                    .permissions = player_permissions,
+                    .permissions = shm_unused_mode,
                     .protections = PROT_READ,
                     .offset = 0,
                 },
@@ -65,32 +65,31 @@ static const shm_data_t entity_spec[total_entities][game_posible_memories] = {
                     .sharedMemoryName = game_sync_memory_name,
                     .mapFlag = MAP_SHARED,
                     .openFlags = O_RDWR,
-                    .permissions = player_permissions,
+                    .permissions = shm_unused_mode,
                     .protections = PROT_READ | PROT_WRITE,
                     .offset = 0,
                 },
         },
 
-    // TODO: Todavia no llegamos a crear memoria para las vistas
     [view] =
         {
             [game_state] =
                 {
-                    .sharedMemoryName = NULL,
-                    .mapFlag = NULL,
-                    .openFlags = NULL,
-                    .permissions = NULL,
-                    .protections = NULL,
-                    .offset = NULL,
+                    .sharedMemoryName = game_state_memory_name,
+                    .mapFlag = MAP_SHARED,
+                    .openFlags = O_RDONLY,
+                    .permissions = shm_unused_mode,
+                    .protections = PROT_READ,
+                    .offset = 0,
                 },
             [game_sync] =
                 {
-                    .sharedMemoryName = NULL,
-                    .mapFlag = NULL,
-                    .openFlags = NULL,
-                    .permissions = NULL,
-                    .protections = NULL,
-                    .offset = NULL,
+                    .sharedMemoryName = game_sync_memory_name,
+                    .mapFlag = MAP_SHARED,
+                    .openFlags = O_RDWR,
+                    .permissions = shm_unused_mode,
+                    .protections = PROT_READ | PROT_WRITE,
+                    .offset = 0,
                 },
         },
 };
@@ -112,9 +111,7 @@ game_t _new_game(entity_t who, game_params_t game_parameters) {
         game_parameters.manage_error(game_parameters.file, game_parameters.func, game_parameters.line,
                                      invalid_argument_error);
     }
-
-    game_t game = game_create_shared_memory(who, &game_parameters);
-    return game;
+    return game_create_shared_memory(who, &game_parameters);
 }
 
 game_t game_connect(uint32_t w, uint32_t h) {}
