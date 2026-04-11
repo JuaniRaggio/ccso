@@ -33,8 +33,6 @@ void *_create_shm(const shm_data_t *data, size_t shm_size, error_manager_t manag
 
 void _destroy_shm(void *ptr, size_t shm_size, error_manager_t manage_error, trace_t caller);
 
-#define create_shm(data, shm_size) \
-    _create_shm((data), (shm_size), manage_error, HERE)
+#define create_shm(data, shm_size) _create_shm((data), (shm_size), manage_error, __FILE__, __func__, __LINE__)
 
-#define destroy_shm(ptr, shm_size) \
-    _destroy_shm((ptr), (shm_size), manage_error, HERE)
+#define destroy_shm(ptr, shm_size) _destroy_shm((ptr), (shm_size), manage_error, __FILE__, __func__, __LINE__)

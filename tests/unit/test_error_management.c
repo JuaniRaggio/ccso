@@ -90,7 +90,8 @@ static void run_manage_error_and_capture(error_code_t code, char *out, int32_t o
         return;
     }
 
-    manage_error("some_file.c", "some_func", 123, code);
+    trace_t internal = {"some_file.c", "some_func", 123};
+    manage_error(internal, TRACE_NONE, code);
 
     stderr_capture_end(&capture, out, out_size);
 }
