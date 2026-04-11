@@ -12,7 +12,6 @@
 static volatile sig_atomic_t should_exit = 0;
 
 static void signal_handler(int32_t sig) {
-    (void)sig;
     should_exit = 1;
 }
 
@@ -26,7 +25,7 @@ int main(int argc, char *argv[]) {
     view_init(&view);
 
     while (!should_exit && game.state->running) {
-        sem_wait(&game.sync->pending_changes_to_show);
+        game_sync_view_wait_frame(game.sync);
         if (should_exit || !game.state->running) {
             break;
         }
@@ -37,7 +36,7 @@ int main(int argc, char *argv[]) {
         }
 
         view_draw_all(&view, game.state);
-        sem_post(&game.sync->printing);
+        game_sync_view_frame_done(game.sync);
     }
 
     view_cleanup(&view);

@@ -20,7 +20,6 @@
 static volatile sig_atomic_t should_exit = 0;
 
 static void signal_handler(int32_t sig) {
-    (void)sig;
     should_exit = 1;
 }
 
