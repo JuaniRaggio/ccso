@@ -53,8 +53,9 @@ int main(int argc, char *argv[]) {
     // Checkea errores y crea las memorias compartidas
     game_t game = new_game(master);
 
-    // Inicializa el game_state y el game_sync
+    game_sync_init(game.sync);
     game_init(&game, parameters.width, parameters.height, parameters.seed, parameters.players_count , parameters.players_paths);
+
 
 
 //  -----------------------------------------------------------------------------------------------

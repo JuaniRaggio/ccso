@@ -26,20 +26,8 @@ static void init_board(game_state_t *state, uint16_t width, uint16_t height, int
     }
 }
 
-static void init_sync(game_sync_t *sync) {
-    sem_init(&sync->view_may_render, SEM_SHARED_BETWEEN_PROCESSES, SEM_LOCKED);
-    sem_init(&sync->view_rendered, SEM_SHARED_BETWEEN_PROCESSES, SEM_LOCKED);
-    sem_init(&sync->master_writing, SEM_SHARED_BETWEEN_PROCESSES, SEM_UNLOCKED);
-    sem_init(&sync->gamestate_mutex, SEM_SHARED_BETWEEN_PROCESSES, SEM_UNLOCKED);
-    sem_init(&sync->readers_count_mutex, SEM_SHARED_BETWEEN_PROCESSES, SEM_UNLOCKED);
-    sync->readers_count = 0;
-    for (uint8_t i = 0; i < MAX_PLAYERS; i++) {
-        sem_init(&sync->player_may_send_movement[i], SEM_SHARED_BETWEEN_PROCESSES, SEM_UNLOCKED);
-    }
-}
 
-void game_init(game_t *game, uint16_t width, uint16_t height, uint64_t seed,int8_t players_count, const char * players[]) {
+void game_init(game_t *game, uint16_t width, uint16_t height, uint64_t seed, int8_t players_count, const char * players[]) {
     srandom(seed);
     init_board(game->state, width, height, players_count,players);
-    init_sync(game->sync);
 }
