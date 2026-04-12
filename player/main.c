@@ -38,7 +38,7 @@ int main(int argc, char *argv[]) {
     pid_t my_pid = getpid();
     uint16_t idx = is_player_ingame(&game, my_pid);
 
-    start_playing(&game, idx);
+    // TO DO: Player Loop
 
     game_disconnect(&game);
     return 0;
