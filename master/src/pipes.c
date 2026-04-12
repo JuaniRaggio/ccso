@@ -38,14 +38,14 @@ static pid_t new_process() {
 }
 
 // TODO / WARNING : Not const view_path, width and height may cause problems check!
-pid_t fork_view(char * view_path, char * width, char * height) {
+pid_t fork_view(char *view_path, char *width, char *height) {
     if (view_path == NULL) {
         manage_error(HERE, TRACE_NONE, errno);
         exit(EXIT_FAILURE);
     }
     pid_t view_pid = new_process();
     if (view_pid == 0) {
-        char * args[] = {
+        char *args[] = {
             [0] = view_path,
             [1] = width,
             [2] = height,
