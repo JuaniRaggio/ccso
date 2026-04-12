@@ -124,7 +124,12 @@ void game_disconnect(game_t *game) {
     destroy_shm(game->sync, sizeof(game_sync_t));
 }
 
-void game_end(game_t *) {}
+void game_end(game_t *game) {
+    game->state->running = false;
+    for (int8_t i = 0; i < game->state->players_count; i++) {
+        game_sync_player_grant_turn(game->sync, i);
+    }
+}
 
 uint_fast8_t players_ingame(game_t *game) {
     return game->state->players_count;
