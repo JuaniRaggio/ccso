@@ -7,6 +7,7 @@
 #include "game_state.h"
 
 typedef enum {
+    invalid_pipe = -1,
     pipe_reader = 0,
     pipe_writer,
     pipe_ends,

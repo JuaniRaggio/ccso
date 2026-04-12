@@ -13,23 +13,18 @@ void create_pipes(int pipes[][pipe_ends], int playersCount) {
     }
 }
 
-static void close_other_pipes(int32_t pipes[][pipe_ends], uint32_t player_count, uint32_t dont_close_this_player,
+static void close_other_pipes(int32_t pipes[][pipe_ends], uint32_t pipe_count, ssize_t dont_close_this_pipe,
                               const pipe_users_t user_to_close) {
     // const here is an optimization for the compiler,
     // since it doesn't change inside this function, the comparison shouldn't be
     // done for each iteration
-    for (uint32_t player_index = 0; player_index < player_count; ++player_index) {
-        if (dont_close_this_player != player_index) {
-            close(pipes[player_index][pipe_writer]);
+    for (ssize_t pipe_index = 0; pipe_index < pipe_count; ++pipe_index) {
+        if (dont_close_this_pipe != pipe_index) {
+            close(pipes[pipe_index][user_to_close]);
         }
     }
 }
 
-void close_pipes(int pipes[][pipe_ends], pipe_users_t action, int playersCount) {
-    for (int i = 0; i < playersCount; i++) {
-        close(pipes[i][action]);
-    }
-}
 
 void fork_players(int pipes[][pipe_ends], int playersCount, game_state_t *game_state) {
 
@@ -45,7 +40,7 @@ void fork_players(int pipes[][pipe_ends], int playersCount, game_state_t *game_s
         if (pid == 0) {
 
             // son should not read => write only => close read-end
-            close_pipes(pipes, pipe_reader, playersCount);
+            close_other_pipes(pipes, playerCount, invalid_pipe, pipe_reader);
             close_other_pipes(pipes, playersCount, i, pipe_writer);
 
             // Redirigir stdout -> pipe
