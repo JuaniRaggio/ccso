@@ -14,7 +14,7 @@ void create_pipes(int pipes[][pipe_ends], int playersCount) {
 }
 
 void close_other_pipes(int32_t pipes[][pipe_ends], uint32_t pipe_count, ssize_t dont_close_this_pipe,
-                              const pipe_users_t user_to_close) {
+                       const pipe_users_t user_to_close) {
     // const here is an optimization for the compiler,
     // since it doesn't change inside this function, the comparison shouldn't be
     // done for each iteration

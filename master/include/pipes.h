@@ -18,6 +18,6 @@ void create_pipes(int pipes[][pipe_ends], int playersCount);
 void fork_players(int pipes[][pipe_ends], int playersCount, game_state_t *game_state);
 
 void close_other_pipes(int32_t pipes[][pipe_ends], uint32_t pipe_count, ssize_t dont_close_this_pipe,
-                              const pipe_users_t user_to_close);
+                       const pipe_users_t user_to_close);
 
 void init_fd_set(fd_set *masterSet, int pipes[][pipe_ends], int playersCount, int *maxFd);
