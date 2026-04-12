@@ -115,6 +115,3 @@ void close_active_pipes(int32_t pipes[][pipe_ends], player_t players[], int8_t c
             close(pipes[i][pipe_reader]);
     }
 }
-
-void wait_and_print_results(player_t players[], int8_t count) {}
-void wait_view(pid_t view_pid) {}
