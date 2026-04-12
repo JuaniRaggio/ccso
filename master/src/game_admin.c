@@ -13,6 +13,10 @@
 #define MIN_CELL_REWARD 1
 #define REWARD_RANGE (MAX_CELL_REWARD - MIN_CELL_REWARD + 1)
 
+static void board_init(game_state_t *state, uint16_t width, uint16_t height, int8_t players);
+static inline size_t get_board_offset(game_state_t *state, uint_fast16_t vertical_coord,
+                                      uint_fast16_t horizontal_coord);
+
 static void board_init(game_state_t *state, uint16_t width, uint16_t height, int8_t players) {
     state->width = width;
     state->height = height;
@@ -56,4 +60,53 @@ size_t game_register_all(player_t current_players[MAX_PLAYERS],
         registered += game_register_player(current_players, i, to_register[i]) ? 1 : 0;
     }
     return registered;
+}
+
+static inline size_t get_board_offset(game_state_t *state, uint_fast16_t vertical_coord,
+                                      uint_fast16_t horizontal_coord) {
+    return vertical_coord * state->width + horizontal_coord;
+}
+
+bool is_move_allowed(game_state_t *state, uint16_t vertical_coord, uint16_t horizontal_coord) {
+    if (vertical_coord >= state->height || horizontal_coord >= state->width) {
+        return false;
+    }
+    int index = vertical_coord * state->width + horizontal_coord;
+    if (state->board[index] < 0) {
+        return false;
+    }
+    return true;
+}
+
+void apply_move(game_state_t *state, uint16_t vertical_coord, uint16_t horizontal_coord, int8_t player_id) {
+    bool valid_move = true;
+    if (!is_move_allowed(state, vertical_coord, horizontal_coord)) {
+        valid_move = false;
+    } else {
+        state->board[get_board_offset(state, vertical_coord, horizontal_coord)] = -player_id;
+    }
+    register_move(state, valid_move, player_id);
+    return;
+}
+
+void register_move(game_state_t *state, const bool is_valid_move, int8_t player_id) {
+    if (is_valid_move) {
+        state->players[player_id].valid_moves++;
+    } else {
+        state->players[player_id].invalid_moves++;
+    }
+}
+
+void process_player_move(game_state_t *state, uint8_t player_idx, direction_wire_t direction) {
+    player_t *p = &state->players[player_idx];
+
+    if (!is_valid_direction(direction)) {
+        register_move(state, false, player_idx);
+        return;
+    }
+
+    int16_t new_x, new_y;
+    apply_direction(p->x, p->y, direction, &new_x, &new_y);
+
+    apply_move(state, new_y, new_x, player_idx);
 }

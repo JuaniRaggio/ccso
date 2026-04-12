@@ -641,6 +641,173 @@ static void test_view_frame_handoff(CuTest *tc) {
     free_sync(sync);
 }
 
+/*
+ * Multiple posts on view_rendered without intermediate waits should
+ * accumulate, symmetrically to view_may_render.
+ */
+static void test_view_rendered_accumulates(CuTest *tc) {
+    game_sync_t *sync = make_sync();
+    CuAssertPtrNotNull(tc, sync);
+
+    static const int32_t frames = 3;
+    for (int32_t i = 0; i < frames; i++) {
+        game_sync_view_frame_done(sync);
+    }
+    CuAssertIntEquals(tc, frames, sem_value(&sync->view_rendered));
+
+    for (int32_t i = 0; i < frames; i++) {
+        game_sync_wait_view_done(sync);
+    }
+    CuAssertIntEquals(tc, (int)SEM_LOCKED, sem_value(&sync->view_rendered));
+
+    free_sync(sync);
+}
+
+/*
+ * Multiple grants on the same player slot without intermediate waits
+ * should accumulate the semaphore value.
+ */
+static void test_player_turn_grant_accumulates(CuTest *tc) {
+    game_sync_t *sync = make_sync();
+    CuAssertPtrNotNull(tc, sync);
+
+    const uint8_t slot = 2;
+    game_sync_player_grant_turn(sync, slot);
+    game_sync_player_grant_turn(sync, slot);
+    game_sync_player_grant_turn(sync, slot);
+
+    CuAssertIntEquals(tc, 3, sem_value(&sync->player_may_send_movement[slot]));
+
+    game_sync_player_wait_turn(sync, slot);
+    game_sync_player_wait_turn(sync, slot);
+    game_sync_player_wait_turn(sync, slot);
+
+    CuAssertIntEquals(tc, (int)SEM_LOCKED, sem_value(&sync->player_may_send_movement[slot]));
+
+    free_sync(sync);
+}
+
+/*
+ * Stress: grant/wait for all players across many rounds. Each round
+ * gives every player a turn and immediately consumes it.
+ */
+static void test_player_turn_stress_all_players(CuTest *tc) {
+    game_sync_t *sync = make_sync();
+    CuAssertPtrNotNull(tc, sync);
+
+    static const uint32_t rounds = 200;
+    for (uint32_t r = 0; r < rounds; r++) {
+        for (uint8_t p = 0; p < MAX_PLAYERS; p++) {
+            game_sync_player_grant_turn(sync, p);
+            game_sync_player_wait_turn(sync, p);
+        }
+    }
+
+    for (uint8_t p = 0; p < MAX_PLAYERS; p++) {
+        CuAssertIntEquals(tc, (int)SEM_LOCKED, sem_value(&sync->player_may_send_movement[p]));
+    }
+
+    free_sync(sync);
+}
+
+/*
+ * Stress: the full master loop: writer critical section, then multiple
+ * readers, across many rounds. This simulates the game main loop pattern
+ * with a single thread.
+ */
+static void test_full_loop_stress(CuTest *tc) {
+    game_sync_t *sync = make_sync();
+    CuAssertPtrNotNull(tc, sync);
+
+    static const uint32_t rounds = 500;
+    for (uint32_t r = 0; r < rounds; r++) {
+        /* Master writes. */
+        game_sync_writer_enter(sync);
+        game_sync_writer_exit(sync);
+
+        /* Several readers read. */
+        game_sync_reader_enter(sync);
+        game_sync_reader_enter(sync);
+        game_sync_reader_enter(sync);
+        game_sync_reader_exit(sync);
+        game_sync_reader_exit(sync);
+        game_sync_reader_exit(sync);
+
+        /* Notify and ack view. */
+        game_sync_notify_view(sync);
+        game_sync_view_wait_frame(sync);
+        game_sync_view_frame_done(sync);
+        game_sync_wait_view_done(sync);
+    }
+
+    CuAssertIntEquals(tc, 0, (int)sync->readers_count);
+    CuAssertIntEquals(tc, (int)SEM_UNLOCKED, sem_value(&sync->master_writing));
+    CuAssertIntEquals(tc, (int)SEM_UNLOCKED, sem_value(&sync->gamestate_mutex));
+    CuAssertIntEquals(tc, (int)SEM_LOCKED, sem_value(&sync->view_may_render));
+    CuAssertIntEquals(tc, (int)SEM_LOCKED, sem_value(&sync->view_rendered));
+
+    free_sync(sync);
+}
+
+/*
+ * Concurrency: the master grants turns to all players in parallel.
+ * Each player is simulated by a worker thread that waits for its turn
+ * and then signals completion. The main thread grants all turns, then
+ * joins all threads.
+ */
+typedef struct {
+    game_sync_t *sync;
+    uint8_t player_idx;
+    sem_t *done;
+} player_thread_ctx_t;
+
+static void *player_turn_worker(void *arg) {
+    player_thread_ctx_t *ctx = (player_thread_ctx_t *)arg;
+    game_sync_player_wait_turn(ctx->sync, ctx->player_idx);
+    sem_post(ctx->done);
+    return NULL;
+}
+
+static void test_concurrent_player_turns(CuTest *tc) {
+    game_sync_t *sync = make_sync();
+    CuAssertPtrNotNull(tc, sync);
+
+    sem_t done[MAX_PLAYERS];
+    player_thread_ctx_t ctxs[MAX_PLAYERS];
+    pthread_t threads[MAX_PLAYERS];
+
+    for (uint8_t i = 0; i < MAX_PLAYERS; i++) {
+        CuAssertIntEquals(tc, 0, sem_init(&done[i], 0, 0));
+        ctxs[i] = (player_thread_ctx_t){.sync = sync, .player_idx = i, .done = &done[i]};
+        CuAssertIntEquals(tc, 0, pthread_create(&threads[i], NULL, player_turn_worker, &ctxs[i]));
+    }
+
+    /* Small delay to let all player threads block on their semaphores. */
+    struct timespec wait = {.tv_sec = 0, .tv_nsec = 30 * 1000 * 1000};
+    nanosleep(&wait, NULL);
+
+    /* Grant all turns simultaneously. */
+    for (uint8_t i = 0; i < MAX_PLAYERS; i++) {
+        game_sync_player_grant_turn(sync, i);
+    }
+
+    /* Wait for all players to finish. */
+    struct timespec deadline;
+    clock_gettime(CLOCK_REALTIME, &deadline);
+    deadline.tv_sec += 5;
+    for (uint8_t i = 0; i < MAX_PLAYERS; i++) {
+        CuAssertIntEquals(tc, 0, sem_timedwait(&done[i], &deadline));
+    }
+
+    for (uint8_t i = 0; i < MAX_PLAYERS; i++) {
+        CuAssertIntEquals(tc, 0, pthread_join(threads[i], NULL));
+        CuAssertIntEquals(tc, 0, sem_destroy(&done[i]));
+        CuAssertIntEquals(tc, (int)SEM_LOCKED, sem_value(&sync->player_may_send_movement[i]));
+    }
+
+    free_sync(sync);
+}
+
 CuSuite *game_sync_get_suite(void) {
     CuSuite *suite = CuSuiteNew();
     SUITE_ADD_TEST(suite, test_init_sets_expected_initial_values);
@@ -662,5 +829,10 @@ CuSuite *game_sync_get_suite(void) {
     SUITE_ADD_TEST(suite, test_writer_blocks_while_reader_active);
     SUITE_ADD_TEST(suite, test_reader_blocks_while_writer_active);
     SUITE_ADD_TEST(suite, test_view_frame_handoff);
+    SUITE_ADD_TEST(suite, test_view_rendered_accumulates);
+    SUITE_ADD_TEST(suite, test_player_turn_grant_accumulates);
+    SUITE_ADD_TEST(suite, test_player_turn_stress_all_players);
+    SUITE_ADD_TEST(suite, test_full_loop_stress);
+    SUITE_ADD_TEST(suite, test_concurrent_player_turns);
     return suite;
 }

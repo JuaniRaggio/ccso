@@ -14,7 +14,7 @@
 #include <game_state.h>
 
 /*
- * game_admin exposes three functions:
+ * game_admin exposes the following functions:
  *
  *   - game_register_player: copies a single registration request into a
  *     player_t slot, with bounds and empty-name validation.
@@ -22,8 +22,15 @@
  *     and counts how many ended up in the array.
  *   - game_state_init: seeds the PRNG and fills the board with reward
  *     values in [1, 9].
+ *   - is_move_allowed: checks if a (row, col) coordinate is within the
+ *     board and the cell is not already claimed (board[i] >= 0).
+ *   - apply_move: if the move is allowed, stamps -player_id on the cell;
+ *     otherwise leaves the board untouched. Either way delegates to
+ *     register_move to bump the valid/invalid counter.
+ *   - register_move: increments the valid_moves or invalid_moves counter
+ *     of the player at state->players[player_id].
  *
- * All three are pure functions over already-allocated memory, so we can
+ * All are pure functions over already-allocated memory, so we can
  * exercise them without going through shared memory or shared state.
  *
  * Error paths call manage_error, which prints to stderr. To keep the
@@ -475,8 +482,444 @@ static void test_game_state_init_resets_running_flag(CuTest *tc) {
     free_game(game);
 }
 
+/* ---------- is_move_allowed ---------- */
+
+/*
+ * Helper: make a game, init its board with a fixed seed, and return it.
+ * The caller must free_game the result.
+ */
+static game_t *make_initialized_game(uint16_t width, uint16_t height, uint64_t seed, int8_t players) {
+    game_t *game = make_game(width, height);
+    if (game == NULL) {
+        return NULL;
+    }
+    game_state_init(game, width, height, seed, players);
+    return game;
+}
+
+/*
+ * A freshly initialized board has all cells in [1, 9], so any in-bounds
+ * coordinate must be allowed.
+ */
+static void test_is_move_allowed_in_bounds_positive_cell(CuTest *tc) {
+    game_t *game = make_initialized_game(5, 5, 1, 1);
+    CuAssertPtrNotNull(tc, game);
+
+    CuAssertTrue(tc, is_move_allowed(game->state, 0, 0));
+    CuAssertTrue(tc, is_move_allowed(game->state, 2, 3));
+    CuAssertTrue(tc, is_move_allowed(game->state, 4, 4));
+
+    free_game(game);
+}
+
+/*
+ * Any coordinate with vertical_coord >= height must be rejected.
+ */
+static void test_is_move_allowed_out_of_bounds_vertical(CuTest *tc) {
+    game_t *game = make_initialized_game(4, 3, 2, 1);
+    CuAssertPtrNotNull(tc, game);
+
+    CuAssertTrue(tc, !is_move_allowed(game->state, 3, 0));
+    CuAssertTrue(tc, !is_move_allowed(game->state, 100, 0));
+
+    free_game(game);
+}
+
+/*
+ * Any coordinate with horizontal_coord >= width must be rejected.
+ */
+static void test_is_move_allowed_out_of_bounds_horizontal(CuTest *tc) {
+    game_t *game = make_initialized_game(4, 3, 3, 1);
+    CuAssertPtrNotNull(tc, game);
+
+    CuAssertTrue(tc, !is_move_allowed(game->state, 0, 4));
+    CuAssertTrue(tc, !is_move_allowed(game->state, 0, 255));
+
+    free_game(game);
+}
+
+/*
+ * Both coordinates out of range at the same time must still be rejected.
+ */
+static void test_is_move_allowed_both_out_of_bounds(CuTest *tc) {
+    game_t *game = make_initialized_game(3, 3, 4, 1);
+    CuAssertPtrNotNull(tc, game);
+
+    CuAssertTrue(tc, !is_move_allowed(game->state, 3, 3));
+    CuAssertTrue(tc, !is_move_allowed(game->state, 10, 10));
+
+    free_game(game);
+}
+
+/*
+ * A cell that has been claimed (board value < 0) must not be allowed.
+ * We manually stamp a negative value to simulate a prior apply_move.
+ */
+static void test_is_move_allowed_already_claimed_cell(CuTest *tc) {
+    game_t *game = make_initialized_game(5, 5, 5, 2);
+    CuAssertPtrNotNull(tc, game);
+
+    /* Stamp cell (1, 2) as claimed by player 1. */
+    game->state->board[1 * 5 + 2] = -1;
+    CuAssertTrue(tc, !is_move_allowed(game->state, 1, 2));
+
+    /* Adjacent cell should still be allowed. */
+    CuAssertTrue(tc, is_move_allowed(game->state, 1, 3));
+
+    free_game(game);
+}
+
+/*
+ * A cell with board value exactly 0 is technically not < 0, so
+ * is_move_allowed returns true. This documents the behavior: the
+ * initial board never has zeros (values are [1,9]), but if somehow
+ * a cell becomes 0 it would still be "allowed". This is a latent
+ * edge case worth pinning.
+ */
+static void test_is_move_allowed_zero_cell_is_allowed(CuTest *tc) {
+    game_t *game = make_initialized_game(3, 3, 6, 1);
+    CuAssertPtrNotNull(tc, game);
+
+    game->state->board[0] = 0;
+    CuAssertTrue(tc, is_move_allowed(game->state, 0, 0));
+
+    free_game(game);
+}
+
+/*
+ * The four corners of the board must all be reachable as valid moves
+ * on a freshly initialized board.
+ */
+static void test_is_move_allowed_all_corners(CuTest *tc) {
+    const uint16_t w = 6;
+    const uint16_t h = 4;
+    game_t *game = make_initialized_game(w, h, 7, 1);
+    CuAssertPtrNotNull(tc, game);
+
+    CuAssertTrue(tc, is_move_allowed(game->state, 0, 0));
+    CuAssertTrue(tc, is_move_allowed(game->state, 0, w - 1));
+    CuAssertTrue(tc, is_move_allowed(game->state, h - 1, 0));
+    CuAssertTrue(tc, is_move_allowed(game->state, h - 1, w - 1));
+
+    free_game(game);
+}
+
+/* ---------- apply_move ---------- */
+
+/*
+ * A valid apply_move must stamp -player_id on the target cell and
+ * increment the player's valid_moves counter.
+ *
+ * IMPORTANT: register_move uses player_id as a direct index into
+ * state->players[]. In the real game, player_id is a pid_t (process ID),
+ * which is usually a large number. Using it as an array index is a bug
+ * (documented in the report). In tests we work around this by using
+ * small player_id values (0..MAX_PLAYERS-1) that happen to be valid
+ * indices.
+ */
+static void test_apply_move_valid_stamps_cell(CuTest *tc) {
+    game_t *game = make_initialized_game(5, 5, 10, 2);
+    CuAssertPtrNotNull(tc, game);
+    memset(game->state->players, 0, sizeof(player_t) * MAX_PLAYERS);
+
+    const int8_t pid = 1;
+    apply_move(game->state, 2, 3, pid);
+
+    CuAssertIntEquals(tc, -pid, (int)game->state->board[2 * 5 + 3]);
+    CuAssertIntEquals(tc, 1, (int)game->state->players[pid].valid_moves);
+    CuAssertIntEquals(tc, 0, (int)game->state->players[pid].invalid_moves);
+
+    free_game(game);
+}
+
+/*
+ * An out-of-bounds move must NOT modify any cell. The player's
+ * invalid_moves counter must be bumped instead.
+ */
+static void test_apply_move_out_of_bounds_increments_invalid(CuTest *tc) {
+    game_t *game = make_initialized_game(4, 4, 11, 1);
+    CuAssertPtrNotNull(tc, game);
+    memset(game->state->players, 0, sizeof(player_t) * MAX_PLAYERS);
+
+    /* Save the entire board to verify nothing changed. */
+    int8_t board_copy[16];
+    memcpy(board_copy, game->state->board, 16);
+
+    const int8_t pid = 1;
+    apply_move(game->state, 4, 0, pid); /* row 4 is out of bounds on a 4x4 board */
+
+    CuAssertIntEquals(tc, 0, (int)game->state->players[pid].valid_moves);
+    CuAssertIntEquals(tc, 1, (int)game->state->players[pid].invalid_moves);
+    CuAssertTrue(tc, memcmp(board_copy, game->state->board, 16) == 0);
+
+    free_game(game);
+}
+
+/*
+ * Trying to move onto an already-claimed cell must be treated as
+ * invalid: board stays unchanged, invalid_moves incremented.
+ *
+ * NOTE: player_id = 0 cannot claim cells because -0 == 0 and
+ * is_move_allowed checks board[i] < 0. We use player IDs >= 1
+ * to avoid this edge case. The player-0 issue is documented as
+ * a bug in the report.
+ */
+static void test_apply_move_already_claimed_is_invalid(CuTest *tc) {
+    game_t *game = make_initialized_game(5, 5, 12, 2);
+    CuAssertPtrNotNull(tc, game);
+    memset(game->state->players, 0, sizeof(player_t) * MAX_PLAYERS);
+
+    const int8_t pid0 = 1;
+    const int8_t pid1 = 2;
+
+    /* First move by player 1 should succeed. */
+    apply_move(game->state, 1, 1, pid0);
+    CuAssertIntEquals(tc, -pid0, (int)game->state->board[1 * 5 + 1]);
+    CuAssertIntEquals(tc, 1, (int)game->state->players[pid0].valid_moves);
+
+    /* Second move by player 2 to the same cell should fail. */
+    apply_move(game->state, 1, 1, pid1);
+    CuAssertIntEquals(tc, -pid0, (int)game->state->board[1 * 5 + 1]); /* unchanged */
+    CuAssertIntEquals(tc, 0, (int)game->state->players[pid1].valid_moves);
+    CuAssertIntEquals(tc, 1, (int)game->state->players[pid1].invalid_moves);
+
+    free_game(game);
+}
+
+/*
+ * Moving twice to the same cell with the same player: the second move
+ * must be invalid because the cell is now negative (holds -player_id).
+ * We use player_id >= 1 to avoid the -0 == 0 edge case.
+ */
+static void test_apply_move_same_cell_twice_is_invalid(CuTest *tc) {
+    game_t *game = make_initialized_game(4, 4, 13, 1);
+    CuAssertPtrNotNull(tc, game);
+    memset(game->state->players, 0, sizeof(player_t) * MAX_PLAYERS);
+
+    const int8_t pid = 1;
+    apply_move(game->state, 0, 0, pid);
+    CuAssertIntEquals(tc, 1, (int)game->state->players[pid].valid_moves);
+
+    apply_move(game->state, 0, 0, pid);
+    CuAssertIntEquals(tc, 1, (int)game->state->players[pid].valid_moves);   /* no change */
+    CuAssertIntEquals(tc, 1, (int)game->state->players[pid].invalid_moves); /* bumped */
+
+    free_game(game);
+}
+
+/*
+ * Multiple valid moves by the same player to distinct cells should
+ * accumulate valid_moves correctly and stamp each cell.
+ */
+static void test_apply_move_multiple_valid_moves(CuTest *tc) {
+    game_t *game = make_initialized_game(5, 5, 14, 2);
+    CuAssertPtrNotNull(tc, game);
+    memset(game->state->players, 0, sizeof(player_t) * MAX_PLAYERS);
+
+    const int8_t pid = 1;
+    apply_move(game->state, 0, 0, pid);
+    apply_move(game->state, 0, 1, pid);
+    apply_move(game->state, 0, 2, pid);
+
+    CuAssertIntEquals(tc, 3, (int)game->state->players[pid].valid_moves);
+    CuAssertIntEquals(tc, 0, (int)game->state->players[pid].invalid_moves);
+    CuAssertIntEquals(tc, -pid, (int)game->state->board[0]);
+    CuAssertIntEquals(tc, -pid, (int)game->state->board[1]);
+    CuAssertIntEquals(tc, -pid, (int)game->state->board[2]);
+
+    free_game(game);
+}
+
+/*
+ * Moves at the four corner cells of the board must all be valid on a
+ * fresh board and must stamp the correct offset.
+ */
+static void test_apply_move_corner_cells(CuTest *tc) {
+    const uint16_t w = 6;
+    const uint16_t h = 4;
+    game_t *game = make_initialized_game(w, h, 15, 2);
+    CuAssertPtrNotNull(tc, game);
+    memset(game->state->players, 0, sizeof(player_t) * MAX_PLAYERS);
+
+    const int8_t pid = 1;
+    apply_move(game->state, 0, 0, pid);
+    apply_move(game->state, 0, w - 1, pid);
+    apply_move(game->state, h - 1, 0, pid);
+    apply_move(game->state, h - 1, w - 1, pid);
+
+    CuAssertIntEquals(tc, 4, (int)game->state->players[pid].valid_moves);
+    CuAssertIntEquals(tc, -pid, (int)game->state->board[0]);
+    CuAssertIntEquals(tc, -pid, (int)game->state->board[w - 1]);
+    CuAssertIntEquals(tc, -pid, (int)game->state->board[(h - 1) * w]);
+    CuAssertIntEquals(tc, -pid, (int)game->state->board[(h - 1) * w + (w - 1)]);
+
+    free_game(game);
+}
+
+/*
+ * BUG: player_id == 0 cannot claim cells because apply_move stamps
+ * -player_id = -0 = 0, and is_move_allowed checks board[i] < 0, so
+ * the cell remains "available" even after being "claimed". This test
+ * documents the bug: the second move to the same cell succeeds when
+ * it should not.
+ */
+static void test_apply_move_player_zero_cannot_claim_bug(CuTest *tc) {
+    game_t *game = make_initialized_game(3, 3, 16, 1);
+    CuAssertPtrNotNull(tc, game);
+    memset(game->state->players, 0, sizeof(player_t) * MAX_PLAYERS);
+
+    const int8_t pid = 0;
+    apply_move(game->state, 0, 0, pid);
+    /* The cell should be stamped as -0 = 0 */
+    CuAssertIntEquals(tc, 0, (int)game->state->board[0]);
+    /* is_move_allowed still returns true because 0 is not < 0 */
+    CuAssertTrue(tc, is_move_allowed(game->state, 0, 0));
+    /* So a second move to the same cell will also "succeed" */
+    apply_move(game->state, 0, 0, pid);
+    CuAssertIntEquals(tc, 2, (int)game->state->players[pid].valid_moves); /* both counted as valid */
+
+    free_game(game);
+}
+
+/* ---------- register_move ---------- */
+
+/*
+ * register_move with is_valid_move=true must bump valid_moves.
+ */
+static void test_register_move_valid(CuTest *tc) {
+    game_t *game = make_initialized_game(3, 3, 20, 2);
+    CuAssertPtrNotNull(tc, game);
+    memset(game->state->players, 0, sizeof(player_t) * MAX_PLAYERS);
+
+    register_move(game->state, true, 0);
+    register_move(game->state, true, 0);
+    register_move(game->state, true, 0);
+
+    CuAssertIntEquals(tc, 3, (int)game->state->players[0].valid_moves);
+    CuAssertIntEquals(tc, 0, (int)game->state->players[0].invalid_moves);
+
+    free_game(game);
+}
+
+/*
+ * register_move with is_valid_move=false must bump invalid_moves.
+ */
+static void test_register_move_invalid(CuTest *tc) {
+    game_t *game = make_initialized_game(3, 3, 21, 2);
+    CuAssertPtrNotNull(tc, game);
+    memset(game->state->players, 0, sizeof(player_t) * MAX_PLAYERS);
+
+    register_move(game->state, false, 1);
+    register_move(game->state, false, 1);
+
+    CuAssertIntEquals(tc, 0, (int)game->state->players[1].valid_moves);
+    CuAssertIntEquals(tc, 2, (int)game->state->players[1].invalid_moves);
+
+    free_game(game);
+}
+
+/*
+ * register_move for different player IDs must only touch their
+ * respective counters and not interfere with each other.
+ */
+static void test_register_move_different_players_isolated(CuTest *tc) {
+    game_t *game = make_initialized_game(3, 3, 22, 3);
+    CuAssertPtrNotNull(tc, game);
+    memset(game->state->players, 0, sizeof(player_t) * MAX_PLAYERS);
+
+    register_move(game->state, true, 0);
+    register_move(game->state, false, 1);
+    register_move(game->state, true, 2);
+    register_move(game->state, true, 2);
+
+    CuAssertIntEquals(tc, 1, (int)game->state->players[0].valid_moves);
+    CuAssertIntEquals(tc, 0, (int)game->state->players[0].invalid_moves);
+    CuAssertIntEquals(tc, 0, (int)game->state->players[1].valid_moves);
+    CuAssertIntEquals(tc, 1, (int)game->state->players[1].invalid_moves);
+    CuAssertIntEquals(tc, 2, (int)game->state->players[2].valid_moves);
+    CuAssertIntEquals(tc, 0, (int)game->state->players[2].invalid_moves);
+
+    free_game(game);
+}
+
+/*
+ * Interleaving valid and invalid moves for a single player must
+ * accumulate both counters independently.
+ */
+static void test_register_move_interleaved(CuTest *tc) {
+    game_t *game = make_initialized_game(3, 3, 23, 1);
+    CuAssertPtrNotNull(tc, game);
+    memset(game->state->players, 0, sizeof(player_t) * MAX_PLAYERS);
+
+    register_move(game->state, true, 0);
+    register_move(game->state, false, 0);
+    register_move(game->state, true, 0);
+    register_move(game->state, false, 0);
+    register_move(game->state, true, 0);
+
+    CuAssertIntEquals(tc, 3, (int)game->state->players[0].valid_moves);
+    CuAssertIntEquals(tc, 2, (int)game->state->players[0].invalid_moves);
+
+    free_game(game);
+}
+
+/* ---------- game_state_init additional tests ---------- */
+
+/*
+ * Different seeds must produce different boards (with overwhelming
+ * probability). We initialize two boards with distinct seeds and check
+ * that at least one cell differs.
+ */
+static void test_game_state_init_different_seeds_differ(CuTest *tc) {
+    const uint16_t w = 8;
+    const uint16_t h = 8;
+
+    game_t *a = make_game(w, h);
+    game_t *b = make_game(w, h);
+    CuAssertPtrNotNull(tc, a);
+    CuAssertPtrNotNull(tc, b);
+
+    game_state_init(a, w, h, 100, 2);
+    game_state_init(b, w, h, 200, 2);
+
+    bool found_diff = false;
+    for (int32_t i = 0; i < w * h; i++) {
+        if (a->state->board[i] != b->state->board[i]) {
+            found_diff = true;
+            break;
+        }
+    }
+    CuAssertTrue(tc, found_diff);
+
+    free_game(a);
+    free_game(b);
+}
+
+/*
+ * A large board (e.g. 100x100) must still have all cells in [1, 9].
+ * This is a stress/bounds test for the board_init loop.
+ */
+static void test_game_state_init_large_board(CuTest *tc) {
+    const uint16_t w = 100;
+    const uint16_t h = 100;
+
+    game_t *game = make_game(w, h);
+    CuAssertPtrNotNull(tc, game);
+
+    game_state_init(game, w, h, 42, 4);
+
+    CuAssertIntEquals(tc, w, (int)game->state->width);
+    CuAssertIntEquals(tc, h, (int)game->state->height);
+    for (int32_t i = 0; i < w * h; i++) {
+        CuAssertTrue(tc, game->state->board[i] >= 1 && game->state->board[i] <= 9);
+    }
+
+    free_game(game);
+}
+
 CuSuite *game_admin_get_suite(void) {
     CuSuite *suite = CuSuiteNew();
+    /* game_register_player */
     SUITE_ADD_TEST(suite, test_register_player_happy_path);
     SUITE_ADD_TEST(suite, test_register_player_rejects_empty_name);
     SUITE_ADD_TEST(suite, test_register_player_rejects_out_of_range_idx);
@@ -484,13 +927,38 @@ CuSuite *game_admin_get_suite(void) {
     SUITE_ADD_TEST(suite, test_register_player_truncates_long_name);
     SUITE_ADD_TEST(suite, test_register_player_overrides_existing_slot);
     SUITE_ADD_TEST(suite, test_register_player_last_slot);
+    /* game_register_all */
     SUITE_ADD_TEST(suite, test_register_all_null_input_returns_without_writing);
     SUITE_ADD_TEST(suite, test_register_all_fills_every_slot);
     SUITE_ADD_TEST(suite, test_register_all_skips_empty_names);
     SUITE_ADD_TEST(suite, test_register_all_empty_set_returns_zero);
+    /* game_state_init */
     SUITE_ADD_TEST(suite, test_game_state_init_populates_board);
     SUITE_ADD_TEST(suite, test_game_state_init_same_seed_produces_same_board);
     SUITE_ADD_TEST(suite, test_game_state_init_minimum_board);
     SUITE_ADD_TEST(suite, test_game_state_init_resets_running_flag);
+    SUITE_ADD_TEST(suite, test_game_state_init_different_seeds_differ);
+    SUITE_ADD_TEST(suite, test_game_state_init_large_board);
+    /* is_move_allowed */
+    SUITE_ADD_TEST(suite, test_is_move_allowed_in_bounds_positive_cell);
+    SUITE_ADD_TEST(suite, test_is_move_allowed_out_of_bounds_vertical);
+    SUITE_ADD_TEST(suite, test_is_move_allowed_out_of_bounds_horizontal);
+    SUITE_ADD_TEST(suite, test_is_move_allowed_both_out_of_bounds);
+    SUITE_ADD_TEST(suite, test_is_move_allowed_already_claimed_cell);
+    SUITE_ADD_TEST(suite, test_is_move_allowed_zero_cell_is_allowed);
+    SUITE_ADD_TEST(suite, test_is_move_allowed_all_corners);
+    /* apply_move */
+    SUITE_ADD_TEST(suite, test_apply_move_valid_stamps_cell);
+    SUITE_ADD_TEST(suite, test_apply_move_out_of_bounds_increments_invalid);
+    SUITE_ADD_TEST(suite, test_apply_move_already_claimed_is_invalid);
+    SUITE_ADD_TEST(suite, test_apply_move_same_cell_twice_is_invalid);
+    SUITE_ADD_TEST(suite, test_apply_move_multiple_valid_moves);
+    SUITE_ADD_TEST(suite, test_apply_move_corner_cells);
+    SUITE_ADD_TEST(suite, test_apply_move_player_zero_cannot_claim_bug);
+    /* register_move */
+    SUITE_ADD_TEST(suite, test_register_move_valid);
+    SUITE_ADD_TEST(suite, test_register_move_invalid);
+    SUITE_ADD_TEST(suite, test_register_move_different_players_isolated);
+    SUITE_ADD_TEST(suite, test_register_move_interleaved);
     return suite;
 }

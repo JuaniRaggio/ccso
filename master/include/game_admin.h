@@ -1,6 +1,7 @@
 #pragma once
 
 #include "game_state.h"
+#include "player_protocol.h"
 #include <game.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -18,3 +19,11 @@ bool game_register_player(player_t current_players[MAX_PLAYERS], size_t idx,
 
 size_t game_register_all(player_t current_players[MAX_PLAYERS],
                          player_registration_requirements_t to_register[MAX_PLAYERS]);
+
+bool is_move_allowed(game_state_t *state, uint16_t vertical_coord, uint16_t horizontal_coord);
+
+void apply_move(game_state_t *state, uint16_t vertical_coord, uint16_t horizontal_coord, int8_t playerId);
+
+void register_move(game_state_t *state, bool is_valid_move, int8_t playerId);
+
+void process_player_move(game_state_t *state, uint8_t player_idx, direction_wire_t direction);

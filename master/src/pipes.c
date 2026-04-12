@@ -4,7 +4,7 @@
 #include <error_management.h>
 #include <stdint.h>
 #include <stdlib.h>
-#include <sys/_types/_pid_t.h>
+#include <sys/types.h>
 #include <unistd.h>
 
 void create_pipes(int pipes[][pipe_ends], int playersCount) {
@@ -74,6 +74,8 @@ void fork_players(int pipes[][pipe_ends], int playersCount, game_state_t *game_s
             }
 
             close(pipes[i][pipe_writer]);
+
+            // TODO: Aca deberiamos inicializar el x, y de cada player
 
             char *args[] = {game_state->players[i].name, NULL};
             execve(game_state->players[i].name, args, NULL);
