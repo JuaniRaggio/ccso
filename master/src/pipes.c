@@ -37,7 +37,7 @@ static pid_t new_process() {
     return pid;
 }
 
-pid_t fork_view(char * view_path, char * width, char * height) {
+pid_t fork_view(const char * view_path, const char * width, const char * height) {
     if (view_path == NULL) {
         manage_error(HERE, TRACE_NONE, invalid_argument_error);
         exit(EXIT_FAILURE);
@@ -45,9 +45,12 @@ pid_t fork_view(char * view_path, char * width, char * height) {
     pid_t view_pid = new_process();
     if (view_pid == 0) {
         char *args[] = {
-            [0] = view_path,
-            [1] = width,
-            [2] = height,
+            // note: casting const to non-const is valid cause
+            // might change but on another process so promise is
+            // still fulfilled
+            [0] = (char *) view_path,
+            [1] = (char *) width,
+            [2] = (char *) height,
         };
         execve(view_path, args, NULL);
         manage_error(HERE, TRACE_NONE, unreachable);
