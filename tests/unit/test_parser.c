@@ -588,13 +588,8 @@ static void test_parse_leading_zero_is_decimal(CuTest *tc) {
 static void test_parse_all_integer_flags_same_value(CuTest *tc) {
     reset_getopt();
     char *argv[] = {
-        (char *)"master",
-        (char *)"-w", (char *)"77",
-        (char *)"-h", (char *)"77",
-        (char *)"-d", (char *)"77",
-        (char *)"-t", (char *)"77",
-        (char *)"-s", (char *)"77",
-        NULL,
+        (char *)"master", (char *)"-w", (char *)"77", (char *)"-h", (char *)"77", (char *)"-d",
+        (char *)"77",     (char *)"-t", (char *)"77", (char *)"-s", (char *)"77", NULL,
     };
     int32_t argc = sizeof(argv) / sizeof(argv[0]) - 1;
 
@@ -635,8 +630,7 @@ static void test_parse_two_unknown_flags_only_first_seen(CuTest *tc) {
  */
 static void test_parse_overflow_on_seed(CuTest *tc) {
     reset_getopt();
-    char *argv[] = {(char *)"master", (char *)"-s",
-                    (char *)"999999999999999999999999999999999999999", NULL};
+    char *argv[] = {(char *)"master", (char *)"-s", (char *)"999999999999999999999999999999999999999", NULL};
     int32_t argc = 3;
 
     parameters_t parameters = make_default_parameters();
