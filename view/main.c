@@ -39,6 +39,7 @@ int main(int argc, char *argv[]) {
     while (1) {
         game_sync_view_wait_frame(game.sync);
         if (should_exit || !game.state->running) {
+            game_sync_view_frame_done(game.sync);
             break;
         }
         int32_t ch = getch();
