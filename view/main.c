@@ -8,6 +8,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include <argv_parser.h>
 
@@ -27,6 +28,11 @@ int main(int argc, char *argv[]) {
     }
 
     game_t game = new_game(view, .height = height, .width = width);
+
+    if (getenv("TERM") == NULL) {
+        setenv("TERM", "xterm-256color", 0);
+    }
+
     view_t view;
     view_init(&view);
 

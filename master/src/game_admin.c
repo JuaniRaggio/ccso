@@ -1,11 +1,13 @@
 #include "error_management.h"
 #include "game.h"
+#include "pipes.h"
 #include <game_admin.h>
 #include <game_state.h>
 #include <game_sync.h>
 #include <semaphore.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -42,11 +44,14 @@ bool game_register_player(player_t current_players[MAX_PLAYERS], size_t idx,
     current_players[idx] = (player_t){
         .player_id = to_register.player_pid,
         .state = true,
+        .score = 0,
         .invalid_moves = 0,
         .valid_moves = 0,
+        .x = 0,
+        .y = 0,
     };
     strncpy(current_players[idx].name, to_register.name, MAX_NAME_LENGTH - 1);
-    current_players[idx].name[MAX_NAME_LENGTH - 1] = '\0'; // JIC
+    current_players[idx].name[MAX_NAME_LENGTH - 1] = '\0';
     return true;
 }
 
@@ -72,7 +77,7 @@ bool is_move_allowed(game_state_t *state, uint16_t vertical_coord, uint16_t hori
         return false;
     }
     int index = vertical_coord * state->width + horizontal_coord;
-    if (state->board[index] < 0) {
+    if (state->board[index] <= 0) {
         return false;
     }
     return true;
@@ -83,10 +88,13 @@ void apply_move(game_state_t *state, uint16_t vertical_coord, uint16_t horizonta
     if (!is_move_allowed(state, vertical_coord, horizontal_coord)) {
         valid_move = false;
     } else {
-        state->board[get_board_offset(state, vertical_coord, horizontal_coord)] = -player_id;
+        size_t offset = get_board_offset(state, vertical_coord, horizontal_coord);
+        state->players[player_id].score += state->board[offset];
+        state->players[player_id].x = horizontal_coord;
+        state->players[player_id].y = vertical_coord;
+        state->board[offset] = -player_id;
     }
     register_move(state, valid_move, player_id);
-    return;
 }
 
 void register_move(game_state_t *state, const bool is_valid_move, int8_t player_id) {
@@ -97,16 +105,91 @@ void register_move(game_state_t *state, const bool is_valid_move, int8_t player_
     }
 }
 
-void process_player_move(game_state_t *state, uint8_t player_idx, direction_wire_t direction) {
+bool process_player_move(game_state_t *state, uint8_t player_idx, direction_wire_t direction) {
     player_t *p = &state->players[player_idx];
 
     if (!is_valid_direction(direction)) {
         register_move(state, false, player_idx);
-        return;
+        return false;
     }
 
     int16_t new_x, new_y;
     apply_direction(p->x, p->y, direction, &new_x, &new_y);
 
+    bool was_allowed = is_move_allowed(state, new_y, new_x);
     apply_move(state, new_y, new_x, player_idx);
+    return was_allowed;
+}
+
+bool handle_player_turn(game_t *game, int32_t pipes[][2], fd_set *readFds, fd_set *masterSet, int8_t idx,
+                        bool *out_valid) {
+    if (!game->state->players[idx].state)
+        return false;
+    if (!FD_ISSET(pipes[idx][pipe_reader], readFds))
+        return false;
+
+    direction_wire_t dir;
+    ssize_t n = recv_direction(pipes[idx][pipe_reader], &dir);
+    if (n <= 0) {
+        disconnect_player(&game->state->players[idx], pipes, masterSet, idx);
+        return false;
+    }
+
+    game_sync_writer_enter(game->sync);
+    bool valid = process_player_move(game->state, idx, dir);
+    game_sync_writer_exit(game->sync);
+
+    game_sync_player_grant_turn(game->sync, idx);
+
+    if (valid)
+        *out_valid = true;
+
+    return true;
+}
+
+void register_players_from_paths(game_state_t *state, const char *paths[]) {
+    for (int8_t i = 0; i < state->players_count; i++) {
+        const char *base = strrchr(paths[i], '/');
+        base = base ? base + 1 : paths[i];
+        player_registration_requirements_t req = {
+            .player_pid = state->players[i].player_id,
+        };
+        strncpy((char *)req.name, base, MAX_NAME_LENGTH - 1);
+        ((char *)req.name)[MAX_NAME_LENGTH - 1] = '\0';
+        game_register_player(state->players, i, req);
+    }
+}
+
+bool any_player_alive(game_state_t *state) {
+    for (int8_t i = 0; i < state->players_count; i++) {
+        if (state->players[i].state)
+            return true;
+    }
+    return false;
+}
+
+void place_players_on_board(game_state_t *state) {
+    int n = state->players_count;
+    int cols = 1;
+    while (cols * cols < n)
+        cols++;
+    int rows = (n + cols - 1) / cols;
+    int step_x = state->width / (cols + 1);
+    int step_y = state->height / (rows + 1);
+    for (int i = 0; i < n; i++) {
+        uint16_t x = (uint16_t)((i % cols + 1) * step_x);
+        uint16_t y = (uint16_t)((i / cols + 1) * step_y);
+        state->players[i].x = x;
+        state->players[i].y = y;
+        size_t offset = (size_t)y * state->width + x;
+        state->board[offset] = -(int8_t)i;
+    }
+}
+
+void print_game_results(game_state_t *state) {
+    for (int8_t i = 0; i < state->players_count; i++) {
+        player_t *p = &state->players[i];
+        fprintf(stderr, "Player %s (%d): score=%u valid=%u invalid=%u\n", p->name, i, p->score, p->valid_moves,
+                p->invalid_moves);
+    }
 }

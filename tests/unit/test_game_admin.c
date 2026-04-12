@@ -97,6 +97,8 @@ static void test_register_player_happy_path(CuTest *tc) {
     CuAssertIntEquals(tc, 0, (int)players[0].score);
     CuAssertIntEquals(tc, 0, (int)players[0].valid_moves);
     CuAssertIntEquals(tc, 0, (int)players[0].invalid_moves);
+    CuAssertIntEquals(tc, 0, (int)players[0].x);
+    CuAssertIntEquals(tc, 0, (int)players[0].y);
     CuAssertTrue(tc, players[0].state);
 }
 
@@ -570,18 +572,15 @@ static void test_is_move_allowed_already_claimed_cell(CuTest *tc) {
 }
 
 /*
- * A cell with board value exactly 0 is technically not < 0, so
- * is_move_allowed returns true. This documents the behavior: the
- * initial board never has zeros (values are [1,9]), but if somehow
- * a cell becomes 0 it would still be "allowed". This is a latent
- * edge case worth pinning.
+ * A cell with board value 0 means it was captured by player 0
+ * (-0 == 0). With the <= 0 fix, is_move_allowed correctly rejects it.
  */
-static void test_is_move_allowed_zero_cell_is_allowed(CuTest *tc) {
+static void test_is_move_allowed_zero_cell_is_captured(CuTest *tc) {
     game_t *game = make_initialized_game(3, 3, 6, 1);
     CuAssertPtrNotNull(tc, game);
 
     game->state->board[0] = 0;
-    CuAssertTrue(tc, is_move_allowed(game->state, 0, 0));
+    CuAssertTrue(tc, !is_move_allowed(game->state, 0, 0));
 
     free_game(game);
 }
@@ -757,26 +756,25 @@ static void test_apply_move_corner_cells(CuTest *tc) {
 }
 
 /*
- * BUG: player_id == 0 cannot claim cells because apply_move stamps
- * -player_id = -0 = 0, and is_move_allowed checks board[i] < 0, so
- * the cell remains "available" even after being "claimed". This test
- * documents the bug: the second move to the same cell succeeds when
- * it should not.
+ * Player 0 claims cells correctly: -0 == 0 and is_move_allowed
+ * rejects cells with board[i] <= 0, so the cell is properly captured.
+ * A second move to the same cell is correctly rejected as invalid.
  */
-static void test_apply_move_player_zero_cannot_claim_bug(CuTest *tc) {
+static void test_apply_move_player_zero_claims_correctly(CuTest *tc) {
     game_t *game = make_initialized_game(3, 3, 16, 1);
     CuAssertPtrNotNull(tc, game);
     memset(game->state->players, 0, sizeof(player_t) * MAX_PLAYERS);
 
     const int8_t pid = 0;
     apply_move(game->state, 0, 0, pid);
-    /* The cell should be stamped as -0 = 0 */
+    /* The cell is stamped as -0 = 0 */
     CuAssertIntEquals(tc, 0, (int)game->state->board[0]);
-    /* is_move_allowed still returns true because 0 is not < 0 */
-    CuAssertTrue(tc, is_move_allowed(game->state, 0, 0));
-    /* So a second move to the same cell will also "succeed" */
+    /* is_move_allowed correctly rejects it (0 <= 0) */
+    CuAssertTrue(tc, !is_move_allowed(game->state, 0, 0));
+    /* Second move to same cell is invalid */
     apply_move(game->state, 0, 0, pid);
-    CuAssertIntEquals(tc, 2, (int)game->state->players[pid].valid_moves); /* both counted as valid */
+    CuAssertIntEquals(tc, 1, (int)game->state->players[pid].valid_moves);
+    CuAssertIntEquals(tc, 1, (int)game->state->players[pid].invalid_moves);
 
     free_game(game);
 }
@@ -1103,7 +1101,7 @@ CuSuite *game_admin_get_suite(void) {
     SUITE_ADD_TEST(suite, test_is_move_allowed_out_of_bounds_horizontal);
     SUITE_ADD_TEST(suite, test_is_move_allowed_both_out_of_bounds);
     SUITE_ADD_TEST(suite, test_is_move_allowed_already_claimed_cell);
-    SUITE_ADD_TEST(suite, test_is_move_allowed_zero_cell_is_allowed);
+    SUITE_ADD_TEST(suite, test_is_move_allowed_zero_cell_is_captured);
     SUITE_ADD_TEST(suite, test_is_move_allowed_all_corners);
     /* apply_move */
     SUITE_ADD_TEST(suite, test_apply_move_valid_stamps_cell);
@@ -1112,7 +1110,7 @@ CuSuite *game_admin_get_suite(void) {
     SUITE_ADD_TEST(suite, test_apply_move_same_cell_twice_is_invalid);
     SUITE_ADD_TEST(suite, test_apply_move_multiple_valid_moves);
     SUITE_ADD_TEST(suite, test_apply_move_corner_cells);
-    SUITE_ADD_TEST(suite, test_apply_move_player_zero_cannot_claim_bug);
+    SUITE_ADD_TEST(suite, test_apply_move_player_zero_claims_correctly);
     /* register_move */
     SUITE_ADD_TEST(suite, test_register_move_valid);
     SUITE_ADD_TEST(suite, test_register_move_invalid);

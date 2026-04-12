@@ -5,6 +5,7 @@
 #include <game.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <sys/select.h>
 #include <sys/types.h>
 
 typedef struct {
@@ -26,4 +27,15 @@ void apply_move(game_state_t *state, uint16_t vertical_coord, uint16_t horizonta
 
 void register_move(game_state_t *state, bool is_valid_move, int8_t playerId);
 
-void process_player_move(game_state_t *state, uint8_t player_idx, direction_wire_t direction);
+bool process_player_move(game_state_t *state, uint8_t player_idx, direction_wire_t direction);
+
+bool handle_player_turn(game_t *game, int32_t pipes[][2], fd_set *readFds, fd_set *masterSet, int8_t idx,
+                        bool *out_valid);
+
+void register_players_from_paths(game_state_t *state, const char *paths[]);
+
+bool any_player_alive(game_state_t *state);
+
+void place_players_on_board(game_state_t *state);
+
+void print_game_results(game_state_t *state);

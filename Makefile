@@ -29,9 +29,12 @@ PLAYER_BINS = $(addprefix $(BUILD_DIR)/player-,$(STRATEGIES))
 # Map strategy name to -D flag (uppercase)
 strategy_flag = $(shell echo $(1) | tr 'a-z' 'A-Z')
 
-.PHONY: all players run clean compile_flags test memcheck $(addprefix player-,$(STRATEGIES))
+.PHONY: all players run clean compile_flags test memcheck deps $(addprefix player-,$(STRATEGIES))
 
-all: $(MASTER_BIN) players $(VIEW_BIN)
+deps:
+	@dpkg -s libncurses-dev > /dev/null 2>&1 || (echo "Installing libncurses-dev..." && apt-get update -qq && apt-get install -y -qq libncurses-dev)
+
+all: deps $(MASTER_BIN) players $(VIEW_BIN)
 
 players: $(PLAYER_BINS)
 
@@ -85,6 +88,7 @@ TEST_PROJECT_SRCS = master/utils/parser.c \
                     common/src/game_sync.c \
                     common/src/player_protocol.c \
                     master/src/game_admin.c \
+                    master/src/pipes.c \
                     player/src/player_movement.c
 
 TEST_BIN = $(TEST_BUILD_DIR)/run_tests

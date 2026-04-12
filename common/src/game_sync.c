@@ -43,6 +43,11 @@ void game_sync_wait_view_done(game_sync_t *sync) {
     sem_wait(&sync->view_rendered);
 }
 
+void game_sync_view_cycle(game_sync_t *sync) {
+    game_sync_notify_view(sync);
+    game_sync_wait_view_done(sync);
+}
+
 void game_sync_view_wait_frame(game_sync_t *sync) {
     sem_wait(&sync->view_may_render);
 }
