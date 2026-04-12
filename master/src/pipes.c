@@ -59,8 +59,8 @@ pid_t fork_view(const char *view_path, const char *width, const char *height) {
     return view_pid;
 }
 
-void fork_players(int pipes[][pipe_ends], int playersCount, game_state_t *game_state,
-                  const char *player_paths[], const char *width, const char *height) {
+void fork_players(int pipes[][pipe_ends], int playersCount, game_state_t *game_state, const char *player_paths[],
+                  const char *width, const char *height) {
     for (int i = 0; i < playersCount; i++) {
         pid_t new_player = new_process();
         if (new_player == 0) {
