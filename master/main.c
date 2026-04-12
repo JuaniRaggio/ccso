@@ -69,9 +69,25 @@ int main(int argc, char *argv[]) {
     int32_t maxFd;
     fd_set masterSet, readFds;
     init_fd_set(&masterSet, pipes, players_count, &maxFd);
+
     time_t last_valid_move = time(NULL);
     int8_t start_player = 0;
+
     while (!should_exit) {
+        time_t now = time(NULL);
+        readFds = masterSet;
+        struct timeval tv = {
+            .tv_sec = remaining,
+            .tv_usec = 0,
+        };
+        int32_t ready = select(maxFd + 1, &readFds, NULL, NULL, &tv);
+        if (ready < 0) {
+            if (errno == EINTR)
+                continue;
+            break;
+        }
+        if (ready == 0)
+            break;
     }
     game_sync_destroy(game.sync);
     game_disconnect(&game);
