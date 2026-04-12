@@ -6,7 +6,6 @@
 #include <sys/select.h>
 #include "game_state.h"
 
-
 typedef enum {
     pipe_reader = 0,
     pipe_writer,
