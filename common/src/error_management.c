@@ -1,5 +1,6 @@
 #include <error_management.h>
 #include <errno.h>
+#include <inttypes.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <sys/mman.h>
@@ -27,7 +28,7 @@ static void print_frame(const char *label, trace_t frame) {
     if (frame.file == NULL) {
         return;
     }
-    fprintf(stderr, "  %s: %s:%s:%llu\n", label, frame.file, frame.func, (uint64_t)frame.line);
+    fprintf(stderr, "  %s: %s:%s:%" PRIu64 "\n", label, frame.file, frame.func, (uint64_t)frame.line);
 }
 
 error_code_t manage_error(trace_t internal, trace_t caller, error_code_t code) {
