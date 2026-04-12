@@ -75,6 +75,10 @@ int main(int argc, char *argv[]) {
 
     while (!should_exit) {
         time_t now = time(NULL);
+        int64_t remaining = (int64_t)parameters.timeout - (int64_t)(now - last_valid_move);
+        if (remaining <= 0)
+            break;
+
         readFds = masterSet;
         struct timeval tv = {
             .tv_sec = remaining,
@@ -84,6 +88,7 @@ int main(int argc, char *argv[]) {
         if (ready < 0) {
             if (errno == EINTR)
                 continue;
+            manage_error(HERE, TRACE_NONE, errno);
             break;
         }
         if (ready == 0)

@@ -3,10 +3,8 @@
 #include <errno.h>
 #include <error_management.h>
 #include <stdint.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
-#include <sys/wait.h>
 #include <unistd.h>
 
 void create_pipes(int pipes[][pipe_ends], int playersCount) {
@@ -113,7 +111,3 @@ void close_active_pipes(int32_t pipes[][pipe_ends], player_t players[], int8_t c
     }
 }
 
-void wait_and_print_results(player_t players[], int8_t count) {
-}
-void wait_view(pid_t view_pid) {
-}
