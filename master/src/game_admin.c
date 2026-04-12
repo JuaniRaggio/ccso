@@ -117,6 +117,14 @@ void process_player_move(game_state_t *state, uint8_t player_idx, direction_wire
     apply_move(state, new_y, new_x, player_idx);
 }
 
+bool any_player_alive(game_state_t *state) {
+    for (int8_t i = 0; i < state->players_count; i++) {
+        if (state->players[i].state)
+            return true;
+    }
+    return false;
+}
+
 void place_players_on_board(game_state_t *state) {
     int n = state->players_count;
     int cols = 1;
