@@ -4,14 +4,14 @@
 
 typedef enum {
     DIR_UP = 0,
-    DIR_UP_RIGHT = 1,
-    DIR_RIGHT = 2,
-    DIR_DOWN_RIGHT = 3,
-    DIR_DOWN = 4,
-    DIR_DOWN_LEFT = 5,
-    DIR_LEFT = 6,
-    DIR_UP_LEFT = 7,
-    DIR_COUNT = 8,
+    DIR_UP_RIGHT,
+    DIR_RIGHT,
+    DIR_DOWN_RIGHT,
+    DIR_DOWN,
+    DIR_DOWN_LEFT,
+    DIR_LEFT,
+    DIR_UP_LEFT,
+    DIR_COUNT,
 } direction_t;
 
 /**
