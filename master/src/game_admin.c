@@ -92,7 +92,7 @@ void apply_move(game_state_t *state, uint16_t vertical_coord, uint16_t horizonta
         state->players[player_id].score += state->board[offset];
         state->players[player_id].x = horizontal_coord;
         state->players[player_id].y = vertical_coord;
-        state->board[offset] = -player_id;
+        state->board[offset] = -(player_id + 1);
     }
     register_move(state, valid_move, player_id);
 }
@@ -182,7 +182,7 @@ void place_players_on_board(game_state_t *state) {
         state->players[i].x = x;
         state->players[i].y = y;
         size_t offset = (size_t)y * state->width + x;
-        state->board[offset] = -(int8_t)i;
+        state->board[offset] = -(int8_t)(i + 1);
     }
 }
 
