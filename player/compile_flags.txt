@@ -2,3 +2,4 @@
 -g
 -I../common/include
 -Iinclude
+-DGREEDY_FLOOD

@@ -36,8 +36,9 @@ int main(int argc, char *argv[]) {
 
     parameter_status_t status = parse(argc, argv, &parameters);
 
-    if (status != success) {
-        manage_error(HERE, TRACE_NONE, invalid_argument_error);
+    if (status != success || parameters.players_count == 0) {
+        // TODO: improve error management for user parameter information
+        return manage_error(HERE, TRACE_NONE, invalid_argument_error);
     }
 
     errno = 0;

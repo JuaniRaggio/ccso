@@ -1,8 +1,11 @@
+#include "game_state.h"
 #include <pipes.h>
 #include <errno.h>
 #include <error_management.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <sys/_types/_pid_t.h>
+#include <unistd.h>
 
 void create_pipes(int pipes[][pipe_ends], int playersCount) {
     for (int i = 0; i < playersCount; i++) {
@@ -25,18 +28,39 @@ void close_other_pipes(int32_t pipes[][pipe_ends], uint32_t pipe_count, ssize_t 
     }
 }
 
+static pid_t new_process() {
+    pid_t pid = fork();
+    if (pid < 0) {
+        manage_error(HERE, TRACE_NONE, errno);
+        exit(EXIT_FAILURE);
+    }
+    return pid;
+}
+
+// TODO / WARNING : Not const view_path, width and height may cause problems check!
+pid_t fork_view(char *view_path, char *width, char *height) {
+    if (view_path == NULL) {
+        manage_error(HERE, TRACE_NONE, errno);
+        exit(EXIT_FAILURE);
+    }
+    pid_t view_pid = new_process();
+    if (view_pid == 0) {
+        char *args[] = {
+            [0] = view_path,
+            [1] = width,
+            [2] = height,
+        };
+        execve(view_path, args, NULL);
+        manage_error(HERE, TRACE_NONE, errno);
+        _exit(EXIT_FAILURE);
+    }
+    return view_pid;
+}
+
 void fork_players(int pipes[][pipe_ends], int playersCount, game_state_t *game_state) {
-
     for (int i = 0; i < playersCount; i++) {
-
-        pid_t pid = fork();
-
-        if (pid < 0) {
-            manage_error(HERE, TRACE_NONE, errno);
-            exit(EXIT_FAILURE);
-        }
-
-        if (pid == 0) {
+        pid_t new_player = new_process();
+        if (new_player == 0) {
 
             // son should not read => write only => close read-end
             close_other_pipes(pipes, playersCount, invalid_pipe, pipe_reader);
@@ -55,15 +79,13 @@ void fork_players(int pipes[][pipe_ends], int playersCount, game_state_t *game_s
 
             // Ejecutamos el programa player[i].name
             char *args[] = {game_state->players[i].name, NULL};
-            sleep(3);
             execve(game_state->players[i].name, args, NULL);
 
             // Si llego aca es porque execve fallo. Ya que sino execve no retorna
             manage_error(HERE, TRACE_NONE, errno);
             _exit(EXIT_FAILURE);
         }
-
-        game_state->players[i].player_id = pid;
+        game_state->players[i].player_id = new_player;
     }
 }
 
