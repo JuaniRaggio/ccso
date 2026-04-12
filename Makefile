@@ -91,14 +91,7 @@ TEST_BIN = $(TEST_BUILD_DIR)/run_tests
 
 TEST_INCLUDES = -I$(CUTEST_DIR) -I$(TEST_INCLUDE_DIR) -I$(COMMON_INC) -Imaster/include -Imaster/utils
 
-# common/include/game_state.h defines game_state_memory_name at file scope
-# with an explicit initializer, so every translation unit that includes it
-# emits its own external definition. Since the real build only links one
-# master TU, the collision does not surface, but the test binary links
-# many. We cannot modify project headers, so we let the linker accept the
-# duplicates. The symbols are all initialized to the same string literal,
-# so picking any of them is correct.
-TEST_LDFLAGS = $(LDFLAGS) -Wl,--allow-multiple-definition
+TEST_LDFLAGS = $(LDFLAGS)
 
 $(TEST_BIN): $(TEST_SRCS) $(TEST_PROJECT_SRCS)
 	@mkdir -p $(TEST_BUILD_DIR)
