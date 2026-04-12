@@ -24,3 +24,11 @@ void close_other_pipes(int32_t pipes[][pipe_ends], uint32_t pipe_count, ssize_t 
                        const pipe_users_t user_to_close);
 
 void init_fd_set(fd_set *masterSet, int pipes[][pipe_ends], int playersCount, int *maxFd);
+
+void disconnect_player(player_t *player, int32_t pipes[][pipe_ends], fd_set *master_set, int8_t idx);
+
+void close_active_pipes(int32_t pipes[][pipe_ends], player_t players[], int8_t count);
+
+void wait_and_print_results(player_t players[], int8_t count);
+
+void wait_view(pid_t view_pid);
