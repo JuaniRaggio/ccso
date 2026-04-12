@@ -97,6 +97,8 @@ static void test_register_player_happy_path(CuTest *tc) {
     CuAssertIntEquals(tc, 0, (int)players[0].score);
     CuAssertIntEquals(tc, 0, (int)players[0].valid_moves);
     CuAssertIntEquals(tc, 0, (int)players[0].invalid_moves);
+    CuAssertIntEquals(tc, 0, (int)players[0].x);
+    CuAssertIntEquals(tc, 0, (int)players[0].y);
     CuAssertTrue(tc, players[0].state);
 }
 

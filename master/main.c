@@ -56,11 +56,15 @@ int main(int argc, char *argv[]) {
 
     close_other_pipes(pipes, players_count, invalid_pipe, pipe_writer);
 
-    /*
-    IDEA: crear un masterSet y ahi cargar todos los filesDescriptors. Para el SELECT, usar el readFds, ya que el select
-    lo cambia (deja unicamente los que tienen algo para leer), entonces en la proxima iteracion, lo unico que deberiamos
-    hacer es readFds = masterSet
-    */
+    for (int i = 0; i < players_count; i++) {
+        player_registration_requirements_t req = {
+            .player_pid = game.state->players[i].player_id,
+        };
+        game_register_player(game.state->players, i, req);
+    }
+    place_players_on_board(game.state);
+    game.state->running = true;
+
     int maxFd;
     fd_set masterSet, readFds;
     init_fd_set(&masterSet, pipes, players_count, &maxFd);

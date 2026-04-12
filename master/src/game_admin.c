@@ -42,11 +42,14 @@ bool game_register_player(player_t current_players[MAX_PLAYERS], size_t idx,
     current_players[idx] = (player_t){
         .player_id = to_register.player_pid,
         .state = true,
+        .score = 0,
         .invalid_moves = 0,
         .valid_moves = 0,
+        .x = 0,
+        .y = 0,
     };
     strncpy(current_players[idx].name, to_register.name, MAX_NAME_LENGTH - 1);
-    current_players[idx].name[MAX_NAME_LENGTH - 1] = '\0'; // JIC
+    current_players[idx].name[MAX_NAME_LENGTH - 1] = '\0';
     return true;
 }
 
