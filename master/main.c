@@ -144,7 +144,7 @@ int main(int argc, char *argv[]) {
     print_game_results(game.state);
 
     game_sync_destroy(game.sync);
-    game_disconnect(&game, master);
+    game_disconnect(&game);
 
     return 0;
 }
