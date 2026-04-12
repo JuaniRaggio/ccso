@@ -43,3 +43,4 @@ void _destroy_shm(void *ptr, size_t shm_size, error_manager_t manage_error, trac
         manage_error(HERE, caller, errno);
     }
 }
+*/
