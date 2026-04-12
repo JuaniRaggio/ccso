@@ -41,8 +41,8 @@ int main(int argc, char *argv[]) {
     game_t game = new_game(master, .height = parameters.height, .width = parameters.width, .seed = parameters.seed);
     game_state_init(&game, parameters.width, parameters.height, parameters.seed, parameters.players_count);
 
-    int pipes[MAX_PLAYERS][pipe_ends];
-    int players_count = game.state->players_count;
+    int32_t pipes[MAX_PLAYERS][pipe_ends];
+    int8_t players_count = game.state->players_count;
 
     create_pipes(pipes, players_count);
 
@@ -56,19 +56,24 @@ int main(int argc, char *argv[]) {
 
     close_other_pipes(pipes, players_count, invalid_pipe, pipe_writer);
 
-    for (int i = 0; i < players_count; i++) {
+    for (int8_t i = 0; i < players_count; i++) {
+        const char *base = strrchr(parameters.players_paths[i], '/');
+        base = base ? base + 1 : parameters.players_paths[i];
         player_registration_requirements_t req = {
             .player_pid = game.state->players[i].player_id,
         };
+        strncpy((char *)req.name, base, MAX_NAME_LENGTH - 1);
+        ((char *)req.name)[MAX_NAME_LENGTH - 1] = '\0';
         game_register_player(game.state->players, i, req);
     }
     place_players_on_board(game.state);
     game.state->running = true;
 
-    int maxFd;
+    int32_t maxFd;
     fd_set masterSet, readFds;
     init_fd_set(&masterSet, pipes, players_count, &maxFd);
     time_t last_valid_move = time(NULL);
+    int8_t start_player = 0;
     while (!should_exit) {
     }
     game_sync_destroy(game.sync);
