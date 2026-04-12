@@ -25,7 +25,6 @@ void close_other_pipes(int32_t pipes[][pipe_ends], uint32_t pipe_count, ssize_t 
     }
 }
 
-
 void fork_players(int pipes[][pipe_ends], int playersCount, game_state_t *game_state) {
 
     for (int i = 0; i < playersCount; i++) {
