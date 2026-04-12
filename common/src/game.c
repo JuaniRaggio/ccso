@@ -115,13 +115,17 @@ game_t _new_game(entity_t who, game_params_t game_parameters) {
     return game;
 }
 
-void game_disconnect(game_t *game) {
+void game_disconnect(game_t *game, entity_t who) {
     if (game == NULL || game->state == NULL) {
         manage_error(HERE, TRACE_NONE, invalid_argument_error);
         return;
     }
     destroy_shm(game->state, sizeof(game_state_t) + game->state->width * game->state->height);
     destroy_shm(game->sync, sizeof(game_sync_t));
+    if (who == master) {
+        shm_unlink(game_state_memory_name);
+        shm_unlink(game_sync_memory_name);
+    }
 }
 
 void game_end(game_t *game) {
