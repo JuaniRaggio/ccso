@@ -54,7 +54,7 @@ int main(int argc, char *argv[]) {
     players_count = game.state->players_count;
 
     create_pipes(pipes, players_count);
-    fork_players(pipes, players_count, game.state);
+    fork_players(pipes, players_count, game.state, parameters.players_paths, parameters.c_width, parameters.c_height);
 
     close_other_pipes(pipes, players_count, invalid_pipe, pipe_writer);
 
