@@ -511,6 +511,155 @@ static void test_parse_hex_literal_rejected(CuTest *tc) {
     CuAssertTrue(tc, (status & invalid_integer_type) != 0);
 }
 
+/*
+ * -d alone with a valid number should only touch delay, leaving
+ * all other fields at their defaults.
+ */
+static void test_parse_delay_only(CuTest *tc) {
+    reset_getopt();
+    char *argv[] = {(char *)"master", (char *)"-d", (char *)"100", NULL};
+    int32_t argc = 3;
+
+    parameters_t parameters = make_default_parameters();
+    parameter_status_t status = parse(argc, argv, &parameters);
+
+    CuAssertIntEquals(tc, success, status);
+    CuAssertIntEquals(tc, 100, (int)parameters.delay);
+    CuAssertIntEquals(tc, (int)default_width, (int)parameters.width);
+    CuAssertIntEquals(tc, (int)default_heigh, (int)parameters.height);
+    CuAssertIntEquals(tc, (int)default_timeout, (int)parameters.timeout);
+}
+
+/*
+ * -t alone with a valid number should only touch timeout.
+ */
+static void test_parse_timeout_only(CuTest *tc) {
+    reset_getopt();
+    char *argv[] = {(char *)"master", (char *)"-t", (char *)"30", NULL};
+    int32_t argc = 3;
+
+    parameters_t parameters = make_default_parameters();
+    parameter_status_t status = parse(argc, argv, &parameters);
+
+    CuAssertIntEquals(tc, success, status);
+    CuAssertIntEquals(tc, 30, (int)parameters.timeout);
+    CuAssertIntEquals(tc, (int)default_delay, (int)parameters.delay);
+}
+
+/*
+ * A single -p flag must produce players_count == 1 and store the
+ * path in slot 0.
+ */
+static void test_parse_single_player(CuTest *tc) {
+    reset_getopt();
+    char *argv[] = {(char *)"master", (char *)"-p", (char *)"./build/player-x", NULL};
+    int32_t argc = 3;
+
+    parameters_t parameters = make_default_parameters();
+    parameter_status_t status = parse(argc, argv, &parameters);
+
+    CuAssertIntEquals(tc, success, status);
+    CuAssertIntEquals(tc, 1, (int)parameters.players_count);
+    CuAssertStrEquals(tc, "./build/player-x", parameters.players_paths[0]);
+}
+
+/*
+ * "010" in base 10 is parsed as decimal 10 (not octal 8). strtoull
+ * with explicit base 10 does not interpret leading zero as octal.
+ * This is important because the parser hardcodes default_base = 10.
+ */
+static void test_parse_leading_zero_is_decimal(CuTest *tc) {
+    reset_getopt();
+    char *argv[] = {(char *)"master", (char *)"-w", (char *)"010", NULL};
+    int32_t argc = 3;
+
+    parameters_t parameters = make_default_parameters();
+    parameter_status_t status = parse(argc, argv, &parameters);
+
+    CuAssertIntEquals(tc, success, status);
+    CuAssertIntEquals(tc, 10, (int)parameters.width);
+}
+
+/*
+ * All five integer flags (-w, -h, -d, -t, -s) receiving the same value
+ * must store it independently in each field. This catches hypothetical
+ * pointer aliasing bugs.
+ */
+static void test_parse_all_integer_flags_same_value(CuTest *tc) {
+    reset_getopt();
+    char *argv[] = {
+        (char *)"master",
+        (char *)"-w", (char *)"77",
+        (char *)"-h", (char *)"77",
+        (char *)"-d", (char *)"77",
+        (char *)"-t", (char *)"77",
+        (char *)"-s", (char *)"77",
+        NULL,
+    };
+    int32_t argc = sizeof(argv) / sizeof(argv[0]) - 1;
+
+    parameters_t parameters = make_default_parameters();
+    parameter_status_t status = parse(argc, argv, &parameters);
+
+    CuAssertIntEquals(tc, success, status);
+    CuAssertIntEquals(tc, 77, (int)parameters.width);
+    CuAssertIntEquals(tc, 77, (int)parameters.height);
+    CuAssertIntEquals(tc, 77, (int)parameters.delay);
+    CuAssertIntEquals(tc, 77, (int)parameters.timeout);
+    CuAssertIntEquals(tc, 77, (int)parameters.seed);
+}
+
+/*
+ * Two unknown flags in a row: the first one causes parse to set
+ * unknown_optional_flag and break the loop. The second unknown flag
+ * should NOT be processed (status should only have one bit set, and
+ * no further side effects).
+ */
+static void test_parse_two_unknown_flags_only_first_seen(CuTest *tc) {
+    reset_getopt();
+    char *argv[] = {(char *)"master", (char *)"-q", (char *)"-z", NULL};
+    int32_t argc = 3;
+
+    parameters_t parameters = make_default_parameters();
+    parameter_status_t status = parse(argc, argv, &parameters);
+
+    CuAssertTrue(tc, (status & unknown_optional_flag) != 0);
+    /* The status should not have any other error bits set. */
+    CuAssertIntEquals(tc, (int)unknown_optional_flag, (int)status);
+}
+
+/*
+ * Overflow on -s (seed) must set the overflow bit. This exercises a
+ * different branch than overflow on -w (which is tested elsewhere),
+ * because the parser uses a goto to share the integer-parsing path.
+ */
+static void test_parse_overflow_on_seed(CuTest *tc) {
+    reset_getopt();
+    char *argv[] = {(char *)"master", (char *)"-s",
+                    (char *)"999999999999999999999999999999999999999", NULL};
+    int32_t argc = 3;
+
+    parameters_t parameters = make_default_parameters();
+    parameter_status_t status = parse(argc, argv, &parameters);
+
+    CuAssertTrue(tc, (status & overflow) != 0);
+}
+
+/*
+ * invalid_integer_type on -d (delay) must set the bit. This exercises
+ * yet another branch of the goto-based integer parsing.
+ */
+static void test_parse_invalid_integer_on_delay(CuTest *tc) {
+    reset_getopt();
+    char *argv[] = {(char *)"master", (char *)"-d", (char *)"abc", NULL};
+    int32_t argc = 3;
+
+    parameters_t parameters = make_default_parameters();
+    parameter_status_t status = parse(argc, argv, &parameters);
+
+    CuAssertTrue(tc, (status & invalid_integer_type) != 0);
+}
+
 CuSuite *parser_get_suite(void) {
     CuSuite *suite = CuSuiteNew();
     SUITE_ADD_TEST(suite, test_parse_no_arguments);
@@ -537,5 +686,13 @@ CuSuite *parser_get_suite(void) {
     SUITE_ADD_TEST(suite, test_parameter_status_bits_are_disjoint);
     SUITE_ADD_TEST(suite, test_parse_seed_zero);
     SUITE_ADD_TEST(suite, test_parse_hex_literal_rejected);
+    SUITE_ADD_TEST(suite, test_parse_delay_only);
+    SUITE_ADD_TEST(suite, test_parse_timeout_only);
+    SUITE_ADD_TEST(suite, test_parse_single_player);
+    SUITE_ADD_TEST(suite, test_parse_leading_zero_is_decimal);
+    SUITE_ADD_TEST(suite, test_parse_all_integer_flags_same_value);
+    SUITE_ADD_TEST(suite, test_parse_two_unknown_flags_only_first_seen);
+    SUITE_ADD_TEST(suite, test_parse_overflow_on_seed);
+    SUITE_ADD_TEST(suite, test_parse_invalid_integer_on_delay);
     return suite;
 }

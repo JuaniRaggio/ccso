@@ -35,6 +35,10 @@ int32_t main(void) {
     CuSuiteAddSuite(root, game_admin_suite);
     CuSuiteDelete(game_admin_suite);
 
+    CuSuite *player_protocol_suite = player_protocol_get_suite();
+    CuSuiteAddSuite(root, player_protocol_suite);
+    CuSuiteDelete(player_protocol_suite);
+
     CuSuiteRun(root);
 
     CuString *summary = CuStringNew();

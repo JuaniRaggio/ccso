@@ -161,6 +161,98 @@ static void test_manage_error_always_includes_location(CuTest *tc) {
     CuAssertTrue(tc, strstr(buffer, "some_func") != NULL);
 }
 
+/*
+ * invalid_argument_error must produce the "Invalid argument" description.
+ */
+static void test_manage_error_invalid_argument(CuTest *tc) {
+    char buffer[capture_buffer_size];
+    run_manage_error_and_capture(invalid_argument_error, buffer, capture_buffer_size);
+
+    CuAssertTrue(tc, strstr(buffer, "Invalid argument") != NULL);
+    CuAssertTrue(tc, strstr(buffer, "some_file.c") != NULL);
+}
+
+/*
+ * range_error must produce the "Value out of range" description.
+ */
+static void test_manage_error_range(CuTest *tc) {
+    char buffer[capture_buffer_size];
+    run_manage_error_and_capture(range_error, buffer, capture_buffer_size);
+
+    CuAssertTrue(tc, strstr(buffer, "Value out of range") != NULL);
+    CuAssertTrue(tc, strstr(buffer, "some_file.c") != NULL);
+}
+
+/*
+ * manage_error must return the same error_code_t that was passed in.
+ * This is the contract that callers like game_register_all rely on.
+ */
+static void test_manage_error_returns_same_code(CuTest *tc) {
+    stderr_capture_t capture;
+    if (stderr_capture_begin(&capture) != 0) {
+        CuAssertTrue(tc, 0); /* Cannot proceed without capture */
+        return;
+    }
+
+    trace_t internal = {"file.c", "func", 1};
+    error_code_t result = manage_error(internal, TRACE_NONE, mapping_error);
+
+    char discard[capture_buffer_size];
+    stderr_capture_end(&capture, discard, capture_buffer_size);
+
+    CuAssertIntEquals(tc, (int)mapping_error, (int)result);
+}
+
+/*
+ * When both traces are provided, both "internal" and "caller" frames
+ * should appear in the output.
+ */
+static void test_manage_error_both_traces(CuTest *tc) {
+    stderr_capture_t capture;
+    if (stderr_capture_begin(&capture) != 0) {
+        CuAssertTrue(tc, 0);
+        return;
+    }
+
+    trace_t internal = {"internal.c", "inner_func", 42};
+    trace_t caller = {"caller.c", "outer_func", 99};
+    manage_error(internal, caller, access_error);
+
+    char buffer[capture_buffer_size];
+    stderr_capture_end(&capture, buffer, capture_buffer_size);
+
+    CuAssertTrue(tc, strstr(buffer, "internal.c") != NULL);
+    CuAssertTrue(tc, strstr(buffer, "inner_func") != NULL);
+    CuAssertTrue(tc, strstr(buffer, "42") != NULL);
+    CuAssertTrue(tc, strstr(buffer, "caller.c") != NULL);
+    CuAssertTrue(tc, strstr(buffer, "outer_func") != NULL);
+    CuAssertTrue(tc, strstr(buffer, "99") != NULL);
+}
+
+/*
+ * When both traces are TRACE_NONE, no frame lines should appear; only
+ * the "Error: ..." header line. We verify by checking that "internal"
+ * and "caller" labels are absent.
+ */
+static void test_manage_error_no_traces(CuTest *tc) {
+    stderr_capture_t capture;
+    if (stderr_capture_begin(&capture) != 0) {
+        CuAssertTrue(tc, 0);
+        return;
+    }
+
+    manage_error(TRACE_NONE, TRACE_NONE, connection_error);
+
+    char buffer[capture_buffer_size];
+    stderr_capture_end(&capture, buffer, capture_buffer_size);
+
+    /* The error message itself must appear. */
+    CuAssertTrue(tc, strstr(buffer, "Failed to connect to shared memory") != NULL);
+    /* No frame labels should be present. */
+    CuAssertTrue(tc, strstr(buffer, "internal") == NULL);
+    CuAssertTrue(tc, strstr(buffer, "caller") == NULL);
+}
+
 CuSuite *error_management_get_suite(void) {
     CuSuite *suite = CuSuiteNew();
     SUITE_ADD_TEST(suite, test_manage_error_access);
@@ -169,5 +261,10 @@ CuSuite *error_management_get_suite(void) {
     SUITE_ADD_TEST(suite, test_manage_error_connection);
     SUITE_ADD_TEST(suite, test_manage_error_unknown_default);
     SUITE_ADD_TEST(suite, test_manage_error_always_includes_location);
+    SUITE_ADD_TEST(suite, test_manage_error_invalid_argument);
+    SUITE_ADD_TEST(suite, test_manage_error_range);
+    SUITE_ADD_TEST(suite, test_manage_error_returns_same_code);
+    SUITE_ADD_TEST(suite, test_manage_error_both_traces);
+    SUITE_ADD_TEST(suite, test_manage_error_no_traces);
     return suite;
 }

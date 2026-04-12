@@ -79,12 +79,12 @@ TEST_SRCS = $(CUTEST_DIR)/CuTest.c \
 # unrelated to the units under test. common/src/game_sync.c is pulled in so
 # the game_sync unit tests can exercise the writer/reader/view/player
 # helpers over an in-process game_sync_t. master/src/game_admin.c is
-# pulled in for game_register_player / game_register_all / game_state_init
-# tests and needs the Darwin shim include path below to fulfil a few
-# macOS-only include directives in master/include/game_admin.h.
+# pulled in for game_register_player / game_register_all / game_state_init /
+# is_move_allowed / apply_move / register_move tests.
 TEST_PROJECT_SRCS = master/utils/parser.c \
                     common/src/error_management.c \
                     common/src/game_sync.c \
+                    common/src/player_protocol.c \
                     master/src/game_admin.c
 
 TEST_BIN = $(TEST_BUILD_DIR)/run_tests
