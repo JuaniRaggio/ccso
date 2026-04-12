@@ -78,16 +78,15 @@ void apply_move(game_state_t *state, uint16_t j, uint16_t k, int8_t playerId) {
 
     if (!is_move_allowed(state, j, k)) {
         valid_move = false;
-    }
-    else{
+    } else {
         int index = j * state->width + k;
-        state->board[index] = -playerId; //No es el PID
+        state->board[index] = -playerId; // No es el PID
     }
     is_valid_move(state, valid_move, playerId);
     return;
 }
 
-void is_valid_move(game_state_t *state, bool is_valid_move, int8_t playerId){
+void is_valid_move(game_state_t *state, bool is_valid_move, int8_t playerId) {
 
     state->players[playerId].valid_moves += is_valid_move;
     state->players[playerId].invalid_moves += !is_valid_move;
