@@ -51,9 +51,10 @@ pid_t fork_view(const char *view_path, const char *width, const char *height) {
             [0] = (char *)view_path,
             [1] = (char *)width,
             [2] = (char *)height,
+            [3] = NULL,
         };
         execve(view_path, args, NULL);
-        manage_error(HERE, TRACE_NONE, unreachable);
+        manage_error(HERE, TRACE_NONE, errno);
         _exit(EXIT_FAILURE);
     }
     return view_pid;
@@ -83,7 +84,7 @@ void fork_players(int pipes[][pipe_ends], int playersCount, game_state_t *game_s
                 NULL,
             };
             execve(player_paths[i], args, NULL);
-            manage_error(HERE, TRACE_NONE, unreachable);
+            manage_error(HERE, TRACE_NONE, errno);
             _exit(EXIT_FAILURE);
         }
         game_state->players[i].player_id = new_player;

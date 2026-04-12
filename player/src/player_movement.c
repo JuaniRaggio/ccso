@@ -69,7 +69,15 @@ static int32_t flood_count(int8_t board[], uint16_t width, uint16_t height, int1
 #ifdef NAIVE
 
 int8_t compute_next_move(int8_t board[], uint16_t width, uint16_t height, uint16_t x, uint16_t y) {
-    return rand() % dir_count;
+    int8_t valid_dirs[dir_count];
+    int8_t count = 0;
+    for (int8_t dir = 0; dir < dir_count; dir++) {
+        int16_t nx, ny;
+        if (is_free_neighbor(board, width, height, x, y, dir, &nx, &ny)) {
+            valid_dirs[count++] = dir;
+        }
+    }
+    return count > 0 ? valid_dirs[rand() % count] : NO_VALID_MOVE;
 }
 
 #elif defined(GREEDY)

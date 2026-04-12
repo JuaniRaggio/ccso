@@ -8,19 +8,20 @@
 #include <stdint.h>
 #include <time.h>
 
-typedef struct {
-    game_state_t *state;
-    game_sync_t *sync;
-
-    size_t shm_total_size;
-} game_t;
-
 typedef enum {
     master,
     player,
     view,
     total_entities,
 } entity_t;
+
+typedef struct {
+    game_state_t *state;
+    game_sync_t *sync;
+
+    size_t shm_total_size;
+    entity_t who;
+} game_t;
 
 typedef struct {
     error_manager_t manage_error;
@@ -32,7 +33,9 @@ typedef struct {
 
 static const char *const default_view_path = NULL;
 static const uint64_t default_width = 10;
+static const char *const default_c_width = "10";
 static const uint64_t default_heigh = 10;
+static const char *const default_c_height = "10";
 static const uint64_t default_delay = 200;
 static const uint64_t default_timeout = 10;
 

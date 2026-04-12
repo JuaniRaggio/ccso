@@ -4,13 +4,6 @@
 #include <stdint.h>
 #include <string.h>
 
-static inline int16_t elevation(int8_t cell_value) {
-    if (cell_value < MIN_CELL_VALUE || cell_value > MAX_CELL_VALUE) {
-        return 0;
-    }
-    return (int16_t)((cell_value - MIN_CELL_VALUE) * HEX_MAX_ELEVATION / CELL_VALUE_RANGE);
-}
-
 static int8_t player_at(game_state_t *state, uint16_t col, uint16_t row) {
     for (int8_t i = 0; i < state->players_count; i++) {
         if (state->players[i].x == col && state->players[i].y == row) {
@@ -20,7 +13,15 @@ static int8_t player_at(game_state_t *state, uint16_t col, uint16_t row) {
     return NO_PLAYER;
 }
 
-void view_init(view_t *view) {
+// Strip "player-" prefix from name for display
+static const char *display_name(const char *name) {
+    if (strncmp(name, PLAYER_PREFIX, PLAYER_PREFIX_LEN) == 0) {
+        return name + PLAYER_PREFIX_LEN;
+    }
+    return name;
+}
+
+void view_init(view_t *view, uint16_t board_width, uint16_t board_height) {
     initscr();
     cbreak();
     noecho();
@@ -41,13 +42,26 @@ void view_init(view_t *view) {
 
     getmaxyx(stdscr, view->term_rows, view->term_cols);
 
-    int16_t board_width = view->term_cols - PANEL_WIDTH - 1;
-    if (board_width < MIN_BOARD_WIDTH) {
-        board_width = view->term_cols;
+    view->board_rows = view->term_rows - PANEL_HEIGHT;
+    if (view->board_rows < 1) {
+        view->board_rows = 1;
     }
 
-    view->board_win = newwin(view->term_rows, board_width, 0, 0);
-    view->panel_win = newwin(view->term_rows, PANEL_WIDTH, 0, board_width + 1);
+    // Center the board horizontally
+    int16_t board_char_width = (int16_t)(board_width * CELL_WIDTH);
+    view->board_x_offset = (view->term_cols - board_char_width) / 2;
+    if (view->board_x_offset < 0) {
+        view->board_x_offset = 0;
+    }
+
+    // Center the board vertically within the board window
+    view->board_y_offset = (view->board_rows - (int16_t)board_height) / 2;
+    if (view->board_y_offset < 0) {
+        view->board_y_offset = 0;
+    }
+
+    view->board_win = newwin(view->board_rows, view->term_cols, 0, 0);
+    view->panel_win = newwin(PANEL_HEIGHT, view->term_cols, view->board_rows, 0);
 }
 
 void view_cleanup(view_t *view) {
@@ -60,105 +74,94 @@ void view_cleanup(view_t *view) {
     endwin();
 }
 
-static void draw_hex_cell(WINDOW *win, int16_t col, int16_t row, int8_t value, int8_t player_idx) {
-    int16_t sx = col * (HEX_CELL_WIDTH - HEX_CELL_OVERLAP);
-
-    int16_t row_slot = HEX_CELL_BASE_HEIGHT + HEX_MAX_ELEVATION;
-    int16_t sy_base = row * row_slot;
-
-    if (col % 2 != 0) {
-        sy_base += row_slot / HEX_STAGGER_DIVISOR;
-    }
-
-    int16_t elev = elevation(value);
-    int16_t sy = sy_base - elev;
-    if (sy < 0) {
-        sy = 0;
-    }
-
-    int16_t color_pair;
-    if (player_idx != NO_PLAYER) {
-        color_pair = player_idx + COLOR_PAIR_OFFSET;
-    } else if (value <= 0) {
-        color_pair = COLOR_EMPTY;
-    } else {
-        color_pair = COLOR_BOARD;
-    }
-
-    wattron(win, COLOR_PAIR(color_pair));
-
-    // Elevation pillars above the hex body
-    for (int16_t e = 0; e < elev; e++) {
-        mvwprintw(win, sy + e, sx, "|   |");
-    }
-
-    // Hex shape: top, body, bottom
-    mvwprintw(win, sy + elev + HEX_TOP_LINE, sx, "/---\\");
-    if (value > 0) {
-        mvwprintw(win, sy + elev + HEX_BODY_LINE, sx, "| %d |", value);
-    } else {
-        mvwprintw(win, sy + elev + HEX_BODY_LINE, sx, "|   |");
-    }
-    mvwprintw(win, sy + elev + HEX_BOTTOM_LINE, sx, "\\---/");
-
-    // Player marker overwrites the cell value
-    if (player_idx != NO_PLAYER) {
-        wattron(win, A_BOLD);
-        mvwprintw(win, sy + elev + HEX_BODY_LINE, sx + HEX_BODY_TEXT_OFFSET, "P%d", player_idx);
-        wattroff(win, A_BOLD);
-    }
-
-    wattroff(win, COLOR_PAIR(color_pair));
-}
-
 void view_draw_board(view_t *view, game_state_t *state) {
     werase(view->board_win);
 
     for (uint16_t row = 0; row < state->height; row++) {
+        int16_t y = view->board_y_offset + (int16_t)row;
+        if (y < 0 || y >= view->board_rows) {
+            continue;
+        }
         for (uint16_t col = 0; col < state->width; col++) {
             int8_t value = state->board[row * state->width + col];
             int8_t pidx = player_at(state, col, row);
-            draw_hex_cell(view->board_win, (int16_t)col, (int16_t)row, value, pidx);
+            int16_t x = view->board_x_offset + col * CELL_WIDTH;
+
+            if (pidx != NO_PLAYER) {
+                wattron(view->board_win, COLOR_PAIR(pidx + COLOR_PAIR_OFFSET) | A_BOLD);
+                mvwprintw(view->board_win, y, x, "P%d", pidx);
+                wattroff(view->board_win, COLOR_PAIR(pidx + COLOR_PAIR_OFFSET) | A_BOLD);
+            } else if (value > 0) {
+                wattron(view->board_win, COLOR_PAIR(COLOR_BOARD));
+                mvwprintw(view->board_win, y, x, "%2d", value);
+                wattroff(view->board_win, COLOR_PAIR(COLOR_BOARD));
+            } else {
+                int8_t eater = (int8_t)(-value);
+                wattron(view->board_win, COLOR_PAIR(eater + COLOR_PAIR_OFFSET) | A_DIM);
+                mvwprintw(view->board_win, y, x, " *");
+                wattroff(view->board_win, COLOR_PAIR(eater + COLOR_PAIR_OFFSET) | A_DIM);
+            }
+
+            if (col < state->width - 1) {
+                mvwaddch(view->board_win, y, x + 2, ' ');
+            }
         }
     }
 
     wrefresh(view->board_win);
 }
 
-static void draw_player_panel(WINDOW *win, int16_t panel_row, player_t *player, int8_t idx) {
-    int16_t y = panel_row * PANEL_HEIGHT;
+static void draw_player_panel(WINDOW *win, int16_t x, int16_t w, player_t *player, int8_t idx) {
     int16_t color = idx + COLOR_PAIR_OFFSET;
+    const char *name = display_name(player->name);
+    const char *face = PLAYER_FACES[idx % MAX_PLAYERS];
+    const char *status = player->state ? "ALIVE" : "DEAD";
 
     wattron(win, COLOR_PAIR(color));
 
-    // Top border
-    mvwprintw(win, y, 0, "+");
-    for (int16_t i = 1; i < PANEL_WIDTH - 1; i++) {
-        mvwaddch(win, y, i, '-');
+    // Line 0: top border  +=== P0: naive [ALIVE] ===+
+    mvwaddch(win, 0, x, '+');
+    for (int16_t i = 1; i < w - 1; i++) {
+        mvwaddch(win, 0, x + i, '=');
     }
-    mvwaddch(win, y, PANEL_WIDTH - 1, '+');
+    mvwaddch(win, 0, x + w - 1, '+');
 
-    // Player label centered on the top border
-    char label[LABEL_BUFFER_SIZE];
-    snprintf(label, sizeof(label), " P%d: %.10s ", idx, player->name);
-    int16_t label_start = (PANEL_WIDTH - (int16_t)strlen(label)) / 2;
-    mvwprintw(win, y, label_start, "%s", label);
-
-    // Row 1: face + score
-    mvwprintw(win, y + 1, 0, "| %s  Score: %-6u      |", PLAYER_FACES[idx % MAX_PLAYERS], player->score);
-
-    // Row 2: current position on the board
-    mvwprintw(win, y + 2, 0, "| Pos: (%-3u, %-3u)        |", player->x, player->y);
-
-    // Row 3: valid/invalid move counts
-    mvwprintw(win, y + 3, 0, "| Moves: %-5uv %-5ui   |", player->valid_moves, player->invalid_moves);
-
-    // Bottom border
-    mvwprintw(win, y + 4, 0, "+");
-    for (int16_t i = 1; i < PANEL_WIDTH - 1; i++) {
-        mvwaddch(win, y + 4, i, '-');
+    char header[LABEL_BUFFER_SIZE];
+    snprintf(header, sizeof(header), " P%d: %s [%s] ", idx, name, status);
+    int16_t hlen = (int16_t)strlen(header);
+    int16_t hstart = x + (w - hlen) / 2;
+    if (hstart < x + 1) {
+        hstart = x + 1;
     }
-    mvwaddch(win, y + 4, PANEL_WIDTH - 1, '+');
+    if (!player->state) {
+        wattron(win, A_DIM);
+    }
+    mvwprintw(win, 0, hstart, "%s", header);
+    if (!player->state) {
+        wattroff(win, A_DIM);
+    }
+
+    // Line 1: face + score   | [^_^]  Score: 150     |
+    mvwaddch(win, 1, x, '|');
+    char line1[64];
+    snprintf(line1, sizeof(line1), " %s  Score: %-5u", face, player->score);
+    mvwprintw(win, 1, x + 1, "%-*s", w - 2, line1);
+    mvwaddch(win, 1, x + w - 1, '|');
+
+    // Line 2: pos + valid/invalid   | (5,3)  V:45  I:2    |
+    mvwaddch(win, 2, x, '|');
+    char line2[64];
+    snprintf(line2, sizeof(line2), " (%u,%u)  V:%-4u I:%-4u", player->x, player->y, player->valid_moves,
+             player->invalid_moves);
+    mvwprintw(win, 2, x + 1, "%-*s", w - 2, line2);
+    mvwaddch(win, 2, x + w - 1, '|');
+
+    // Line 3: bottom border  +===...===+
+    mvwaddch(win, 3, x, '+');
+    for (int16_t i = 1; i < w - 1; i++) {
+        mvwaddch(win, 3, x + i, '=');
+    }
+    mvwaddch(win, 3, x + w - 1, '+');
 
     wattroff(win, COLOR_PAIR(color));
 }
@@ -166,8 +169,19 @@ static void draw_player_panel(WINDOW *win, int16_t panel_row, player_t *player, 
 void view_draw_panels(view_t *view, game_state_t *state) {
     werase(view->panel_win);
 
+    if (state->players_count <= 0) {
+        wrefresh(view->panel_win);
+        return;
+    }
+
+    int16_t panel_w = view->term_cols / state->players_count;
+    if (panel_w < 12) {
+        panel_w = 12;
+    }
     for (int8_t i = 0; i < state->players_count; i++) {
-        draw_player_panel(view->panel_win, i, &state->players[i], i);
+        int16_t x_offset = i * panel_w;
+        int16_t w = (i == state->players_count - 1) ? (view->term_cols - x_offset) : panel_w;
+        draw_player_panel(view->panel_win, x_offset, w, &state->players[i], i);
     }
 
     wrefresh(view->panel_win);

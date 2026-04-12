@@ -101,6 +101,7 @@ static game_t game_create_shared_memory(entity_t who, game_params_t *game_parame
         .sync = _create_shm(&entity_spec[who][game_sync], sync_size, game_parameters->manage_error,
                             game_parameters->caller),
         .shm_total_size = state_size + sync_size,
+        .who = who,
     };
 }
 
@@ -122,6 +123,10 @@ void game_disconnect(game_t *game) {
     }
     destroy_shm(game->state, sizeof(game_state_t) + game->state->width * game->state->height);
     destroy_shm(game->sync, sizeof(game_sync_t));
+    if (game->who == master) {
+        shm_unlink(game_state_memory_name);
+        shm_unlink(game_sync_memory_name);
+    }
 }
 
 void game_end(game_t *game) {

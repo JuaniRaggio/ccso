@@ -63,6 +63,10 @@ int main(int argc, char *argv[]) {
                                                  game.state->players[my_idx].x, game.state->players[my_idx].y);
         game_sync_reader_exit(game.sync);
 
+        if (dir == NO_VALID_MOVE) {
+            break;
+        }
+
         send_direction(STDOUT_FILENO, dir);
         game_sync_player_wait_turn(game.sync, (uint8_t)my_idx);
         if (!game.state->running) {
