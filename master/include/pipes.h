@@ -15,7 +15,7 @@ typedef enum {
 
 void create_pipes(int pipes[][pipe_ends], int playersCount);
 
-pid_t fork_view(const char * view_path, const char * width, const char * height);
+pid_t fork_view(const char *view_path, const char *width, const char *height);
 
 void fork_players(int pipes[][pipe_ends], int playersCount, game_state_t *game_state);
 
