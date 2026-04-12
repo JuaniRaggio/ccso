@@ -4,13 +4,6 @@
 #include <stdint.h>
 #include <string.h>
 
-static inline int16_t elevation(int8_t cell_value) {
-    if (cell_value < MIN_CELL_VALUE || cell_value > MAX_CELL_VALUE) {
-        return 0;
-    }
-    return (int16_t)((cell_value - MIN_CELL_VALUE) * HEX_MAX_ELEVATION / CELL_VALUE_RANGE);
-}
-
 static int8_t player_at(game_state_t *state, uint16_t col, uint16_t row) {
     for (int8_t i = 0; i < state->players_count; i++) {
         if (state->players[i].x == col && state->players[i].y == row) {
@@ -41,13 +34,13 @@ void view_init(view_t *view) {
 
     getmaxyx(stdscr, view->term_rows, view->term_cols);
 
-    int16_t board_width = view->term_cols - PANEL_WIDTH - 1;
-    if (board_width < MIN_BOARD_WIDTH) {
-        board_width = view->term_cols;
+    int16_t board_h = view->term_rows - PANEL_BOTTOM_HEIGHT;
+    if (board_h < 1) {
+        board_h = 1;
     }
 
-    view->board_win = newwin(view->term_rows, board_width, 0, 0);
-    view->panel_win = newwin(view->term_rows, PANEL_WIDTH, 0, board_width + 1);
+    view->board_win = newwin(board_h, view->term_cols, 0, 0);
+    view->panel_win = newwin(PANEL_BOTTOM_HEIGHT, view->term_cols, board_h, 0);
 }
 
 void view_cleanup(view_t *view) {
@@ -63,49 +56,41 @@ void view_cleanup(view_t *view) {
 static void draw_hex_cell(WINDOW *win, int16_t col, int16_t row, int8_t value, int8_t player_idx) {
     int16_t sx = col * (HEX_CELL_WIDTH - HEX_CELL_OVERLAP);
 
-    int16_t row_slot = HEX_CELL_BASE_HEIGHT + HEX_MAX_ELEVATION;
-    int16_t sy_base = row * row_slot;
-
+    int16_t sy = row * HEX_CELL_BASE_HEIGHT;
     if (col % 2 != 0) {
-        sy_base += row_slot / HEX_STAGGER_DIVISOR;
-    }
-
-    int16_t elev = elevation(value);
-    int16_t sy = sy_base - elev;
-    if (sy < 0) {
-        sy = 0;
+        sy += HEX_CELL_BASE_HEIGHT / HEX_STAGGER_DIVISOR;
     }
 
     int16_t color_pair;
     if (player_idx != NO_PLAYER) {
         color_pair = player_idx + COLOR_PAIR_OFFSET;
     } else if (value <= 0) {
-        color_pair = COLOR_EMPTY;
+        // Eaten cell: value = -player_id, so eater index = -value
+        int8_t eater = (int8_t)(-value);
+        color_pair = eater + COLOR_PAIR_OFFSET;
     } else {
         color_pair = COLOR_BOARD;
     }
 
     wattron(win, COLOR_PAIR(color_pair));
 
-    // Elevation pillars above the hex body
-    for (int16_t e = 0; e < elev; e++) {
-        mvwprintw(win, sy + e, sx, "|   |");
-    }
-
-    // Hex shape: top, body, bottom
-    mvwprintw(win, sy + elev + HEX_TOP_LINE, sx, "/---\\");
-    if (value > 0) {
-        mvwprintw(win, sy + elev + HEX_BODY_LINE, sx, "| %d |", value);
-    } else {
-        mvwprintw(win, sy + elev + HEX_BODY_LINE, sx, "|   |");
-    }
-    mvwprintw(win, sy + elev + HEX_BOTTOM_LINE, sx, "\\---/");
-
-    // Player marker overwrites the cell value
     if (player_idx != NO_PLAYER) {
+        // Player standing here: bold hex with player marker
         wattron(win, A_BOLD);
-        mvwprintw(win, sy + elev + HEX_BODY_LINE, sx + HEX_BODY_TEXT_OFFSET, "P%d", player_idx);
+        mvwprintw(win, sy + HEX_TOP_LINE, sx, "/---\\");
+        mvwprintw(win, sy + HEX_BODY_LINE, sx, "|P%-2d|", player_idx);
+        mvwprintw(win, sy + HEX_BOTTOM_LINE, sx, "\\---/");
         wattroff(win, A_BOLD);
+    } else if (value > 0) {
+        // Unclaimed cell with value
+        mvwprintw(win, sy + HEX_TOP_LINE, sx, "/---\\");
+        mvwprintw(win, sy + HEX_BODY_LINE, sx, "| %d |", value);
+        mvwprintw(win, sy + HEX_BOTTOM_LINE, sx, "\\---/");
+    } else {
+        // Eaten cell: dim colored marker
+        mvwprintw(win, sy + HEX_TOP_LINE, sx, "/---\\");
+        mvwprintw(win, sy + HEX_BODY_LINE, sx, "| . |");
+        mvwprintw(win, sy + HEX_BOTTOM_LINE, sx, "\\---/");
     }
 
     wattroff(win, COLOR_PAIR(color_pair));
@@ -125,40 +110,44 @@ void view_draw_board(view_t *view, game_state_t *state) {
     wrefresh(view->board_win);
 }
 
-static void draw_player_panel(WINDOW *win, int16_t panel_row, player_t *player, int8_t idx) {
-    int16_t y = panel_row * PANEL_HEIGHT;
+static void draw_player_panel(WINDOW *win, int16_t x_offset, int16_t panel_w, player_t *player, int8_t idx) {
     int16_t color = idx + COLOR_PAIR_OFFSET;
 
     wattron(win, COLOR_PAIR(color));
 
-    // Top border
-    mvwprintw(win, y, 0, "+");
-    for (int16_t i = 1; i < PANEL_WIDTH - 1; i++) {
-        mvwaddch(win, y, i, '-');
+    // Top border with label
+    mvwaddch(win, 0, x_offset, '+');
+    for (int16_t i = 1; i < panel_w - 1; i++) {
+        mvwaddch(win, 0, x_offset + i, '-');
     }
-    mvwaddch(win, y, PANEL_WIDTH - 1, '+');
+    mvwaddch(win, 0, x_offset + panel_w - 1, '+');
 
-    // Player label centered on the top border
     char label[LABEL_BUFFER_SIZE];
-    snprintf(label, sizeof(label), " P%d: %.10s ", idx, player->name);
-    int16_t label_start = (PANEL_WIDTH - (int16_t)strlen(label)) / 2;
-    mvwprintw(win, y, label_start, "%s", label);
+    snprintf(label, sizeof(label), " %s P%d: %.8s ", PLAYER_FACES[idx % MAX_PLAYERS], idx, player->name);
+    int16_t label_len = (int16_t)strlen(label);
+    int16_t label_start = x_offset + (panel_w - label_len) / 2;
+    if (label_start < x_offset + 1) {
+        label_start = x_offset + 1;
+    }
+    mvwprintw(win, 0, label_start, "%s", label);
 
-    // Row 1: face + score
-    mvwprintw(win, y + 1, 0, "| %s  Score: %-6u      |", PLAYER_FACES[idx % MAX_PLAYERS], player->score);
-
-    // Row 2: current position on the board
-    mvwprintw(win, y + 2, 0, "| Pos: (%-3u, %-3u)        |", player->x, player->y);
-
-    // Row 3: valid/invalid move counts
-    mvwprintw(win, y + 3, 0, "| Moves: %-5uv %-5ui   |", player->valid_moves, player->invalid_moves);
+    // Stats line
+    mvwaddch(win, 1, x_offset, '|');
+    char stats[64];
+    snprintf(stats, sizeof(stats), " S:%-5u V:%-4u I:%-4u", player->score, player->valid_moves, player->invalid_moves);
+    int16_t stats_len = (int16_t)strlen(stats);
+    mvwprintw(win, 1, x_offset + 1, "%s", stats);
+    for (int16_t i = stats_len + 1; i < panel_w - 1; i++) {
+        mvwaddch(win, 1, x_offset + i, ' ');
+    }
+    mvwaddch(win, 1, x_offset + panel_w - 1, '|');
 
     // Bottom border
-    mvwprintw(win, y + 4, 0, "+");
-    for (int16_t i = 1; i < PANEL_WIDTH - 1; i++) {
-        mvwaddch(win, y + 4, i, '-');
+    mvwaddch(win, 2, x_offset, '+');
+    for (int16_t i = 1; i < panel_w - 1; i++) {
+        mvwaddch(win, 2, x_offset + i, '-');
     }
-    mvwaddch(win, y + 4, PANEL_WIDTH - 1, '+');
+    mvwaddch(win, 2, x_offset + panel_w - 1, '+');
 
     wattroff(win, COLOR_PAIR(color));
 }
@@ -166,8 +155,20 @@ static void draw_player_panel(WINDOW *win, int16_t panel_row, player_t *player, 
 void view_draw_panels(view_t *view, game_state_t *state) {
     werase(view->panel_win);
 
+    if (state->players_count <= 0) {
+        wrefresh(view->panel_win);
+        return;
+    }
+
+    int16_t panel_w = view->term_cols / state->players_count;
+    if (panel_w < 10) {
+        panel_w = 10;
+    }
+
     for (int8_t i = 0; i < state->players_count; i++) {
-        draw_player_panel(view->panel_win, i, &state->players[i], i);
+        int16_t x_offset = i * panel_w;
+        int16_t w = (i == state->players_count - 1) ? (view->term_cols - x_offset) : panel_w;
+        draw_player_panel(view->panel_win, x_offset, w, &state->players[i], i);
     }
 
     wrefresh(view->panel_win);
