@@ -88,7 +88,14 @@ int main(int argc, char *argv[]) {
         }
         if (ready == 0)
             break;
+
+        bool any_move = false;
+        bool any_valid = false;
+        int8_t last_processed = start_player;
+        if (!any_player_alive(game.state))
+            break;
     }
+
     game_end(&game);
 
     if (has_view)
