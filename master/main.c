@@ -43,7 +43,7 @@ int main(int argc, char *argv[]) {
     errno = 0;
     game_t game = new_game(master, .height = parameters.height, .width = parameters.width, .seed = parameters.seed);
     game_state_init(&game, parameters.width, parameters.height, parameters.seed, parameters.players_count);
-    
+
     const bool has_view = parameters.view_path != NULL;
     if (has_view) {
         // TODO: make view process
@@ -54,7 +54,7 @@ int main(int argc, char *argv[]) {
 
     create_pipes(pipes, players_count);
     fork_players(pipes, players_count, game.state);
-    
+
     close_other_pipes(pipes, players_count, invalid_pipe, pipe_writer);
 
     /*
