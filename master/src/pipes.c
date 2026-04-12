@@ -37,7 +37,7 @@ static pid_t new_process() {
     return pid;
 }
 
-pid_t fork_view(char * view_path, char * width, char * height) {
+pid_t fork_view(char *view_path, char *width, char *height) {
     if (view_path == NULL) {
         manage_error(HERE, TRACE_NONE, invalid_argument_error);
         exit(EXIT_FAILURE);
