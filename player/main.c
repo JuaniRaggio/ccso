@@ -60,13 +60,8 @@ int main(int argc, char *argv[]) {
             break;
         }
         game_sync_reader_enter(game.sync);
-        direction_wire_t dir = compute_next_move(
-            game.state->board,
-            game.state->width,
-            game.state->height,
-            game.state->players[my_idx].x,
-            game.state->players[my_idx].y
-        );
+        direction_wire_t dir = compute_next_move(game.state->board, game.state->width, game.state->height,
+                                                 game.state->players[my_idx].x, game.state->players[my_idx].y);
         game_sync_reader_exit(game.sync);
 
         send_direction(STDOUT_FILENO, dir);
