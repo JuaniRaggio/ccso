@@ -32,7 +32,9 @@ typedef struct {
 
 static const char *const default_view_path = NULL;
 static const uint64_t default_width = 10;
+static const char *const default_c_width = "10";
 static const uint64_t default_heigh = 10;
+static const char *const default_c_height = "10";
 static const uint64_t default_delay = 200;
 static const uint64_t default_timeout = 10;
 

@@ -29,7 +29,9 @@ int main(int argc, char *argv[]) {
     errno = 0;
     parameters_t parameters = (parameters_t){
         .width = default_width,
+        .c_width = (char *)default_c_width,
         .height = default_heigh,
+        .c_height = (char *)default_c_height,
         .delay = default_delay,
         .timeout = default_timeout,
         .seed = time(NULL),
@@ -52,7 +54,7 @@ int main(int argc, char *argv[]) {
 
     create_pipes(pipes, players_count);
 
-    const bool has_view = parameters.view_path != NULL;
+    bool has_view = parameters.view_path != NULL;
     pid_t view_pid = 0;
     if (has_view) {
         view_pid = fork_view(parameters.view_path, parameters.c_width, parameters.c_height);
@@ -111,8 +113,13 @@ int main(int argc, char *argv[]) {
         if (any_valid)
             last_valid_move = time(NULL);
 
-        if (any_move && has_view)
-            game_sync_view_cycle(game.sync);
+        if (any_move && has_view) {
+            if (waitpid(view_pid, NULL, WNOHANG) != 0) {
+                has_view = false;
+            } else {
+                game_sync_view_cycle(game.sync);
+            }
+        }
 
         if (any_move)
             usleep(parameters.delay * 1000);
@@ -131,9 +138,8 @@ int main(int argc, char *argv[]) {
     for (int8_t i = 0; i < players_count; i++) {
         waitpid(game.state->players[i].player_id, NULL, 0);
     }
-    if (has_view) {
+    if (has_view)
         waitpid(view_pid, NULL, 0);
-    }
 
     print_game_results(game.state);
 
