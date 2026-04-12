@@ -54,7 +54,7 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    while (!should_exit && game.state->running) {
+    while (1) {
         game_sync_player_wait_turn(game.sync, (uint8_t)my_idx);
         if (should_exit || !game.state->running) {
             break;
