@@ -88,6 +88,7 @@ TEST_PROJECT_SRCS = master/utils/parser.c \
                     common/src/game_sync.c \
                     common/src/player_protocol.c \
                     master/src/game_admin.c \
+                    master/src/pipes.c \
                     player/src/player_movement.c
 
 TEST_BIN = $(TEST_BUILD_DIR)/run_tests

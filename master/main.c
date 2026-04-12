@@ -105,6 +105,9 @@ int main(int argc, char *argv[]) {
                 last_processed = idx;
             }
         }
+
+        start_player = (last_processed + 1) % players_count;
+
         if (any_valid)
             last_valid_move = time(NULL);
 
