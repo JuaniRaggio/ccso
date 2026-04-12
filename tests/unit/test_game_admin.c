@@ -24,7 +24,7 @@
  *     values in [1, 9].
  *   - is_move_allowed: checks if a (row, col) coordinate is within the
  *     board and the cell is not already claimed (board[i] >= 0).
- *   - apply_move: if the move is allowed, stamps -player_id on the cell;
+ *   - apply_move: if the move is allowed, stamps -(player_id+1) on the cell;
  *     otherwise leaves the board untouched. Either way delegates to
  *     register_move to bump the valid/invalid counter.
  *   - register_move: increments the valid_moves or invalid_moves counter
@@ -606,7 +606,7 @@ static void test_is_move_allowed_all_corners(CuTest *tc) {
 /* ---------- apply_move ---------- */
 
 /*
- * A valid apply_move must stamp -player_id on the target cell and
+ * A valid apply_move must stamp -(player_id+1) on the target cell and
  * increment the player's valid_moves counter.
  *
  * IMPORTANT: register_move uses player_id as a direct index into
@@ -624,7 +624,7 @@ static void test_apply_move_valid_stamps_cell(CuTest *tc) {
     const int8_t pid = 1;
     apply_move(game->state, 2, 3, pid);
 
-    CuAssertIntEquals(tc, -pid, (int)game->state->board[2 * 5 + 3]);
+    CuAssertIntEquals(tc, -(pid + 1), (int)game->state->board[2 * 5 + 3]);
     CuAssertIntEquals(tc, 1, (int)game->state->players[pid].valid_moves);
     CuAssertIntEquals(tc, 0, (int)game->state->players[pid].invalid_moves);
 
@@ -657,11 +657,6 @@ static void test_apply_move_out_of_bounds_increments_invalid(CuTest *tc) {
 /*
  * Trying to move onto an already-claimed cell must be treated as
  * invalid: board stays unchanged, invalid_moves incremented.
- *
- * NOTE: player_id = 0 cannot claim cells because -0 == 0 and
- * is_move_allowed checks board[i] < 0. We use player IDs >= 1
- * to avoid this edge case. The player-0 issue is documented as
- * a bug in the report.
  */
 static void test_apply_move_already_claimed_is_invalid(CuTest *tc) {
     game_t *game = make_initialized_game(5, 5, 12, 2);
@@ -673,12 +668,12 @@ static void test_apply_move_already_claimed_is_invalid(CuTest *tc) {
 
     /* First move by player 1 should succeed. */
     apply_move(game->state, 1, 1, pid0);
-    CuAssertIntEquals(tc, -pid0, (int)game->state->board[1 * 5 + 1]);
+    CuAssertIntEquals(tc, -(pid0 + 1), (int)game->state->board[1 * 5 + 1]);
     CuAssertIntEquals(tc, 1, (int)game->state->players[pid0].valid_moves);
 
     /* Second move by player 2 to the same cell should fail. */
     apply_move(game->state, 1, 1, pid1);
-    CuAssertIntEquals(tc, -pid0, (int)game->state->board[1 * 5 + 1]); /* unchanged */
+    CuAssertIntEquals(tc, -(pid0 + 1), (int)game->state->board[1 * 5 + 1]); /* unchanged */
     CuAssertIntEquals(tc, 0, (int)game->state->players[pid1].valid_moves);
     CuAssertIntEquals(tc, 1, (int)game->state->players[pid1].invalid_moves);
 
@@ -687,8 +682,7 @@ static void test_apply_move_already_claimed_is_invalid(CuTest *tc) {
 
 /*
  * Moving twice to the same cell with the same player: the second move
- * must be invalid because the cell is now negative (holds -player_id).
- * We use player_id >= 1 to avoid the -0 == 0 edge case.
+ * must be invalid because the cell is now negative (holds -(player_id+1)).
  */
 static void test_apply_move_same_cell_twice_is_invalid(CuTest *tc) {
     game_t *game = make_initialized_game(4, 4, 13, 1);
@@ -722,9 +716,9 @@ static void test_apply_move_multiple_valid_moves(CuTest *tc) {
 
     CuAssertIntEquals(tc, 3, (int)game->state->players[pid].valid_moves);
     CuAssertIntEquals(tc, 0, (int)game->state->players[pid].invalid_moves);
-    CuAssertIntEquals(tc, -pid, (int)game->state->board[0]);
-    CuAssertIntEquals(tc, -pid, (int)game->state->board[1]);
-    CuAssertIntEquals(tc, -pid, (int)game->state->board[2]);
+    CuAssertIntEquals(tc, -(pid + 1), (int)game->state->board[0]);
+    CuAssertIntEquals(tc, -(pid + 1), (int)game->state->board[1]);
+    CuAssertIntEquals(tc, -(pid + 1), (int)game->state->board[2]);
 
     free_game(game);
 }
@@ -747,16 +741,16 @@ static void test_apply_move_corner_cells(CuTest *tc) {
     apply_move(game->state, h - 1, w - 1, pid);
 
     CuAssertIntEquals(tc, 4, (int)game->state->players[pid].valid_moves);
-    CuAssertIntEquals(tc, -pid, (int)game->state->board[0]);
-    CuAssertIntEquals(tc, -pid, (int)game->state->board[w - 1]);
-    CuAssertIntEquals(tc, -pid, (int)game->state->board[(h - 1) * w]);
-    CuAssertIntEquals(tc, -pid, (int)game->state->board[(h - 1) * w + (w - 1)]);
+    CuAssertIntEquals(tc, -(pid + 1), (int)game->state->board[0]);
+    CuAssertIntEquals(tc, -(pid + 1), (int)game->state->board[w - 1]);
+    CuAssertIntEquals(tc, -(pid + 1), (int)game->state->board[(h - 1) * w]);
+    CuAssertIntEquals(tc, -(pid + 1), (int)game->state->board[(h - 1) * w + (w - 1)]);
 
     free_game(game);
 }
 
 /*
- * Player 0 claims cells correctly: -0 == 0 and is_move_allowed
+ * Player 0 claims cells correctly: -(0+1) = -1, and is_move_allowed
  * rejects cells with board[i] <= 0, so the cell is properly captured.
  * A second move to the same cell is correctly rejected as invalid.
  */
@@ -767,9 +761,9 @@ static void test_apply_move_player_zero_claims_correctly(CuTest *tc) {
 
     const int8_t pid = 0;
     apply_move(game->state, 0, 0, pid);
-    /* The cell is stamped as -0 = 0 */
-    CuAssertIntEquals(tc, 0, (int)game->state->board[0]);
-    /* is_move_allowed correctly rejects it (0 <= 0) */
+    /* The cell is stamped as -(0+1) = -1 */
+    CuAssertIntEquals(tc, -1, (int)game->state->board[0]);
+    /* is_move_allowed correctly rejects it (-1 <= 0) */
     CuAssertTrue(tc, !is_move_allowed(game->state, 0, 0));
     /* Second move to same cell is invalid */
     apply_move(game->state, 0, 0, pid);
@@ -873,7 +867,7 @@ static void test_register_move_interleaved(CuTest *tc) {
 /*
  * A valid direction on a fresh board: the player starts at (2, 2) and
  * moves right. The new position should be (3, 2), and the cell at
- * row=2, col=3 must be stamped with -player_idx.
+ * row=2, col=3 must be stamped with -(player_idx+1).
  */
 static void test_process_player_move_valid_direction(CuTest *tc) {
     game_t *game = make_initialized_game(5, 5, 30, 2);
@@ -888,7 +882,7 @@ static void test_process_player_move_valid_direction(CuTest *tc) {
 
     /* apply_direction(2, 2, dir_right) -> new_x=3, new_y=2 */
     /* apply_move(state, new_y=2, new_x=3, player_idx=1) */
-    CuAssertIntEquals(tc, -(int8_t)idx, (int)game->state->board[2 * 5 + 3]);
+    CuAssertIntEquals(tc, -(int8_t)(idx + 1), (int)game->state->board[2 * 5 + 3]);
     CuAssertIntEquals(tc, 1, (int)game->state->players[idx].valid_moves);
     CuAssertIntEquals(tc, 0, (int)game->state->players[idx].invalid_moves);
 
