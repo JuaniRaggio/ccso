@@ -30,7 +30,7 @@ int main(int argc, char *argv[]) {
     view_t view;
     view_init(&view);
 
-    while (!should_exit && game.state->running) {
+    while (1) {
         game_sync_view_wait_frame(game.sync);
         if (should_exit || !game.state->running) {
             break;
