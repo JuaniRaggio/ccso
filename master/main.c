@@ -89,6 +89,17 @@ int main(int argc, char *argv[]) {
         if (ready == 0)
             break;
     }
+    game_end(&game);
+
+    if (has_view)
+        game_sync_notify_view(game.sync);
+
+    close_active_pipes(pipes, game.state->players, players_count);
+    wait_and_print_results(game.state->players, players_count);
+
+    if (has_view)
+        wait_view(view_pid);
+
     game_sync_destroy(game.sync);
     game_disconnect(&game);
 
