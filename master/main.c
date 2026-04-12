@@ -105,6 +105,15 @@ int main(int argc, char *argv[]) {
                 last_processed = idx;
             }
         }
+        if (any_valid)
+            last_valid_move = time(NULL);
+
+        if (any_move && has_view)
+            game_sync_view_cycle(game.sync);
+
+        if (any_move)
+            usleep(parameters.delay * 1000);
+
         if (!any_player_alive(game.state))
             break;
     }
@@ -115,10 +124,15 @@ int main(int argc, char *argv[]) {
         game_sync_notify_view(game.sync);
 
     close_active_pipes(pipes, game.state->players, players_count);
-    wait_and_print_results(game.state->players, players_count);
 
-    if (has_view)
-        wait_view(view_pid);
+    for (int8_t i = 0; i < players_count; i++) {
+        waitpid(game.state->players[i].player_id, NULL, 0);
+    }
+    if (has_view) {
+        waitpid(view_pid, NULL, 0);
+    }
+
+    print_game_results(game.state);
 
     game_sync_destroy(game.sync);
     game_disconnect(&game);
