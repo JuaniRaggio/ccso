@@ -20,9 +20,11 @@ static inline void parse_argument(int opt, parameters_t *parameters, parameter_s
     uint64_t *current_parameter = NULL;
     switch (opt) {
     case 'w':
+        parameters->c_width = optarg;
         current_parameter = &parameters->width;
         goto integer_checking;
     case 'h':
+        parameters->c_height = optarg;
         current_parameter = &parameters->height;
         goto integer_checking;
     case 'd':
