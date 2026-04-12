@@ -117,6 +117,19 @@ void process_player_move(game_state_t *state, uint8_t player_idx, direction_wire
     apply_move(state, new_y, new_x, player_idx);
 }
 
+void register_players_from_paths(game_state_t *state, const char *paths[]) {
+    for (int8_t i = 0; i < state->players_count; i++) {
+        const char *base = strrchr(paths[i], '/');
+        base = base ? base + 1 : paths[i];
+        player_registration_requirements_t req = {
+            .player_pid = state->players[i].player_id,
+        };
+        strncpy((char *)req.name, base, MAX_NAME_LENGTH - 1);
+        ((char *)req.name)[MAX_NAME_LENGTH - 1] = '\0';
+        game_register_player(state->players, i, req);
+    }
+}
+
 bool any_player_alive(game_state_t *state) {
     for (int8_t i = 0; i < state->players_count; i++) {
         if (state->players[i].state)
