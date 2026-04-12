@@ -59,7 +59,8 @@ pid_t fork_view(const char *view_path, const char *width, const char *height) {
     return view_pid;
 }
 
-void fork_players(int pipes[][pipe_ends], int playersCount, game_state_t *game_state) {
+void fork_players(int pipes[][pipe_ends], int playersCount, game_state_t *game_state,
+                  const char *player_paths[], const char *width, const char *height) {
     for (int i = 0; i < playersCount; i++) {
         pid_t new_player = new_process();
         if (new_player == 0) {
@@ -75,10 +76,8 @@ void fork_players(int pipes[][pipe_ends], int playersCount, game_state_t *game_s
 
             close(pipes[i][pipe_writer]);
 
-            // TODO: Aca deberiamos inicializar el x, y de cada player
-
-            char *args[] = {game_state->players[i].name, NULL};
-            execve(game_state->players[i].name, args, NULL);
+            char *args[] = {(char *)player_paths[i], (char *)width, (char *)height, NULL};
+            execve(player_paths[i], args, NULL);
             manage_error(HERE, TRACE_NONE, unreachable);
             _exit(EXIT_FAILURE);
         }
