@@ -570,18 +570,15 @@ static void test_is_move_allowed_already_claimed_cell(CuTest *tc) {
 }
 
 /*
- * A cell with board value exactly 0 is technically not < 0, so
- * is_move_allowed returns true. This documents the behavior: the
- * initial board never has zeros (values are [1,9]), but if somehow
- * a cell becomes 0 it would still be "allowed". This is a latent
- * edge case worth pinning.
+ * A cell with board value 0 means it was captured by player 0
+ * (-0 == 0). With the <= 0 fix, is_move_allowed correctly rejects it.
  */
-static void test_is_move_allowed_zero_cell_is_allowed(CuTest *tc) {
+static void test_is_move_allowed_zero_cell_is_captured(CuTest *tc) {
     game_t *game = make_initialized_game(3, 3, 6, 1);
     CuAssertPtrNotNull(tc, game);
 
     game->state->board[0] = 0;
-    CuAssertTrue(tc, is_move_allowed(game->state, 0, 0));
+    CuAssertTrue(tc, !is_move_allowed(game->state, 0, 0));
 
     free_game(game);
 }
@@ -1103,7 +1100,7 @@ CuSuite *game_admin_get_suite(void) {
     SUITE_ADD_TEST(suite, test_is_move_allowed_out_of_bounds_horizontal);
     SUITE_ADD_TEST(suite, test_is_move_allowed_both_out_of_bounds);
     SUITE_ADD_TEST(suite, test_is_move_allowed_already_claimed_cell);
-    SUITE_ADD_TEST(suite, test_is_move_allowed_zero_cell_is_allowed);
+    SUITE_ADD_TEST(suite, test_is_move_allowed_zero_cell_is_captured);
     SUITE_ADD_TEST(suite, test_is_move_allowed_all_corners);
     /* apply_move */
     SUITE_ADD_TEST(suite, test_apply_move_valid_stamps_cell);
