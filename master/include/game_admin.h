@@ -4,8 +4,7 @@
 #include <game.h>
 #include <stddef.h>
 #include <stdint.h>
-#include <sys/_types/_pid_t.h>
-#include <sys/_types/_ssize_t.h>
+#include <sys/types.h>
 
 typedef struct {
     pid_t player_pid;

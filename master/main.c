@@ -1,11 +1,10 @@
-#include <signal.h>
-#include <stdint.h>
-#include <stdbool.h>
+#include <errno.h>
+#include <fcntl.h>
 #include <parser.h>
+#include <signal.h>
+#include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
-#include <sys/errno.h>
-#include <sys/fcntl.h>
-#include <sys/mman.h>
 #include <time.h>
 #include <unistd.h>
 #include "game.h"

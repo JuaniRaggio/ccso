@@ -3,11 +3,11 @@
 #include "game_sync.h"
 #include "shmemory_utils.h"
 #include <errno.h>
+#include <fcntl.h>
 #include <game.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
-#include <sys/fcntl.h>
 #include <sys/mman.h>
 #include <time.h>
 

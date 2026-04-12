@@ -1,10 +1,10 @@
 #include "error_management.h"
+#include <fcntl.h>
+#include <semaphore.h>
 #include <shmemory_utils.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdlib.h>
-#include <sys/fcntl.h>
-#include <semaphore.h>
 
 static inline bool is_creator(int open_flags) {
     return open_flags & O_CREAT;

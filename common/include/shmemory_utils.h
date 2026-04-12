@@ -2,14 +2,14 @@
 
 #include <error_management.h>
 #include <errno.h>
-#include <stddef.h>
-#include <stdint.h>
-#include <sys/mman.h>
-#include <sys/fcntl.h>
-#include <unistd.h>
-#include <stdio.h>
+#include <fcntl.h>
 #include <game_state.h>
 #include <game_sync.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <sys/mman.h>
+#include <unistd.h>
 
 typedef struct {
     const char *shared_memory_name;

@@ -1,8 +1,7 @@
 #pragma once
 
+#include <errno.h>
 #include <stdint.h>
-#include <sys/errno.h>
-#include <sys/mman.h>
 
 typedef enum {
     access_error = EACCES,
