@@ -121,8 +121,8 @@ bool process_player_move(game_state_t *state, uint8_t player_idx, direction_wire
     return was_allowed;
 }
 
-bool handle_player_turn(game_t *game, int32_t pipes[][2], fd_set *readFds,
-                        fd_set *masterSet, int8_t idx, bool *out_valid) {
+bool handle_player_turn(game_t *game, int32_t pipes[][2], fd_set *readFds, fd_set *masterSet, int8_t idx,
+                        bool *out_valid) {
     if (!game->state->players[idx].state)
         return false;
     if (!FD_ISSET(pipes[idx][pipe_reader], readFds))
@@ -189,7 +189,7 @@ void place_players_on_board(game_state_t *state) {
 void print_game_results(game_state_t *state) {
     for (int8_t i = 0; i < state->players_count; i++) {
         player_t *p = &state->players[i];
-        fprintf(stderr, "Player %s (%d): score=%u valid=%u invalid=%u\n",
-                p->name, i, p->score, p->valid_moves, p->invalid_moves);
+        fprintf(stderr, "Player %s (%d): score=%u valid=%u invalid=%u\n", p->name, i, p->score, p->valid_moves,
+                p->invalid_moves);
     }
 }
