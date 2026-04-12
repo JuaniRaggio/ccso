@@ -17,7 +17,7 @@ typedef enum {
 
 typedef int8_t direction_wire_t;
 
-#define NO_VALID_MOVE ((direction_wire_t)-1)
+#define NO_VALID_MOVE ((direction_wire_t) - 1)
 typedef struct {
     int8_t dx;
     int8_t dy;
