@@ -13,6 +13,12 @@ typedef struct {
     const char name[MAX_NAME_LENGTH];
 } player_registration_requirements_t;
 
+typedef struct {
+    bool any_move;
+    bool any_valid;
+    int8_t next_start_player;
+} round_result_t;
+
 void game_state_init(game_t *game, uint16_t width, uint16_t height, uint64_t seed, int8_t players);
 
 bool game_register_player(player_t current_players[MAX_PLAYERS], size_t idx,
@@ -37,5 +43,7 @@ void register_players_from_paths(game_state_t *state, const char *paths[]);
 bool any_player_alive(game_state_t *state);
 
 void place_players_on_board(game_state_t *state);
+
+round_result_t process_round(game_t *game, int32_t pipes[][2], fd_set *readFds, fd_set *masterSet, int8_t start_player);
 
 void print_game_results(game_state_t *state);
