@@ -9,8 +9,8 @@
 #define COLOR_EMPTY 11
 #define COLOR_PAIR_OFFSET 1
 
-#define CELL_WIDTH 3    // "XX " per cell
-#define PANEL_HEIGHT 4  // top border + face/score + stats + bottom border
+#define CELL_WIDTH 3   // "XX " per cell
+#define PANEL_HEIGHT 4 // top border + face/score + stats + bottom border
 #define LABEL_BUFFER_SIZE 32
 #define PLAYER_PREFIX "player-"
 #define PLAYER_PREFIX_LEN 7

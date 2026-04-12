@@ -113,8 +113,7 @@ void view_draw_board(view_t *view, game_state_t *state) {
     wrefresh(view->board_win);
 }
 
-static void draw_player_panel(WINDOW *win, int16_t x, int16_t w,
-                               player_t *player, int8_t idx) {
+static void draw_player_panel(WINDOW *win, int16_t x, int16_t w, player_t *player, int8_t idx) {
     int16_t color = idx + COLOR_PAIR_OFFSET;
     const char *name = display_name(player->name);
     const char *face = PLAYER_FACES[idx % MAX_PLAYERS];
@@ -154,8 +153,8 @@ static void draw_player_panel(WINDOW *win, int16_t x, int16_t w,
     // Line 2: pos + valid/invalid   | (5,3)  V:45  I:2    |
     mvwaddch(win, 2, x, '|');
     char line2[64];
-    snprintf(line2, sizeof(line2), " (%u,%u)  V:%-4u I:%-4u", player->x, player->y,
-             player->valid_moves, player->invalid_moves);
+    snprintf(line2, sizeof(line2), " (%u,%u)  V:%-4u I:%-4u", player->x, player->y, player->valid_moves,
+             player->invalid_moves);
     mvwprintw(win, 2, x + 1, "%-*s", w - 2, line2);
     mvwaddch(win, 2, x + w - 1, '|');
 
