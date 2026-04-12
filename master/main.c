@@ -12,9 +12,6 @@
 #include "pipes.h"
 #include <error_management.h>
 
-void printGameState(int8_t board[], uint16_t height, uint16_t width, int8_t players_count, bool state);
-void printBoard(int8_t board[], uint16_t height, uint16_t width); // Just for us
-
 static volatile sig_atomic_t should_exit = 0;
 
 static void signal_handler(int32_t sig) {
@@ -37,7 +34,6 @@ int main(int argc, char *argv[]) {
     parameter_status_t status = parse(argc, argv, &parameters);
 
     if (status != success || parameters.players_count == 0) {
-        // TODO: improve error management for user parameter information
         return manage_error(HERE, TRACE_NONE, invalid_argument_error);
     }
 
@@ -45,15 +41,17 @@ int main(int argc, char *argv[]) {
     game_t game = new_game(master, .height = parameters.height, .width = parameters.width, .seed = parameters.seed);
     game_state_init(&game, parameters.width, parameters.height, parameters.seed, parameters.players_count);
 
-    const bool has_view = parameters.view_path != NULL;
-    if (has_view) {
-        fork_view(parameters.view_path, parameters.c_width, parameters.c_height);
-    }
-
-    int pipes[MAX_PLAYERS][pipe_ends], players_count;
-    players_count = game.state->players_count;
+    int pipes[MAX_PLAYERS][pipe_ends];
+    int players_count = game.state->players_count;
 
     create_pipes(pipes, players_count);
+
+    const bool has_view = parameters.view_path != NULL;
+    pid_t view_pid = 0;
+    if (has_view) {
+        view_pid = fork_view(parameters.view_path, parameters.c_width, parameters.c_height);
+    }
+
     fork_players(pipes, players_count, game.state, parameters.players_paths, parameters.c_width, parameters.c_height);
 
     close_other_pipes(pipes, players_count, invalid_pipe, pipe_writer);
