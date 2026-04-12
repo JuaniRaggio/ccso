@@ -36,6 +36,8 @@ void game_sync_notify_view(game_sync_t *sync);
 
 void game_sync_wait_view_done(game_sync_t *sync);
 
+void game_sync_view_cycle(game_sync_t *sync);
+
 void game_sync_view_wait_frame(game_sync_t *sync);
 
 void game_sync_view_frame_done(game_sync_t *sync);
