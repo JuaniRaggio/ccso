@@ -1,11 +1,13 @@
 #include "error_management.h"
 #include "game.h"
+#include "pipes.h"
 #include <game_admin.h>
 #include <game_state.h>
 #include <game_sync.h>
 #include <semaphore.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -119,6 +121,32 @@ bool process_player_move(game_state_t *state, uint8_t player_idx, direction_wire
     return was_allowed;
 }
 
+bool handle_player_turn(game_t *game, int32_t pipes[][2], fd_set *readFds,
+                        fd_set *masterSet, int8_t idx, bool *out_valid) {
+    if (!game->state->players[idx].state)
+        return false;
+    if (!FD_ISSET(pipes[idx][pipe_reader], readFds))
+        return false;
+
+    direction_wire_t dir;
+    ssize_t n = recv_direction(pipes[idx][pipe_reader], &dir);
+    if (n <= 0) {
+        disconnect_player(&game->state->players[idx], pipes, masterSet, idx);
+        return false;
+    }
+
+    game_sync_writer_enter(game->sync);
+    bool valid = process_player_move(game->state, idx, dir);
+    game_sync_writer_exit(game->sync);
+
+    game_sync_player_grant_turn(game->sync, idx);
+
+    if (valid)
+        *out_valid = true;
+
+    return true;
+}
+
 void register_players_from_paths(game_state_t *state, const char *paths[]) {
     for (int8_t i = 0; i < state->players_count; i++) {
         const char *base = strrchr(paths[i], '/');
@@ -155,5 +183,13 @@ void place_players_on_board(game_state_t *state) {
         state->players[i].y = y;
         size_t offset = (size_t)y * state->width + x;
         state->board[offset] = -(int8_t)i;
+    }
+}
+
+void print_game_results(game_state_t *state) {
+    for (int8_t i = 0; i < state->players_count; i++) {
+        player_t *p = &state->players[i];
+        fprintf(stderr, "Player %s (%d): score=%u valid=%u invalid=%u\n",
+                p->name, i, p->score, p->valid_moves, p->invalid_moves);
     }
 }
