@@ -64,4 +64,11 @@ int main(int argc, char *argv[]) {
     int maxFd;
     fd_set masterSet, readFds;
     init_fd_set(&masterSet, pipes, players_count, &maxFd);
+    time_t last_valid_move = time(NULL);
+    while (!should_exit) {
+    }
+    game_sync_destroy(game.sync);
+    game_disconnect(&game);
+
+    return 0;
 }
