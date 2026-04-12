@@ -15,7 +15,6 @@
 #include "game_admin.h"
 #include "game_sync.h"
 #include "pipes.h"
-#include "player_protocol.h"
 #include <error_management.h>
 
 static volatile sig_atomic_t should_exit = 0;
@@ -38,8 +37,9 @@ int main(int argc, char *argv[]) {
     };
 
     parameter_status_t status = parse(argc, argv, &parameters);
-
     if (status != success || parameters.players_count == 0) {
+        fprintf(stderr, "Usage: master -w <width> -h <height> -p <player> [-p <player> ...] "
+                        "[-v <view>] [-d <delay>] [-t <timeout>] [-s <seed>]\n");
         return manage_error(HERE, TRACE_NONE, invalid_argument_error);
     }
 
@@ -59,7 +59,6 @@ int main(int argc, char *argv[]) {
     }
 
     fork_players(pipes, players_count, game.state, parameters.players_paths, parameters.c_width, parameters.c_height);
-
     close_other_pipes(pipes, players_count, invalid_pipe, pipe_writer);
 
     register_players_from_paths(game.state, parameters.players_paths);
@@ -85,6 +84,7 @@ int main(int argc, char *argv[]) {
             .tv_usec = 0,
         };
         int32_t ready = select(maxFd + 1, &readFds, NULL, NULL, &tv);
+
         if (ready < 0) {
             if (errno == EINTR)
                 continue;
@@ -97,6 +97,14 @@ int main(int argc, char *argv[]) {
         bool any_move = false;
         bool any_valid = false;
         int8_t last_processed = start_player;
+
+        for (int8_t i = 0; i < players_count; i++) {
+            int8_t idx = (start_player + i) % players_count;
+            if (handle_player_turn(&game, pipes, &readFds, &masterSet, idx, &any_valid)) {
+                any_move = true;
+                last_processed = idx;
+            }
+        }
         if (!any_player_alive(game.state))
             break;
     }
