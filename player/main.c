@@ -48,8 +48,8 @@ int main(int argc, char *argv[]) {
 
     game_t game = new_game(player, .height = height, .width = width);
 
-    fprintf(stderr, "[DBG player %d] connected, players_count=%d running=%d\n",
-            getpid(), game.state->players_count, game.state->running);
+    fprintf(stderr, "[DBG player %d] connected, players_count=%d running=%d\n", getpid(), game.state->players_count,
+            game.state->running);
     for (int8_t i = 0; i < game.state->players_count; i++) {
         fprintf(stderr, "[DBG player %d]   slot[%d] pid=%d\n", getpid(), i, game.state->players[i].player_id);
     }
@@ -64,8 +64,8 @@ int main(int argc, char *argv[]) {
     while (1) {
         fprintf(stderr, "[DBG player %d] waiting for turn...\n", getpid());
         game_sync_player_wait_turn(game.sync, (uint8_t)my_idx);
-        fprintf(stderr, "[DBG player %d] woke up, running=%d should_exit=%d\n",
-                getpid(), game.state->running, should_exit);
+        fprintf(stderr, "[DBG player %d] woke up, running=%d should_exit=%d\n", getpid(), game.state->running,
+                should_exit);
         if (should_exit || !game.state->running) {
             break;
         }
