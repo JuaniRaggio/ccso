@@ -3,6 +3,7 @@
 #include <inttypes.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <string.h>
 #include <sys/mman.h>
 
 static const char *description_for(error_code_t code) {
@@ -19,8 +20,10 @@ static const char *description_for(error_code_t code) {
         return "Invalid argument";
     case range_error:
         return "Value out of range";
+    case unreachable:
+        return "Unreachable code reached";
     default:
-        return "Unknown Error";
+        return strerror(code);
     }
 }
 

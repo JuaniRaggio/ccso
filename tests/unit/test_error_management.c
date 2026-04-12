@@ -141,7 +141,7 @@ static void test_manage_error_unknown_default(CuTest *tc) {
     /* 0xFFFF is well outside the handled set and the errno constants. */
     run_manage_error_and_capture((error_code_t)0xFFFF, buffer, capture_buffer_size);
 
-    CuAssertTrue(tc, strstr(buffer, "Unknown Error") != NULL);
+    CuAssertTrue(tc, strstr(buffer, "Unknown error") != NULL);
     CuAssertTrue(tc, strstr(buffer, "some_file.c") != NULL);
 }
 
