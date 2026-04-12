@@ -13,6 +13,8 @@ static const char *const allowed_flags = "w:h:d:t:s:v:p:";
  * parse_argument expects that arguments are not destroyed before the program finishes, this limitation
  * is produced by the fact we are not allocating memory to save paths
  */
+static inline void parse_argument(int opt, parameters_t *parameters, parameter_status_t *status);
+
 static inline void parse_argument(int opt, parameters_t *parameters, parameter_status_t *status) {
     char *endptr = NULL;
     uint64_t *current_parameter = NULL;
