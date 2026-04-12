@@ -45,6 +45,7 @@ bool any_player_alive(game_state_t *state);
 
 void place_players_on_board(game_state_t *state);
 
-round_result_t process_round(game_t *game, int32_t pipes[][pipe_ends], fd_set *readFds, fd_set *masterSet, int8_t start_player);
+round_result_t process_round(game_t *game, int32_t pipes[][pipe_ends], fd_set *readFds, fd_set *masterSet,
+                             int8_t start_player);
 
 void print_game_results(game_state_t *state);
