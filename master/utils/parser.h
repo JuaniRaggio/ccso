@@ -24,6 +24,4 @@ typedef enum {
     overflow = unknown_optional_flag << 1,
 } parameter_status_t;
 
-static inline void parse_argument(int opt, parameters_t *parameters, parameter_status_t *status);
-
 parameter_status_t parse(int argc, char *argv[], parameters_t *parameters);

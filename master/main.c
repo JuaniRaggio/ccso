@@ -64,6 +64,6 @@ int main(int argc, char *argv[]) {
     hacer es readFds = masterSet
     */
     int maxFd;
-    fd_set masterSet, readFds; // Creo dos cjto de fileDescriptors
+    fd_set masterSet, readFds;
     init_fd_set(&masterSet, pipes, players_count, &maxFd);
 }
