@@ -23,6 +23,14 @@ static void signal_handler(int32_t sig) {
     should_exit = 1;
 }
 
+static void sync_view_frame(game_t *game, pid_t view_pid, bool *has_view) {
+    if (waitpid(view_pid, NULL, WNOHANG) != 0) {
+        *has_view = false;
+    } else {
+        game_sync_view_cycle(game->sync);
+    }
+}
+
 int main(int argc, char *argv[]) {
     signal(SIGINT, signal_handler);
     signal(SIGTERM, signal_handler);
@@ -96,32 +104,16 @@ int main(int argc, char *argv[]) {
         if (ready == 0)
             break;
 
-        bool any_move = false;
-        bool any_valid = false;
-        int8_t last_processed = start_player;
+        round_result_t round = process_round(&game, pipes, &readFds, &masterSet, start_player);
+        start_player = round.next_start_player;
 
-        for (int8_t i = 0; i < players_count; i++) {
-            int8_t idx = (start_player + i) % players_count;
-            if (handle_player_turn(&game, pipes, &readFds, &masterSet, idx, &any_valid)) {
-                any_move = true;
-                last_processed = idx;
-            }
-        }
-
-        start_player = (last_processed + 1) % players_count;
-
-        if (any_valid)
+        if (round.any_valid)
             last_valid_move = time(NULL);
 
-        if (any_move && has_view) {
-            if (waitpid(view_pid, NULL, WNOHANG) != 0) {
-                has_view = false;
-            } else {
-                game_sync_view_cycle(game.sync);
-            }
-        }
+        if (round.any_move && has_view)
+            sync_view_frame(&game, view_pid, &has_view);
 
-        if (any_move)
+        if (round.any_move)
             usleep(parameters.delay * 1000);
 
         if (!any_player_alive(game.state))

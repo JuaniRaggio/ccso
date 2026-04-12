@@ -121,7 +121,7 @@ bool process_player_move(game_state_t *state, uint8_t player_idx, direction_wire
     return was_allowed;
 }
 
-bool handle_player_turn(game_t *game, int32_t pipes[][2], fd_set *readFds, fd_set *masterSet, int8_t idx,
+bool handle_player_turn(game_t *game, int32_t pipes[][pipe_ends], fd_set *readFds, fd_set *masterSet, int8_t idx,
                         bool *out_valid) {
     if (!game->state->players[idx].state)
         return false;
@@ -145,6 +145,28 @@ bool handle_player_turn(game_t *game, int32_t pipes[][2], fd_set *readFds, fd_se
         *out_valid = true;
 
     return true;
+}
+
+round_result_t process_round(game_t *game, int32_t pipes[][pipe_ends], fd_set *readFds, fd_set *masterSet,
+                             int8_t start_player) {
+    int8_t players_count = game->state->players_count;
+    bool any_move = false;
+    bool any_valid = false;
+    int8_t last_processed = start_player;
+
+    for (int8_t i = 0; i < players_count; i++) {
+        int8_t idx = (start_player + i) % players_count;
+        if (handle_player_turn(game, pipes, readFds, masterSet, idx, &any_valid)) {
+            any_move = true;
+            last_processed = idx;
+        }
+    }
+
+    return (round_result_t){
+        .any_move = any_move,
+        .any_valid = any_valid,
+        .next_start_player = (last_processed + 1) % players_count,
+    };
 }
 
 void register_players_from_paths(game_state_t *state, const char *paths[]) {
