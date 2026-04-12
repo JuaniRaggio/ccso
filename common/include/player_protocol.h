@@ -33,3 +33,5 @@ static inline void apply_direction(int16_t x, int16_t y, direction_t dir, int16_
     *out_x = x + move_delta[dir].dx;
     *out_y = y + move_delta[dir].dy;
 }
+ssize_t send_direction(int32_t fd, direction_wire_t dir);
+ssize_t recv_direction(int32_t fd, direction_wire_t *out_dir);
