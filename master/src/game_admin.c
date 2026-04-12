@@ -13,6 +13,10 @@
 #define MIN_CELL_REWARD 1
 #define REWARD_RANGE (MAX_CELL_REWARD - MIN_CELL_REWARD + 1)
 
+static void board_init(game_state_t *state, uint16_t width, uint16_t height, int8_t players);
+static inline size_t get_board_offset(game_state_t *state, uint_fast16_t vertical_coord,
+                                      uint_fast16_t horizontal_coord);
+
 static void board_init(game_state_t *state, uint16_t width, uint16_t height, int8_t players) {
     state->width = width;
     state->height = height;
@@ -58,36 +62,37 @@ size_t game_register_all(player_t current_players[MAX_PLAYERS],
     return registered;
 }
 
-bool is_move_allowed(game_state_t *state, uint16_t j, uint16_t k) {
+static inline size_t get_board_offset(game_state_t *state, uint_fast16_t vertical_coord,
+                                      uint_fast16_t horizontal_coord) {
+    return vertical_coord * state->width + horizontal_coord;
+}
 
-    if (j >= state->height || k >= state->width) {
+bool is_move_allowed(game_state_t *state, uint16_t vertical_coord, uint16_t horizontal_coord) {
+    if (vertical_coord >= state->height || horizontal_coord >= state->width) {
         return false;
     }
-
-    int index = j * state->width + k;
+    int index = vertical_coord * state->width + horizontal_coord;
     if (state->board[index] < 0) {
         return false;
     }
     return true;
 }
 
-// Si devuelve TRUE, hay q sumar 1 a valid moves, si devuele FALSE hay que sumar 1 a invalid moves
-void apply_move(game_state_t *state, uint16_t j, uint16_t k, int8_t playerId) {
-
+void apply_move(game_state_t *state, uint16_t vertical_coord, uint16_t horizontal_coord, int8_t player_id) {
     bool valid_move = true;
-
-    if (!is_move_allowed(state, j, k)) {
+    if (!is_move_allowed(state, vertical_coord, horizontal_coord)) {
         valid_move = false;
     } else {
-        int index = j * state->width + k;
-        state->board[index] = -playerId; // No es el PID
+        state->board[get_board_offset(state, vertical_coord, horizontal_coord)] = -player_id;
     }
-    is_valid_move(state, valid_move, playerId);
+    register_move(state, valid_move, player_id);
     return;
 }
 
-void is_valid_move(game_state_t *state, bool is_valid_move, int8_t playerId) {
-
-    state->players[playerId].valid_moves += is_valid_move;
-    state->players[playerId].invalid_moves += !is_valid_move;
+void register_move(game_state_t *state, const bool is_valid_move, int8_t player_id) {
+    if (is_valid_move) {
+        state->players[player_id].valid_moves++;
+    } else {
+        state->players[player_id].invalid_moves++;
+    }
 }

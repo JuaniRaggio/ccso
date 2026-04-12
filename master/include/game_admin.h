@@ -19,9 +19,8 @@ bool game_register_player(player_t current_players[MAX_PLAYERS], size_t idx,
 size_t game_register_all(player_t current_players[MAX_PLAYERS],
                          player_registration_requirements_t to_register[MAX_PLAYERS]);
 
-bool is_move_allowed(game_state_t *state, uint16_t j, uint16_t k);
+bool is_move_allowed(game_state_t *state, uint16_t vertical_coord, uint16_t horizontal_coord);
 
-// Si devuelve TRUE, hay q sumar 1 a valid moves, si devuele FALSE hay que sumar 1 a invalid moves
-void apply_move(game_state_t *state, uint16_t j, uint16_t k, int8_t playerId);
+void apply_move(game_state_t *state, uint16_t vertical_coord, uint16_t horizontal_coord, int8_t playerId);
 
-void is_valid_move(game_state_t *state, bool is_valid_move, int8_t playerId);
+void register_move(game_state_t *state, bool is_valid_move, int8_t playerId);
