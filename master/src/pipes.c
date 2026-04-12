@@ -4,7 +4,7 @@
 #include <error_management.h>
 #include <stdint.h>
 #include <stdlib.h>
-#include <sys/_types/_pid_t.h>
+#include <sys/types.h>
 #include <unistd.h>
 
 void create_pipes(int pipes[][pipe_ends], int playersCount) {
