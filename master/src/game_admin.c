@@ -96,3 +96,17 @@ void register_move(game_state_t *state, const bool is_valid_move, int8_t player_
         state->players[player_id].invalid_moves++;
     }
 }
+
+void process_player_move(game_state_t *state, uint8_t player_idx, direction_wire_t direction) {
+    player_t *p = &state->players[player_idx];
+
+    if (!is_valid_direction(direction)) {
+        register_move(state, false, player_idx);
+        return;
+    }
+
+    int16_t new_x, new_y;
+    apply_direction(p->x, p->y, direction, &new_x, &new_y);
+
+    apply_move(state, new_y, new_x, player_idx);
+}
