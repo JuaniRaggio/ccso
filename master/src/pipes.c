@@ -76,7 +76,12 @@ void fork_players(int pipes[][pipe_ends], int playersCount, game_state_t *game_s
 
             close(pipes[i][pipe_writer]);
 
-            char *args[] = {(char *)player_paths[i], (char *)width, (char *)height, NULL};
+            char *args[] = {
+                (char *)player_paths[i],
+                (char *)width,
+                (char *)height,
+                NULL,
+            };
             execve(player_paths[i], args, NULL);
             manage_error(HERE, TRACE_NONE, unreachable);
             _exit(EXIT_FAILURE);
