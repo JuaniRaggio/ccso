@@ -33,8 +33,8 @@ int main(int argc, char *argv[]) {
         setenv("TERM", "xterm-256color", 0);
     }
 
-    view_t view;
-    view_init(&view);
+    view_t game_view;
+    view_init(&game_view, width, height);
 
     while (1) {
         game_sync_view_wait_frame(game.sync);
@@ -43,15 +43,15 @@ int main(int argc, char *argv[]) {
         }
         int32_t ch = getch();
         if (ch == KEY_RESIZE) {
-            view_cleanup(&view);
-            view_init(&view);
+            view_cleanup(&game_view);
+            view_init(&game_view, width, height);
         }
 
-        view_draw_all(&view, game.state);
+        view_draw_all(&game_view, game.state);
         game_sync_view_frame_done(game.sync);
     }
 
-    view_cleanup(&view);
+    view_cleanup(&game_view);
     game_disconnect(&game);
 
     return 0;

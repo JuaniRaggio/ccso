@@ -8,19 +8,20 @@
 #include <stdint.h>
 #include <time.h>
 
-typedef struct {
-    game_state_t *state;
-    game_sync_t *sync;
-
-    size_t shm_total_size;
-} game_t;
-
 typedef enum {
     master,
     player,
     view,
     total_entities,
 } entity_t;
+
+typedef struct {
+    game_state_t *state;
+    game_sync_t *sync;
+
+    size_t shm_total_size;
+    entity_t who;
+} game_t;
 
 typedef struct {
     error_manager_t manage_error;

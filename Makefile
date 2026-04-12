@@ -59,8 +59,11 @@ $(VIEW_BIN): $(VIEW_SRCS) $(COMMON_SRCS)
 PLAYER_RUN_ARGS = $(foreach p,$(PLAYERS),-p ./$(BUILD_DIR)/player-$(p))
 PLAYER_RUN_TARGETS = $(addprefix $(BUILD_DIR)/player-,$(PLAYERS))
 
+WIDTH  ?= 20
+HEIGHT ?= 20
+
 run: $(MASTER_BIN) $(PLAYER_RUN_TARGETS) $(VIEW_BIN)
-	./$(MASTER_BIN) -v ./$(VIEW_BIN) $(PLAYER_RUN_ARGS)
+	./$(MASTER_BIN) -w $(WIDTH) -h $(HEIGHT) -v ./$(VIEW_BIN) $(PLAYER_RUN_ARGS)
 
 clean:
 	rm -rf $(BUILD_DIR)
