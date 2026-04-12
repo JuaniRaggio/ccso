@@ -400,8 +400,8 @@ static void test_parse_short_circuits_on_first_error(CuTest *tc) {
     parameter_status_t status = parse(argc, argv, &parameters);
 
     CuAssertTrue(tc, (status & invalid_integer_type) != 0);
-    CuAssertPtrEquals_Msg(tc, "view_path should not have been touched after the first error",
-                          (void *)default_view_path, (void *)parameters.view_path);
+    CuAssertPtrEquals_Msg(tc, "view_path should not have been touched after the first error", (void *)default_view_path,
+                          (void *)parameters.view_path);
 }
 
 /*
@@ -447,12 +447,8 @@ static void test_parse_missing_required_argument(CuTest *tc) {
 static void test_parse_interleaved_flag_order(CuTest *tc) {
     reset_getopt();
     char *argv[] = {
-        (char *)"master",
-        (char *)"-p", (char *)"./p-a",
-        (char *)"-w", (char *)"7",
-        (char *)"-p", (char *)"./p-b",
-        (char *)"-h", (char *)"8",
-        NULL,
+        (char *)"master", (char *)"-p",    (char *)"./p-a", (char *)"-w", (char *)"7",
+        (char *)"-p",     (char *)"./p-b", (char *)"-h",    (char *)"8",  NULL,
     };
     int32_t argc = sizeof(argv) / sizeof(argv[0]) - 1;
 

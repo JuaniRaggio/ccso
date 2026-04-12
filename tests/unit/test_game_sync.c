@@ -423,7 +423,7 @@ static void test_view_may_render_accumulates(CuTest *tc) {
  */
 typedef struct {
     game_sync_t *sync;
-    pthread_barrier_t *enter_barrier; // synchronize the enter
+    pthread_barrier_t *enter_barrier;  // synchronize the enter
     pthread_barrier_t *inside_barrier; // main thread waits here
     pthread_barrier_t *exit_barrier;   // main thread releases readers
 } reader_thread_ctx_t;
