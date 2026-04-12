@@ -17,7 +17,8 @@ void create_pipes(int pipes[][pipe_ends], int playersCount);
 
 pid_t fork_view(const char *view_path, const char *width, const char *height);
 
-void fork_players(int pipes[][pipe_ends], int playersCount, game_state_t *game_state);
+void fork_players(int pipes[][pipe_ends], int playersCount, game_state_t *game_state, const char *player_paths[],
+                  const char *width, const char *height);
 
 void close_other_pipes(int32_t pipes[][pipe_ends], uint32_t pipe_count, ssize_t dont_close_this_pipe,
                        const pipe_users_t user_to_close);
