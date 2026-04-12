@@ -121,7 +121,7 @@ bool process_player_move(game_state_t *state, uint8_t player_idx, direction_wire
     return was_allowed;
 }
 
-bool handle_player_turn(game_t *game, int32_t pipes[][2], fd_set *readFds, fd_set *masterSet, int8_t idx,
+bool handle_player_turn(game_t *game, int32_t pipes[][pipe_ends], fd_set *readFds, fd_set *masterSet, int8_t idx,
                         bool *out_valid) {
     if (!game->state->players[idx].state)
         return false;
@@ -147,7 +147,7 @@ bool handle_player_turn(game_t *game, int32_t pipes[][2], fd_set *readFds, fd_se
     return true;
 }
 
-round_result_t process_round(game_t *game, int32_t pipes[][2], fd_set *readFds, fd_set *masterSet,
+round_result_t process_round(game_t *game, int32_t pipes[][pipe_ends], fd_set *readFds, fd_set *masterSet,
                              int8_t start_player) {
     int8_t players_count = game->state->players_count;
     bool any_move = false;
