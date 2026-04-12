@@ -34,7 +34,7 @@ int main(int argc, char *argv[]) {
     }
 
     view_t view;
-    view_init(&view);
+    view_init(&view, width, height);
 
     while (1) {
         game_sync_view_wait_frame(game.sync);
@@ -44,7 +44,7 @@ int main(int argc, char *argv[]) {
         int32_t ch = getch();
         if (ch == KEY_RESIZE) {
             view_cleanup(&view);
-            view_init(&view);
+            view_init(&view, width, height);
         }
 
         view_draw_all(&view, game.state);
