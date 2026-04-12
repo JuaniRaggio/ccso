@@ -54,17 +54,20 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    while (1) {
-        game_sync_player_wait_turn(game.sync, (uint8_t)my_idx);
-        if (should_exit || !game.state->running) {
-            break;
-        }
+    // Consume initial token (catedra inits G[i]=1, don't check running yet)
+    game_sync_player_wait_turn(game.sync, (uint8_t)my_idx);
+
+    while (!should_exit) {
         game_sync_reader_enter(game.sync);
         direction_wire_t dir = compute_next_move(game.state->board, game.state->width, game.state->height,
                                                  game.state->players[my_idx].x, game.state->players[my_idx].y);
         game_sync_reader_exit(game.sync);
 
         send_direction(STDOUT_FILENO, dir);
+        game_sync_player_wait_turn(game.sync, (uint8_t)my_idx);
+        if (!game.state->running) {
+            break;
+        }
     }
 
     game_disconnect(&game);

@@ -67,7 +67,7 @@ void game_sync_init(game_sync_t *sync) {
     sem_init(&sync->readers_count_mutex, SEM_SHARED_BETWEEN_PROCESSES, SEM_UNLOCKED);
     sync->readers_count = 0;
     for (uint8_t i = 0; i < MAX_PLAYERS; i++) {
-        sem_init(&sync->player_may_send_movement[i], SEM_SHARED_BETWEEN_PROCESSES, SEM_LOCKED);
+        sem_init(&sync->player_may_send_movement[i], SEM_SHARED_BETWEEN_PROCESSES, SEM_UNLOCKED);
     }
 }
 

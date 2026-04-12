@@ -50,7 +50,7 @@ static int32_t sem_value(sem_t *sem) {
 /*
  * game_sync_init must leave the struct in the exact state described by the
  * comments in game_sync.c: view semaphores locked, writer/mutex unlocked,
- * reader count at zero, and every per-player turn gate locked.
+ * reader count at zero, and every per-player turn gate unlocked.
  */
 static void test_init_sets_expected_initial_values(CuTest *tc) {
     game_sync_t *sync = make_sync();
@@ -64,7 +64,7 @@ static void test_init_sets_expected_initial_values(CuTest *tc) {
     CuAssertIntEquals(tc, 0, (int)sync->readers_count);
 
     for (uint8_t i = 0; i < MAX_PLAYERS; i++) {
-        CuAssertIntEquals_Msg(tc, "player turn gate must start locked", (int)SEM_LOCKED,
+        CuAssertIntEquals_Msg(tc, "player turn gate must start unlocked", (int)SEM_UNLOCKED,
                               sem_value(&sync->player_may_send_movement[i]));
     }
 
@@ -198,13 +198,13 @@ static void test_player_turn_grant_is_isolated(CuTest *tc) {
     game_sync_player_grant_turn(sync, target);
 
     for (uint8_t i = 0; i < MAX_PLAYERS; i++) {
-        int32_t expected = i == target ? 1 : (int32_t)SEM_LOCKED;
+        int32_t expected = i == target ? 2 : (int32_t)SEM_UNLOCKED;
         CuAssertIntEquals_Msg(tc, "only the target player slot must be posted", (int)expected,
                               sem_value(&sync->player_may_send_movement[i]));
     }
 
     game_sync_player_wait_turn(sync, target);
-    CuAssertIntEquals(tc, (int)SEM_LOCKED, sem_value(&sync->player_may_send_movement[target]));
+    CuAssertIntEquals(tc, (int)SEM_UNLOCKED, sem_value(&sync->player_may_send_movement[target]));
 
     free_sync(sync);
 }
@@ -223,13 +223,13 @@ static void test_player_turn_grant_all_players(CuTest *tc) {
         game_sync_player_grant_turn(sync, i);
     }
     for (uint8_t i = 0; i < MAX_PLAYERS; i++) {
-        CuAssertIntEquals(tc, 1, sem_value(&sync->player_may_send_movement[i]));
+        CuAssertIntEquals(tc, 2, sem_value(&sync->player_may_send_movement[i]));
     }
     for (uint8_t i = 0; i < MAX_PLAYERS; i++) {
         game_sync_player_wait_turn(sync, i);
     }
     for (uint8_t i = 0; i < MAX_PLAYERS; i++) {
-        CuAssertIntEquals(tc, (int)SEM_LOCKED, sem_value(&sync->player_may_send_movement[i]));
+        CuAssertIntEquals(tc, (int)SEM_UNLOCKED, sem_value(&sync->player_may_send_movement[i]));
     }
 
     free_sync(sync);
@@ -315,7 +315,7 @@ static void test_reinit_after_destroy_restores_baseline(CuTest *tc) {
     CuAssertIntEquals(tc, (int)SEM_UNLOCKED, sem_value(&sync->master_writing));
     CuAssertIntEquals(tc, (int)SEM_UNLOCKED, sem_value(&sync->gamestate_mutex));
     for (uint8_t i = 0; i < MAX_PLAYERS; i++) {
-        CuAssertIntEquals(tc, (int)SEM_LOCKED, sem_value(&sync->player_may_send_movement[i]));
+        CuAssertIntEquals(tc, (int)SEM_UNLOCKED, sem_value(&sync->player_may_send_movement[i]));
     }
 
     free_sync(sync);
@@ -372,18 +372,18 @@ static void test_player_turn_boundary_slots(CuTest *tc) {
     CuAssertPtrNotNull(tc, sync);
 
     game_sync_player_grant_turn(sync, 0);
-    CuAssertIntEquals(tc, 1, sem_value(&sync->player_may_send_movement[0]));
+    CuAssertIntEquals(tc, 2, sem_value(&sync->player_may_send_movement[0]));
     game_sync_player_wait_turn(sync, 0);
-    CuAssertIntEquals(tc, (int)SEM_LOCKED, sem_value(&sync->player_may_send_movement[0]));
+    CuAssertIntEquals(tc, (int)SEM_UNLOCKED, sem_value(&sync->player_may_send_movement[0]));
 
     game_sync_player_grant_turn(sync, MAX_PLAYERS - 1);
-    CuAssertIntEquals(tc, 1, sem_value(&sync->player_may_send_movement[MAX_PLAYERS - 1]));
+    CuAssertIntEquals(tc, 2, sem_value(&sync->player_may_send_movement[MAX_PLAYERS - 1]));
     game_sync_player_wait_turn(sync, MAX_PLAYERS - 1);
-    CuAssertIntEquals(tc, (int)SEM_LOCKED, sem_value(&sync->player_may_send_movement[MAX_PLAYERS - 1]));
+    CuAssertIntEquals(tc, (int)SEM_UNLOCKED, sem_value(&sync->player_may_send_movement[MAX_PLAYERS - 1]));
 
     /* All other slots must remain untouched. */
     for (uint8_t i = 1; i < MAX_PLAYERS - 1; i++) {
-        CuAssertIntEquals(tc, (int)SEM_LOCKED, sem_value(&sync->player_may_send_movement[i]));
+        CuAssertIntEquals(tc, (int)SEM_UNLOCKED, sem_value(&sync->player_may_send_movement[i]));
     }
 
     free_sync(sync);
@@ -676,13 +676,13 @@ static void test_player_turn_grant_accumulates(CuTest *tc) {
     game_sync_player_grant_turn(sync, slot);
     game_sync_player_grant_turn(sync, slot);
 
-    CuAssertIntEquals(tc, 3, sem_value(&sync->player_may_send_movement[slot]));
+    CuAssertIntEquals(tc, 4, sem_value(&sync->player_may_send_movement[slot]));
 
     game_sync_player_wait_turn(sync, slot);
     game_sync_player_wait_turn(sync, slot);
     game_sync_player_wait_turn(sync, slot);
 
-    CuAssertIntEquals(tc, (int)SEM_LOCKED, sem_value(&sync->player_may_send_movement[slot]));
+    CuAssertIntEquals(tc, (int)SEM_UNLOCKED, sem_value(&sync->player_may_send_movement[slot]));
 
     free_sync(sync);
 }
@@ -704,7 +704,7 @@ static void test_player_turn_stress_all_players(CuTest *tc) {
     }
 
     for (uint8_t p = 0; p < MAX_PLAYERS; p++) {
-        CuAssertIntEquals(tc, (int)SEM_LOCKED, sem_value(&sync->player_may_send_movement[p]));
+        CuAssertIntEquals(tc, (int)SEM_UNLOCKED, sem_value(&sync->player_may_send_movement[p]));
     }
 
     free_sync(sync);
@@ -802,7 +802,7 @@ static void test_concurrent_player_turns(CuTest *tc) {
     for (uint8_t i = 0; i < MAX_PLAYERS; i++) {
         CuAssertIntEquals(tc, 0, pthread_join(threads[i], NULL));
         CuAssertIntEquals(tc, 0, sem_destroy(&done[i]));
-        CuAssertIntEquals(tc, (int)SEM_LOCKED, sem_value(&sync->player_may_send_movement[i]));
+        CuAssertIntEquals(tc, (int)SEM_UNLOCKED, sem_value(&sync->player_may_send_movement[i]));
     }
 
     free_sync(sync);
