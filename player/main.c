@@ -13,7 +13,7 @@
 #include <game_state.h>
 #include <game_sync.h>
 #include <player_movement.h>
-//#include <player.h>
+// #include <player.h>
 #include <shmemory_utils.h>
 
 static volatile sig_atomic_t should_exit = 0;

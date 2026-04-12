@@ -58,7 +58,6 @@ size_t game_register_all(player_t current_players[MAX_PLAYERS],
     return registered;
 }
 
-
 bool is_move_allowed(game_state_t *state, uint16_t j, uint16_t k) {
 
     if (j >= state->height || k >= state->width) {
@@ -73,8 +72,7 @@ bool is_move_allowed(game_state_t *state, uint16_t j, uint16_t k) {
 }
 
 bool apply_move(game_state_t *state, uint16_t j, uint16_t k, int8_t newVal) {
-    
-    
+
     if (!is_move_allowed(state, j, k)) {
         return false;
     }
