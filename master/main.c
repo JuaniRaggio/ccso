@@ -1,15 +1,15 @@
-#include <signal.h>
-#include <stdint.h>
-#include <stdbool.h>
+#include <errno.h>
+#include <fcntl.h>
 #include <parser.h>
+#include <signal.h>
+#include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
-#include <sys/errno.h>
-#include <sys/fcntl.h>
-#include <sys/mman.h>
 #include <time.h>
 #include <unistd.h>
 #include "game.h"
 #include "game_admin.h"
+#include "pipes.h"
 #include <error_management.h>
 
 void printGameState(int8_t board[], uint16_t height, uint16_t width, int8_t players_count, bool state);
@@ -48,4 +48,25 @@ int main(int argc, char *argv[]) {
     if (has_view) {
         // TODO: make view process
     }
+
+    //  -----------------------------------------------------------------------------------------------
+
+    // Creamos los pipes, los procesos hijos, cargamos cada player y lo corremos
+    int pipes[MAX_PLAYERS][2], players_count;
+    players_count = game.state->players_count;
+
+    createPipes(pipes, players_count);
+    forkPlayers(pipes, players_count, game.state);
+    closePipes(pipes, WRITE, players_count); // Cierro todos los writes-ends del master
+
+    // ------------------------------------------------------------------------------------------------
+
+    /*
+    IDEA: crear un masterSet y ahi cargar todos los filesDescriptors. Para el SELECT, usar el readFds, ya que el select
+    lo cambia (deja unicamente los que tienen algo para leer), entonces en la proxima iteracion, lo unico que deberiamos
+    hacer es readFds = masterSet
+    */
+    int maxFd;
+    fd_set masterSet, readFds; // Creo dos cjto de fileDescriptors
+    initFdSet(&masterSet, pipes, players_count, &maxFd);
 }

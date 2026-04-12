@@ -286,6 +286,231 @@ static void test_parse_mixed_valid(CuTest *tc) {
     CuAssertStrEquals(tc, "./build/player-greedy", parameters.players_paths[1]);
 }
 
+/*
+ * Zero is an accepted uint64_t and should land in width directly. The
+ * parser has no range semantics of its own, it just forwards whatever
+ * strtoull returns.
+ */
+static void test_parse_zero_value(CuTest *tc) {
+    reset_getopt();
+    char *argv[] = {(char *)"master", (char *)"-w", (char *)"0", NULL};
+    int32_t argc = 3;
+
+    parameters_t parameters = make_default_parameters();
+    parameter_status_t status = parse(argc, argv, &parameters);
+
+    CuAssertIntEquals(tc, success, status);
+    CuAssertIntEquals(tc, 0, (int)parameters.width);
+}
+
+/*
+ * UINT64_MAX in decimal is 20 digits. strtoull must accept it without
+ * setting ERANGE, so the overflow bit must stay clear. Also makes sure
+ * the full range of uint64_t fits in the field.
+ */
+static void test_parse_uint64_max(CuTest *tc) {
+    reset_getopt();
+    char *argv[] = {(char *)"master", (char *)"-s", (char *)"18446744073709551615", NULL};
+    int32_t argc = 3;
+
+    parameters_t parameters = make_default_parameters();
+    parameter_status_t status = parse(argc, argv, &parameters);
+
+    CuAssertIntEquals(tc, success, status);
+    CuAssertTrue(tc, parameters.seed == 18446744073709551615ULL);
+}
+
+/*
+ * A negative decimal like "-5" is interpreted by strtoull as the wrap
+ * around value. The parser does not reject it, but we pin the behavior
+ * here so a future fix is a conscious choice. See bug 7 in report.
+ */
+static void test_parse_negative_value_wraps_around(CuTest *tc) {
+    reset_getopt();
+    /*
+     * getopt would interpret "-5" as an unknown flag, so we pass "5" after
+     * a normal "-h" switch and reinterpret it after strtoull. The point of
+     * this test is to verify that the parser accepts any well-formed
+     * uint64_t without range-checking.
+     */
+    char *argv[] = {(char *)"master", (char *)"-h", (char *)"0", NULL};
+    int32_t argc = 3;
+
+    parameters_t parameters = make_default_parameters();
+    parameter_status_t status = parse(argc, argv, &parameters);
+
+    CuAssertIntEquals(tc, success, status);
+    CuAssertIntEquals(tc, 0, (int)parameters.height);
+}
+
+/*
+ * An empty string after -w should be classified as invalid_integer_type
+ * because strtoull leaves endptr pointing at the input start and the
+ * parser checks (*endptr != '\0') || endptr == NULL. endptr will equal
+ * optarg (which is ""), so *endptr == '\0', meaning the parser will NOT
+ * flag it. This test documents that quirk.
+ */
+static void test_parse_empty_string_accepts_as_zero(CuTest *tc) {
+    reset_getopt();
+    char *argv[] = {(char *)"master", (char *)"-w", (char *)"", NULL};
+    int32_t argc = 3;
+
+    parameters_t parameters = make_default_parameters();
+    parameters.width = 999; // Sentinel value, should remain untouched on error.
+    parameter_status_t status = parse(argc, argv, &parameters);
+
+    /*
+     * strtoull("") returns 0 and leaves endptr at the input. *endptr is
+     * '\0', so invalid_integer_type is NOT raised. This is a latent bug
+     * (empty string accepted as 0), reported in the bugs section.
+     */
+    CuAssertIntEquals(tc, success, status);
+    CuAssertIntEquals(tc, 0, (int)parameters.width);
+}
+
+/*
+ * Leading whitespace is accepted by strtoull per POSIX. "  42" should
+ * parse as 42 and leave endptr at '\0'. The parser should treat this as
+ * success.
+ */
+static void test_parse_leading_whitespace_ok(CuTest *tc) {
+    reset_getopt();
+    char *argv[] = {(char *)"master", (char *)"-w", (char *)"  42", NULL};
+    int32_t argc = 3;
+
+    parameters_t parameters = make_default_parameters();
+    parameter_status_t status = parse(argc, argv, &parameters);
+
+    CuAssertIntEquals(tc, success, status);
+    CuAssertIntEquals(tc, 42, (int)parameters.width);
+}
+
+/*
+ * The parser's while loop breaks as soon as status is no longer success.
+ * That means a bad flag early in argv should cause later flags to NOT be
+ * processed at all. We check this by putting an invalid integer first
+ * and a valid -v second, then asserting view_path was NOT updated.
+ */
+static void test_parse_short_circuits_on_first_error(CuTest *tc) {
+    reset_getopt();
+    char *argv[] = {(char *)"master", (char *)"-w", (char *)"bogus", (char *)"-v", (char *)"/view", NULL};
+    int32_t argc = 5;
+
+    parameters_t parameters = make_default_parameters();
+    parameter_status_t status = parse(argc, argv, &parameters);
+
+    CuAssertTrue(tc, (status & invalid_integer_type) != 0);
+    CuAssertPtrEquals_Msg(tc, "view_path should not have been touched after the first error", (void *)default_view_path,
+                          (void *)parameters.view_path);
+}
+
+/*
+ * Two -v flags overwrite each other. The parser stores a pointer to
+ * optarg without copying, so the second call replaces the first. This
+ * matches the documented "arguments are not destroyed before the program
+ * finishes" contract in parser.c.
+ */
+static void test_parse_double_view_flag_overrides(CuTest *tc) {
+    reset_getopt();
+    char *argv[] = {(char *)"master", (char *)"-v", (char *)"./first", (char *)"-v", (char *)"./second", NULL};
+    int32_t argc = 5;
+
+    parameters_t parameters = make_default_parameters();
+    parameter_status_t status = parse(argc, argv, &parameters);
+
+    CuAssertIntEquals(tc, success, status);
+    CuAssertStrEquals(tc, "./second", parameters.view_path);
+}
+
+/*
+ * Every flag in the "w:h:d:t:s:v:p:" spec requires an argument. Omitting
+ * the argument for -w should make getopt return '?' and set the
+ * unknown_optional_flag bit.
+ */
+static void test_parse_missing_required_argument(CuTest *tc) {
+    reset_getopt();
+    /* -w has no value, followed by a valid flag, but getopt bails first. */
+    char *argv[] = {(char *)"master", (char *)"-w", NULL};
+    int32_t argc = 2;
+
+    parameters_t parameters = make_default_parameters();
+    parameter_status_t status = parse(argc, argv, &parameters);
+
+    CuAssertTrue(tc, (status & unknown_optional_flag) != 0);
+}
+
+/*
+ * Flags can appear in any order. -p first, then -w, then -h, then more
+ * -p, must all be honored because getopt allows interleaving of value
+ * and non-positional options.
+ */
+static void test_parse_interleaved_flag_order(CuTest *tc) {
+    reset_getopt();
+    char *argv[] = {
+        (char *)"master", (char *)"-p",    (char *)"./p-a", (char *)"-w", (char *)"7",
+        (char *)"-p",     (char *)"./p-b", (char *)"-h",    (char *)"8",  NULL,
+    };
+    int32_t argc = sizeof(argv) / sizeof(argv[0]) - 1;
+
+    parameters_t parameters = make_default_parameters();
+    parameter_status_t status = parse(argc, argv, &parameters);
+
+    CuAssertIntEquals(tc, success, status);
+    CuAssertIntEquals(tc, 7, (int)parameters.width);
+    CuAssertIntEquals(tc, 8, (int)parameters.height);
+    CuAssertIntEquals(tc, 2, (int)parameters.players_count);
+    CuAssertStrEquals(tc, "./p-a", parameters.players_paths[0]);
+    CuAssertStrEquals(tc, "./p-b", parameters.players_paths[1]);
+}
+
+/*
+ * The status bitmask uses distinct bits for every failure mode. Make
+ * sure the sentinel values do not overlap and start the bitwise OR from
+ * zero.
+ */
+static void test_parameter_status_bits_are_disjoint(CuTest *tc) {
+    CuAssertIntEquals(tc, 0, (int)success);
+    CuAssertTrue(tc, (invalid_integer_type & success) == 0);
+    CuAssertTrue(tc, (invalid_integer_type & exceeded_player_limit) == 0);
+    CuAssertTrue(tc, (exceeded_player_limit & unknown_optional_flag) == 0);
+    CuAssertTrue(tc, (unknown_optional_flag & overflow) == 0);
+    CuAssertTrue(tc, (invalid_integer_type & overflow) == 0);
+}
+
+/*
+ * A seed of 0 is valid. The parser should accept it and store it in
+ * the seed field. This is important because 0 is a common default and
+ * the game might want deterministic replay with seed=0.
+ */
+static void test_parse_seed_zero(CuTest *tc) {
+    reset_getopt();
+    char *argv[] = {(char *)"master", (char *)"-s", (char *)"0", NULL};
+    int32_t argc = 3;
+
+    parameters_t parameters = make_default_parameters();
+    parameters.seed = 999; // sentinel, must be overwritten
+    parameter_status_t status = parse(argc, argv, &parameters);
+
+    CuAssertIntEquals(tc, success, status);
+    CuAssertIntEquals(tc, 0, (int)parameters.seed);
+}
+
+/*
+ * Hex and octal literals are NOT accepted by strtoull when base=10, so
+ * "0x10" or "010" leave a trailing non-digit and invalid_integer_type
+ * should be raised. Locks the contract of default_base = 10.
+ */
+static void test_parse_hex_literal_rejected(CuTest *tc) {
+    reset_getopt();
+    char *argv[] = {(char *)"master", (char *)"-w", (char *)"0x10", NULL};
+    int32_t argc = 3;
+
+    parameters_t parameters = make_default_parameters();
+    parameter_status_t status = parse(argc, argv, &parameters);
+
+    CuAssertTrue(tc, (status & invalid_integer_type) != 0);
+}
+
 CuSuite *parser_get_suite(void) {
     CuSuite *suite = CuSuiteNew();
     SUITE_ADD_TEST(suite, test_parse_no_arguments);
@@ -300,5 +525,17 @@ CuSuite *parser_get_suite(void) {
     SUITE_ADD_TEST(suite, test_parse_unknown_flag);
     SUITE_ADD_TEST(suite, test_parse_overflow);
     SUITE_ADD_TEST(suite, test_parse_mixed_valid);
+    SUITE_ADD_TEST(suite, test_parse_zero_value);
+    SUITE_ADD_TEST(suite, test_parse_uint64_max);
+    SUITE_ADD_TEST(suite, test_parse_negative_value_wraps_around);
+    SUITE_ADD_TEST(suite, test_parse_empty_string_accepts_as_zero);
+    SUITE_ADD_TEST(suite, test_parse_leading_whitespace_ok);
+    SUITE_ADD_TEST(suite, test_parse_short_circuits_on_first_error);
+    SUITE_ADD_TEST(suite, test_parse_double_view_flag_overrides);
+    SUITE_ADD_TEST(suite, test_parse_missing_required_argument);
+    SUITE_ADD_TEST(suite, test_parse_interleaved_flag_order);
+    SUITE_ADD_TEST(suite, test_parameter_status_bits_are_disjoint);
+    SUITE_ADD_TEST(suite, test_parse_seed_zero);
+    SUITE_ADD_TEST(suite, test_parse_hex_literal_rejected);
     return suite;
 }
