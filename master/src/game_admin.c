@@ -71,13 +71,24 @@ bool is_move_allowed(game_state_t *state, uint16_t j, uint16_t k) {
     return true;
 }
 
-bool apply_move(game_state_t *state, uint16_t j, uint16_t k, int8_t newVal) {
+// Si devuelve TRUE, hay q sumar 1 a valid moves, si devuele FALSE hay que sumar 1 a invalid moves
+void apply_move(game_state_t *state, uint16_t j, uint16_t k, int8_t playerId) {
+
+    bool valid_move = true;
 
     if (!is_move_allowed(state, j, k)) {
-        return false;
+        valid_move = false;
     }
+    else{
+        int index = j * state->width + k;
+        state->board[index] = -playerId; //No es el PID
+    }
+    is_valid_move(state, valid_move, playerId);
+    return;
+}
 
-    int index = j * state->width + k;
-    state->board[index] = newVal;
-    return true;
+void is_valid_move(game_state_t *state, bool is_valid_move, int8_t playerId){
+
+    state->players[playerId].valid_moves += is_valid_move;
+    state->players[playerId].invalid_moves += !is_valid_move;
 }
