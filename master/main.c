@@ -5,11 +5,17 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <string.h>
+#include <sys/select.h>
+#include <sys/wait.h>
 #include <time.h>
 #include <unistd.h>
+
 #include "game.h"
 #include "game_admin.h"
+#include "game_sync.h"
 #include "pipes.h"
+#include "player_protocol.h"
 #include <error_management.h>
 
 static volatile sig_atomic_t should_exit = 0;
@@ -56,16 +62,7 @@ int main(int argc, char *argv[]) {
 
     close_other_pipes(pipes, players_count, invalid_pipe, pipe_writer);
 
-    for (int8_t i = 0; i < players_count; i++) {
-        const char *base = strrchr(parameters.players_paths[i], '/');
-        base = base ? base + 1 : parameters.players_paths[i];
-        player_registration_requirements_t req = {
-            .player_pid = game.state->players[i].player_id,
-        };
-        strncpy((char *)req.name, base, MAX_NAME_LENGTH - 1);
-        ((char *)req.name)[MAX_NAME_LENGTH - 1] = '\0';
-        game_register_player(game.state->players, i, req);
-    }
+    register_players_from_paths(game.state, parameters.players_paths);
     place_players_on_board(game.state);
     game.state->running = true;
 
