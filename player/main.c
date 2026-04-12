@@ -55,6 +55,15 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
+    while (!should_exit && game.state->running) {
+        game_sync_player_wait_turn(game.sync, (uint8_t)my_idx);
+        if (should_exit || !game.state->running) {
+            break;
+        }
+        game_sync_reader_exit(game.sync);
+        send_direction(STDOUT_FILENO, dir);
+    }
+
     game_disconnect(&game);
     return 0;
 }
