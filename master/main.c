@@ -55,9 +55,9 @@ int main(int argc, char *argv[]) {
     int pipes[MAX_PLAYERS][2], players_count;
     players_count = game.state->players_count;
 
-    createPipes(pipes, players_count);
-    forkPlayers(pipes, players_count, game.state);
-    closePipes(pipes, WRITE, players_count); // Cierro todos los writes-ends del master
+    create_pipes(pipes, players_count);
+    fork_players(pipes, players_count, game.state);
+    close_pipes(pipes, pipe_writer, players_count); // Cierro todos los writes-ends del master
 
     // ------------------------------------------------------------------------------------------------
 
@@ -68,5 +68,5 @@ int main(int argc, char *argv[]) {
     */
     int maxFd;
     fd_set masterSet, readFds; // Creo dos cjto de fileDescriptors
-    initFdSet(&masterSet, pipes, players_count, &maxFd);
+    init_fd_set(&masterSet, pipes, players_count, &maxFd);
 }

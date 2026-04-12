@@ -13,10 +13,10 @@ typedef enum {
     pipe_ends,
 } pipe_users_t;
 
-void createPipes(int pipes[][pipe_ends], int playersCount);
+void create_pipes(int pipes[][pipe_ends], int playersCount);
 
-void forkPlayers(int pipes[][pipe_ends], int playersCount, game_state_t *game_state);
+void fork_players(int pipes[][pipe_ends], int playersCount, game_state_t *game_state);
 
-void closePipes(int pipes[][pipe_ends], int action, int playersCount);
+void close_pipes(int pipes[][pipe_ends], pipe_users_t action, int playersCount);
 
-void initFdSet(fd_set *masterSet, int pipes[][pipe_ends], int playersCount, int *maxFd);
+void init_fd_set(fd_set *masterSet, int pipes[][pipe_ends], int playersCount, int *maxFd);
