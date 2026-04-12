@@ -13,7 +13,7 @@ void create_pipes(int pipes[][pipe_ends], int playersCount) {
     }
 }
 
-static void close_other_pipes(int32_t pipes[][pipe_ends], uint32_t pipe_count, ssize_t dont_close_this_pipe,
+void close_other_pipes(int32_t pipes[][pipe_ends], uint32_t pipe_count, ssize_t dont_close_this_pipe,
                               const pipe_users_t user_to_close) {
     // const here is an optimization for the compiler,
     // since it doesn't change inside this function, the comparison shouldn't be
@@ -40,7 +40,7 @@ void fork_players(int pipes[][pipe_ends], int playersCount, game_state_t *game_s
         if (pid == 0) {
 
             // son should not read => write only => close read-end
-            close_other_pipes(pipes, playerCount, invalid_pipe, pipe_reader);
+            close_other_pipes(pipes, playersCount, invalid_pipe, pipe_reader);
             close_other_pipes(pipes, playersCount, i, pipe_writer);
 
             // Redirigir stdout -> pipe

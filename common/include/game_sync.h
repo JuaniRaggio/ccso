@@ -14,7 +14,7 @@ static const int32_t SEM_SHARED_BETWEEN_PROCESSES = 1;
 static const uint32_t SEM_LOCKED = 0;
 static const uint32_t SEM_UNLOCKED = 1;
 
-extern const char *const game_sync_memory_name;
+extern const char game_sync_memory_name[];
 
 typedef struct {
     sem_t view_may_render;

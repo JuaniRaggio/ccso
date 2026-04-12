@@ -7,6 +7,7 @@
 #include <game_sync.h>
 #include <player_movement.h>
 
+/*
 void start_playing(game_t *game, uint16_t idx) {
     while (game->state->running) {
         // Waiting for the master to allow reading
@@ -28,3 +29,4 @@ void start_playing(game_t *game, uint16_t idx) {
     }
     return;
 }
+*/

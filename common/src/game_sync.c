@@ -1,7 +1,7 @@
 #include <game_sync.h>
 #include <semaphore.h>
 
-const char *const game_sync_memory_name = "/game_sync";
+const char game_sync_memory_name[] = "/game_sync";
 
 void game_sync_writer_enter(game_sync_t *sync) {
     sem_wait(&sync->master_writing);
