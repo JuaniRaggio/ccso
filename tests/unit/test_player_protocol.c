@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #include "CuTest.h"
 #include "test_suites.h"
@@ -197,6 +198,114 @@ static void test_no_valid_move_sentinel(CuTest *tc) {
     CuAssertTrue(tc, !is_valid_direction(NO_VALID_MOVE));
 }
 
+/* ---------- send_direction / recv_direction ---------- */
+
+/*
+ * Helper: create a pipe and return the read/write fds.
+ * Returns 0 on success, -1 on failure.
+ */
+static int32_t make_pipe(int32_t *read_fd, int32_t *write_fd) {
+    int32_t fds[2];
+    if (pipe(fds) == -1) {
+        return -1;
+    }
+    *read_fd = fds[0];
+    *write_fd = fds[1];
+    return 0;
+}
+
+/*
+ * send_direction followed by recv_direction must roundtrip a single
+ * direction value correctly.
+ */
+static void test_send_recv_direction_roundtrip(CuTest *tc) {
+    int32_t rfd, wfd;
+    CuAssertIntEquals(tc, 0, make_pipe(&rfd, &wfd));
+
+    direction_wire_t sent = dir_right;
+    ssize_t written = send_direction(wfd, sent);
+    CuAssertIntEquals(tc, 1, (int)written);
+
+    direction_wire_t received = -99;
+    ssize_t read_n = recv_direction(rfd, &received);
+    CuAssertIntEquals(tc, 1, (int)read_n);
+    CuAssertIntEquals(tc, (int)sent, (int)received);
+
+    close(rfd);
+    close(wfd);
+}
+
+/*
+ * All 8 valid directions must roundtrip correctly through a pipe.
+ */
+static void test_send_recv_all_directions(CuTest *tc) {
+    int32_t rfd, wfd;
+    CuAssertIntEquals(tc, 0, make_pipe(&rfd, &wfd));
+
+    for (int8_t d = 0; d < (int8_t)dir_count; d++) {
+        ssize_t written = send_direction(wfd, (direction_wire_t)d);
+        CuAssertIntEquals(tc, 1, (int)written);
+    }
+
+    for (int8_t d = 0; d < (int8_t)dir_count; d++) {
+        direction_wire_t received = -99;
+        ssize_t read_n = recv_direction(rfd, &received);
+        CuAssertIntEquals(tc, 1, (int)read_n);
+        CuAssertIntEquals(tc, (int)d, (int)received);
+    }
+
+    close(rfd);
+    close(wfd);
+}
+
+/*
+ * NO_VALID_MOVE (-1) must roundtrip correctly. send_direction casts
+ * to uint8_t, so -1 becomes 0xFF. recv_direction casts back to
+ * direction_wire_t (int8_t), which is -1 on two's complement.
+ */
+static void test_send_recv_no_valid_move(CuTest *tc) {
+    int32_t rfd, wfd;
+    CuAssertIntEquals(tc, 0, make_pipe(&rfd, &wfd));
+
+    ssize_t written = send_direction(wfd, NO_VALID_MOVE);
+    CuAssertIntEquals(tc, 1, (int)written);
+
+    direction_wire_t received = 0;
+    ssize_t read_n = recv_direction(rfd, &received);
+    CuAssertIntEquals(tc, 1, (int)read_n);
+    CuAssertIntEquals(tc, (int)NO_VALID_MOVE, (int)received);
+
+    close(rfd);
+    close(wfd);
+}
+
+/*
+ * recv_direction on a closed pipe (EOF) must return 0 and not modify
+ * the output parameter.
+ */
+static void test_recv_direction_eof(CuTest *tc) {
+    int32_t rfd, wfd;
+    CuAssertIntEquals(tc, 0, make_pipe(&rfd, &wfd));
+
+    close(wfd); /* close write end -> EOF on read end */
+
+    direction_wire_t received = 42;
+    ssize_t read_n = recv_direction(rfd, &received);
+    CuAssertIntEquals(tc, 0, (int)read_n);
+    /* received should NOT have been modified (n != 1) */
+    CuAssertIntEquals(tc, 42, (int)received);
+
+    close(rfd);
+}
+
+/*
+ * send_direction on an invalid fd should return -1 (error).
+ */
+static void test_send_direction_bad_fd(CuTest *tc) {
+    ssize_t result = send_direction(-1, dir_up);
+    CuAssertTrue(tc, result == -1);
+}
+
 CuSuite *player_protocol_get_suite(void) {
     CuSuite *suite = CuSuiteNew();
     SUITE_ADD_TEST(suite, test_direction_enum_layout);
@@ -212,5 +321,11 @@ CuSuite *player_protocol_get_suite(void) {
     SUITE_ADD_TEST(suite, test_is_valid_direction_large_positive_is_invalid);
     SUITE_ADD_TEST(suite, test_is_valid_direction_boundaries);
     SUITE_ADD_TEST(suite, test_no_valid_move_sentinel);
+    /* send_direction / recv_direction */
+    SUITE_ADD_TEST(suite, test_send_recv_direction_roundtrip);
+    SUITE_ADD_TEST(suite, test_send_recv_all_directions);
+    SUITE_ADD_TEST(suite, test_send_recv_no_valid_move);
+    SUITE_ADD_TEST(suite, test_recv_direction_eof);
+    SUITE_ADD_TEST(suite, test_send_direction_bad_fd);
     return suite;
 }

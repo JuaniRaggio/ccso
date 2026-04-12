@@ -39,6 +39,14 @@ int32_t main(void) {
     CuSuiteAddSuite(root, player_protocol_suite);
     CuSuiteDelete(player_protocol_suite);
 
+    CuSuite *argv_parser_suite = argv_parser_get_suite();
+    CuSuiteAddSuite(root, argv_parser_suite);
+    CuSuiteDelete(argv_parser_suite);
+
+    CuSuite *player_movement_suite = player_movement_get_suite();
+    CuSuiteAddSuite(root, player_movement_suite);
+    CuSuiteDelete(player_movement_suite);
+
     CuSuiteRun(root);
 
     CuString *summary = CuStringNew();

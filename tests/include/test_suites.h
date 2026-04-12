@@ -12,3 +12,5 @@ CuSuite *error_management_get_suite(void);
 CuSuite *game_sync_get_suite(void);
 CuSuite *game_admin_get_suite(void);
 CuSuite *player_protocol_get_suite(void);
+CuSuite *argv_parser_get_suite(void);
+CuSuite *player_movement_get_suite(void);

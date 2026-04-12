@@ -654,6 +654,77 @@ static void test_parse_invalid_integer_on_delay(CuTest *tc) {
     CuAssertTrue(tc, (status & invalid_integer_type) != 0);
 }
 
+/*
+ * -w must also populate the c_width string pointer with the raw optarg
+ * value, so the master can forward it to forked children.
+ */
+static void test_parse_width_populates_c_width(CuTest *tc) {
+    reset_getopt();
+    char *argv[] = {(char *)"master", (char *)"-w", (char *)"25", NULL};
+    int32_t argc = 3;
+
+    parameters_t parameters = make_default_parameters();
+    parameter_status_t status = parse(argc, argv, &parameters);
+
+    CuAssertIntEquals(tc, success, status);
+    CuAssertIntEquals(tc, 25, (int)parameters.width);
+    CuAssertPtrNotNull(tc, (void *)parameters.c_width);
+    CuAssertStrEquals(tc, "25", parameters.c_width);
+}
+
+/*
+ * -h must also populate the c_height string pointer with the raw optarg
+ * value.
+ */
+static void test_parse_height_populates_c_height(CuTest *tc) {
+    reset_getopt();
+    char *argv[] = {(char *)"master", (char *)"-h", (char *)"30", NULL};
+    int32_t argc = 3;
+
+    parameters_t parameters = make_default_parameters();
+    parameter_status_t status = parse(argc, argv, &parameters);
+
+    CuAssertIntEquals(tc, success, status);
+    CuAssertIntEquals(tc, 30, (int)parameters.height);
+    CuAssertPtrNotNull(tc, (void *)parameters.c_height);
+    CuAssertStrEquals(tc, "30", parameters.c_height);
+}
+
+/*
+ * When both -w and -h are provided, both c_width and c_height must
+ * point to the respective optarg strings.
+ */
+static void test_parse_both_c_width_c_height(CuTest *tc) {
+    reset_getopt();
+    char *argv[] = {(char *)"master", (char *)"-w", (char *)"15", (char *)"-h", (char *)"20", NULL};
+    int32_t argc = 5;
+
+    parameters_t parameters = make_default_parameters();
+    parameter_status_t status = parse(argc, argv, &parameters);
+
+    CuAssertIntEquals(tc, success, status);
+    CuAssertStrEquals(tc, "15", parameters.c_width);
+    CuAssertStrEquals(tc, "20", parameters.c_height);
+}
+
+/*
+ * When -w is not provided, c_width must remain at its default (NULL or
+ * whatever the caller initialized it to). We initialize to NULL via
+ * make_default_parameters and verify it stays NULL.
+ */
+static void test_parse_c_width_default_when_omitted(CuTest *tc) {
+    reset_getopt();
+    char *argv[] = {(char *)"master", (char *)"-h", (char *)"10", NULL};
+    int32_t argc = 3;
+
+    parameters_t parameters = make_default_parameters();
+    parameters.c_width = NULL;
+    parameter_status_t status = parse(argc, argv, &parameters);
+
+    CuAssertIntEquals(tc, success, status);
+    CuAssertTrue(tc, parameters.c_width == NULL);
+}
+
 CuSuite *parser_get_suite(void) {
     CuSuite *suite = CuSuiteNew();
     SUITE_ADD_TEST(suite, test_parse_no_arguments);
@@ -688,5 +759,9 @@ CuSuite *parser_get_suite(void) {
     SUITE_ADD_TEST(suite, test_parse_two_unknown_flags_only_first_seen);
     SUITE_ADD_TEST(suite, test_parse_overflow_on_seed);
     SUITE_ADD_TEST(suite, test_parse_invalid_integer_on_delay);
+    SUITE_ADD_TEST(suite, test_parse_width_populates_c_width);
+    SUITE_ADD_TEST(suite, test_parse_height_populates_c_height);
+    SUITE_ADD_TEST(suite, test_parse_both_c_width_c_height);
+    SUITE_ADD_TEST(suite, test_parse_c_width_default_when_omitted);
     return suite;
 }

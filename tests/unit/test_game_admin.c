@@ -863,6 +863,164 @@ static void test_register_move_interleaved(CuTest *tc) {
     free_game(game);
 }
 
+/* ---------- process_player_move ---------- */
+
+/*
+ * process_player_move combines direction validation, coordinate
+ * computation via apply_direction, and apply_move into a single
+ * function. It operates on the player's current (x, y) position
+ * stored in state->players[player_idx].
+ */
+
+/*
+ * A valid direction on a fresh board: the player starts at (2, 2) and
+ * moves right. The new position should be (3, 2), and the cell at
+ * row=2, col=3 must be stamped with -player_idx.
+ */
+static void test_process_player_move_valid_direction(CuTest *tc) {
+    game_t *game = make_initialized_game(5, 5, 30, 2);
+    CuAssertPtrNotNull(tc, game);
+    memset(game->state->players, 0, sizeof(player_t) * MAX_PLAYERS);
+
+    const uint8_t idx = 1;
+    game->state->players[idx].x = 2;
+    game->state->players[idx].y = 2;
+
+    process_player_move(game->state, idx, dir_right);
+
+    /* apply_direction(2, 2, dir_right) -> new_x=3, new_y=2 */
+    /* apply_move(state, new_y=2, new_x=3, player_idx=1) */
+    CuAssertIntEquals(tc, -(int8_t)idx, (int)game->state->board[2 * 5 + 3]);
+    CuAssertIntEquals(tc, 1, (int)game->state->players[idx].valid_moves);
+    CuAssertIntEquals(tc, 0, (int)game->state->players[idx].invalid_moves);
+
+    free_game(game);
+}
+
+/*
+ * An invalid direction (e.g. NO_VALID_MOVE = -1) must be rejected
+ * and increment the player's invalid_moves counter without touching
+ * the board.
+ */
+static void test_process_player_move_invalid_direction(CuTest *tc) {
+    game_t *game = make_initialized_game(5, 5, 31, 2);
+    CuAssertPtrNotNull(tc, game);
+    memset(game->state->players, 0, sizeof(player_t) * MAX_PLAYERS);
+
+    /* Save board for comparison. */
+    int8_t board_copy[25];
+    memcpy(board_copy, game->state->board, 25);
+
+    const uint8_t idx = 1;
+    game->state->players[idx].x = 2;
+    game->state->players[idx].y = 2;
+
+    process_player_move(game->state, idx, NO_VALID_MOVE);
+
+    CuAssertIntEquals(tc, 0, (int)game->state->players[idx].valid_moves);
+    CuAssertIntEquals(tc, 1, (int)game->state->players[idx].invalid_moves);
+    CuAssertTrue(tc, memcmp(board_copy, game->state->board, 25) == 0);
+
+    free_game(game);
+}
+
+/*
+ * A valid direction that leads out of bounds (player at (0, 0) moving
+ * up means new_y=-1). The apply_move call receives uint16_t coordinates,
+ * and -1 cast to uint16_t is 65535 which is out of bounds. So the move
+ * should be invalid.
+ */
+static void test_process_player_move_out_of_bounds_wraps(CuTest *tc) {
+    game_t *game = make_initialized_game(5, 5, 32, 2);
+    CuAssertPtrNotNull(tc, game);
+    memset(game->state->players, 0, sizeof(player_t) * MAX_PLAYERS);
+
+    const uint8_t idx = 1;
+    game->state->players[idx].x = 0;
+    game->state->players[idx].y = 0;
+
+    process_player_move(game->state, idx, dir_up);
+
+    /* dir_up: new_y = 0 + (-1) = -1, passed to apply_move as uint16_t = 65535 */
+    CuAssertIntEquals(tc, 0, (int)game->state->players[idx].valid_moves);
+    CuAssertIntEquals(tc, 1, (int)game->state->players[idx].invalid_moves);
+
+    free_game(game);
+}
+
+/*
+ * All 8 directions from the center of a 5x5 board must be valid moves.
+ * After each move the target cell must be stamped.
+ */
+static void test_process_player_move_all_directions_from_center(CuTest *tc) {
+    const uint8_t idx = 1;
+    /*
+     * For each direction, create a fresh game, place the player at center
+     * (2,2) and try the move. We use separate games to avoid interference
+     * between moves (each claimed cell blocks the next).
+     */
+    for (int8_t d = 0; d < (int8_t)dir_count; d++) {
+        game_t *g = make_initialized_game(5, 5, 33 + d, 2);
+        CuAssertPtrNotNull(tc, g);
+        memset(g->state->players, 0, sizeof(player_t) * MAX_PLAYERS);
+        g->state->players[idx].x = 2;
+        g->state->players[idx].y = 2;
+
+        process_player_move(g->state, idx, d);
+        CuAssertIntEquals(tc, 1, (int)g->state->players[idx].valid_moves);
+        CuAssertIntEquals(tc, 0, (int)g->state->players[idx].invalid_moves);
+
+        free_game(g);
+    }
+}
+
+/*
+ * process_player_move with dir_count (= 8) should be rejected as
+ * invalid since is_valid_direction returns false for dir_count.
+ */
+static void test_process_player_move_dir_count_is_invalid(CuTest *tc) {
+    game_t *game = make_initialized_game(5, 5, 34, 2);
+    CuAssertPtrNotNull(tc, game);
+    memset(game->state->players, 0, sizeof(player_t) * MAX_PLAYERS);
+
+    const uint8_t idx = 1;
+    game->state->players[idx].x = 2;
+    game->state->players[idx].y = 2;
+
+    process_player_move(game->state, idx, (direction_wire_t)dir_count);
+
+    CuAssertIntEquals(tc, 0, (int)game->state->players[idx].valid_moves);
+    CuAssertIntEquals(tc, 1, (int)game->state->players[idx].invalid_moves);
+
+    free_game(game);
+}
+
+/*
+ * Moving to an already-claimed cell through process_player_move must
+ * still be treated as invalid (apply_move handles this).
+ */
+static void test_process_player_move_to_claimed_cell(CuTest *tc) {
+    game_t *game = make_initialized_game(5, 5, 35, 3);
+    CuAssertPtrNotNull(tc, game);
+    memset(game->state->players, 0, sizeof(player_t) * MAX_PLAYERS);
+
+    /* Manually claim cell (2, 3) = row 2, col 3 */
+    game->state->board[2 * 5 + 3] = -2;
+
+    const uint8_t idx = 1;
+    game->state->players[idx].x = 2;
+    game->state->players[idx].y = 2;
+
+    /* dir_right: new_x=3, new_y=2 -> cell (2,3) is already claimed */
+    process_player_move(game->state, idx, dir_right);
+
+    CuAssertIntEquals(tc, 0, (int)game->state->players[idx].valid_moves);
+    CuAssertIntEquals(tc, 1, (int)game->state->players[idx].invalid_moves);
+    CuAssertIntEquals(tc, -2, (int)game->state->board[2 * 5 + 3]); /* unchanged */
+
+    free_game(game);
+}
+
 /* ---------- game_state_init additional tests ---------- */
 
 /*
@@ -960,5 +1118,12 @@ CuSuite *game_admin_get_suite(void) {
     SUITE_ADD_TEST(suite, test_register_move_invalid);
     SUITE_ADD_TEST(suite, test_register_move_different_players_isolated);
     SUITE_ADD_TEST(suite, test_register_move_interleaved);
+    /* process_player_move */
+    SUITE_ADD_TEST(suite, test_process_player_move_valid_direction);
+    SUITE_ADD_TEST(suite, test_process_player_move_invalid_direction);
+    SUITE_ADD_TEST(suite, test_process_player_move_out_of_bounds_wraps);
+    SUITE_ADD_TEST(suite, test_process_player_move_all_directions_from_center);
+    SUITE_ADD_TEST(suite, test_process_player_move_dir_count_is_invalid);
+    SUITE_ADD_TEST(suite, test_process_player_move_to_claimed_cell);
     return suite;
 }
