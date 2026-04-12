@@ -1,18 +1,7 @@
 #pragma once
 #include <game_state.h>
+#include <player_protocol.h>
 #include <stdint.h>
-
-typedef enum {
-    DIR_UP = 0,
-    DIR_UP_RIGHT,
-    DIR_RIGHT,
-    DIR_DOWN_RIGHT,
-    DIR_DOWN,
-    DIR_DOWN_LEFT,
-    DIR_LEFT,
-    DIR_UP_LEFT,
-    DIR_COUNT,
-} direction_t;
 
 /**
  * @brief: Calculates next move for player

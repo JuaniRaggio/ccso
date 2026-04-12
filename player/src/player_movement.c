@@ -1,11 +1,6 @@
 #include <player_movement.h>
 #include <string.h>
 
-static const int8_t DX[] = {0, 1, 1, 1, 0, -1, -1, -1};
-static const int8_t DY[] = {-1, -1, 0, 1, 1, 1, 0, -1};
-
-#define NO_VALID_MOVE 0
-
 static inline bool in_bounds(int16_t x, int16_t y, uint16_t width, uint16_t height) {
     return x >= 0 && x < width && y >= 0 && y < height;
 }
@@ -19,8 +14,7 @@ static inline bool is_free(int8_t cell) {
 }
 
 static inline void neighbor(int16_t x, int16_t y, int8_t dir, int16_t *nx, int16_t *ny) {
-    *nx = x + DX[dir];
-    *ny = y + DY[dir];
+    apply_direction(x, y, dir, nx, ny);
 }
 
 static inline bool is_free_neighbor(int8_t board[], uint16_t width, uint16_t height, int16_t x, int16_t y, int8_t dir,
@@ -52,7 +46,7 @@ static int32_t flood_count(int8_t board[], uint16_t width, uint16_t height, int1
         int16_t cy = stack[--top];
         int16_t cx = stack[--top];
         int16_t nx, ny;
-        for (int8_t d = 0; d < DIR_COUNT; d++) {
+        for (int8_t d = 0; d < dir_count; d++) {
             if (!is_free_neighbor(board, width, height, cx, cy, d, &nx, &ny))
                 continue;
             int32_t idx = ny * width + nx;
@@ -75,7 +69,7 @@ static int32_t flood_count(int8_t board[], uint16_t width, uint16_t height, int1
 #ifdef NAIVE
 
 int8_t compute_next_move(int8_t board[], uint16_t width, uint16_t height, uint16_t x, uint16_t y) {
-    return rand() % DIR_COUNT;
+    return rand() % dir_count;
 }
 
 #elif defined(GREEDY)
@@ -83,7 +77,7 @@ int8_t compute_next_move(int8_t board[], uint16_t width, uint16_t height, uint16
 int8_t compute_next_move(int8_t board[], uint16_t width, uint16_t height, uint16_t x, uint16_t y) {
     int8_t best_dir = -1;
     int8_t best_val = 0;
-    for (int8_t dir = 0; dir < DIR_COUNT; dir++) {
+    for (int8_t dir = 0; dir < dir_count; dir++) {
         int16_t nx, ny;
         if (!is_free_neighbor(board, width, height, x, y, dir, &nx, &ny))
             continue;
@@ -115,7 +109,7 @@ static int32_t lookahead(int8_t board[], uint16_t width, uint16_t height, int16_
     if (depth == 0)
         return 0;
     int32_t best = 0;
-    for (int8_t dir = 0; dir < DIR_COUNT; dir++) {
+    for (int8_t dir = 0; dir < dir_count; dir++) {
         int16_t nx, ny;
         if (!is_free_neighbor(board, width, height, cx, cy, dir, &nx, &ny))
             continue;
@@ -136,7 +130,7 @@ int8_t compute_next_move(int8_t board[], uint16_t width, uint16_t height, uint16
     int32_t best_val = 0;
     int16_t path_x[LOOKAHEAD_DEPTH + 1];
     int16_t path_y[LOOKAHEAD_DEPTH + 1];
-    for (int8_t dir = 0; dir < DIR_COUNT; dir++) {
+    for (int8_t dir = 0; dir < dir_count; dir++) {
         int16_t nx, ny;
         if (!is_free_neighbor(board, width, height, x, y, dir, &nx, &ny))
             continue;
@@ -157,7 +151,7 @@ int8_t compute_next_move(int8_t board[], uint16_t width, uint16_t height, uint16
 int8_t compute_next_move(int8_t board[], uint16_t width, uint16_t height, uint16_t x, uint16_t y) {
     int8_t best_dir = -1;
     int32_t best_space = -1;
-    for (int8_t dir = 0; dir < DIR_COUNT; dir++) {
+    for (int8_t dir = 0; dir < dir_count; dir++) {
         int16_t nx, ny;
         if (!is_free_neighbor(board, width, height, x, y, dir, &nx, &ny))
             continue;
@@ -177,12 +171,12 @@ int8_t compute_next_move(int8_t board[], uint16_t width, uint16_t height, uint16
 #define SURVIVAL_DEN 10
 
 int8_t compute_next_move(int8_t board[], uint16_t width, uint16_t height, uint16_t x, uint16_t y) {
-    int32_t floods[DIR_COUNT] = {0};
-    int8_t rewards[DIR_COUNT] = {0};
-    bool valid[DIR_COUNT] = {false};
+    int32_t floods[dir_count] = {0};
+    int8_t rewards[dir_count] = {0};
+    bool valid[dir_count] = {false};
     int32_t max_flood = 0;
 
-    for (int8_t dir = 0; dir < DIR_COUNT; dir++) {
+    for (int8_t dir = 0; dir < dir_count; dir++) {
         int16_t nx, ny;
         if (!is_free_neighbor(board, width, height, x, y, dir, &nx, &ny))
             continue;
@@ -198,7 +192,7 @@ int8_t compute_next_move(int8_t board[], uint16_t width, uint16_t height, uint16
     int8_t best_reward = 0;
     int32_t best_flood = -1;
 
-    for (int8_t dir = 0; dir < DIR_COUNT; dir++) {
+    for (int8_t dir = 0; dir < dir_count; dir++) {
         if (!valid[dir] || floods[dir] < threshold)
             continue;
         if (rewards[dir] > best_reward || (rewards[dir] == best_reward && floods[dir] > best_flood)) {
@@ -210,7 +204,7 @@ int8_t compute_next_move(int8_t board[], uint16_t width, uint16_t height, uint16
 
     if (best_dir == -1) {
         best_flood = -1;
-        for (int8_t dir = 0; dir < DIR_COUNT; dir++) {
+        for (int8_t dir = 0; dir < dir_count; dir++) {
             if (!valid[dir])
                 continue;
             if (floods[dir] > best_flood) {
@@ -229,7 +223,7 @@ int8_t decidir_movimiento(game_state_t *state, uint16_t width, uint16_t height, 
     int16_t x = state->players[idx].x;
     int16_t y = state->players[idx].y;
 
-    for (int8_t dir = 0; dir < DIR_COUNT; dir++) {
+    for (int8_t dir = 0; dir < dir_count; dir++) {
         int16_t nx, ny;
         if (!is_free_neighbor(state->board, width, height, x, y, dir, &nx, &ny))
             continue;
