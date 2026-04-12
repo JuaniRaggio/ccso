@@ -47,11 +47,11 @@ static void test_direction_enum_layout(CuTest *tc) {
  * Right is +1, left is -1, vertical-only is 0.
  */
 static void test_move_dx_values(CuTest *tc) {
-    CuAssertIntEquals(tc,  0, (int)move_delta[dir_up].dx);
-    CuAssertIntEquals(tc,  1, (int)move_delta[dir_up_right].dx);
-    CuAssertIntEquals(tc,  1, (int)move_delta[dir_right].dx);
-    CuAssertIntEquals(tc,  1, (int)move_delta[dir_down_right].dx);
-    CuAssertIntEquals(tc,  0, (int)move_delta[dir_down].dx);
+    CuAssertIntEquals(tc, 0, (int)move_delta[dir_up].dx);
+    CuAssertIntEquals(tc, 1, (int)move_delta[dir_up_right].dx);
+    CuAssertIntEquals(tc, 1, (int)move_delta[dir_right].dx);
+    CuAssertIntEquals(tc, 1, (int)move_delta[dir_down_right].dx);
+    CuAssertIntEquals(tc, 0, (int)move_delta[dir_down].dx);
     CuAssertIntEquals(tc, -1, (int)move_delta[dir_down_left].dx);
     CuAssertIntEquals(tc, -1, (int)move_delta[dir_left].dx);
     CuAssertIntEquals(tc, -1, (int)move_delta[dir_up_left].dx);
@@ -64,11 +64,11 @@ static void test_move_dx_values(CuTest *tc) {
 static void test_move_dy_values(CuTest *tc) {
     CuAssertIntEquals(tc, -1, (int)move_delta[dir_up].dy);
     CuAssertIntEquals(tc, -1, (int)move_delta[dir_up_right].dy);
-    CuAssertIntEquals(tc,  0, (int)move_delta[dir_right].dy);
-    CuAssertIntEquals(tc,  1, (int)move_delta[dir_down_right].dy);
-    CuAssertIntEquals(tc,  1, (int)move_delta[dir_down].dy);
-    CuAssertIntEquals(tc,  1, (int)move_delta[dir_down_left].dy);
-    CuAssertIntEquals(tc,  0, (int)move_delta[dir_left].dy);
+    CuAssertIntEquals(tc, 0, (int)move_delta[dir_right].dy);
+    CuAssertIntEquals(tc, 1, (int)move_delta[dir_down_right].dy);
+    CuAssertIntEquals(tc, 1, (int)move_delta[dir_down].dy);
+    CuAssertIntEquals(tc, 1, (int)move_delta[dir_down_left].dy);
+    CuAssertIntEquals(tc, 0, (int)move_delta[dir_left].dy);
     CuAssertIntEquals(tc, -1, (int)move_delta[dir_up_left].dy);
 }
 
