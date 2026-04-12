@@ -95,13 +95,11 @@ void view_draw_board(view_t *view, game_state_t *state) {
                 wattron(view->board_win, COLOR_PAIR(COLOR_BOARD));
                 mvwprintw(view->board_win, y, x, "%2d", value);
                 wattroff(view->board_win, COLOR_PAIR(COLOR_BOARD));
-            } else if (value < 0) {
-                int8_t eater = (int8_t)(-value - 1);
+            } else {
+                int8_t eater = (int8_t)(-value);
                 wattron(view->board_win, COLOR_PAIR(eater + COLOR_PAIR_OFFSET) | A_DIM);
                 mvwprintw(view->board_win, y, x, " *");
                 wattroff(view->board_win, COLOR_PAIR(eater + COLOR_PAIR_OFFSET) | A_DIM);
-            } else {
-                mvwprintw(view->board_win, y, x, " *");
             }
 
             if (col < state->width - 1) {
