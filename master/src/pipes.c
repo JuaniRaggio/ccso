@@ -3,8 +3,10 @@
 #include <errno.h>
 #include <error_management.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
+#include <sys/wait.h>
 #include <unistd.h>
 
 void create_pipes(int pipes[][pipe_ends], int playersCount) {
@@ -90,13 +92,28 @@ void init_fd_set(fd_set *masterSet, int pipes[][pipe_ends], int playersCount, in
     FD_ZERO(masterSet);
     *maxFd = 0;
 
-    // Agrego los (read-end, de los pipes) al set. (Agrega el numero de fd)
     for (int i = 0; i < playersCount; i++) {
-        FD_SET(pipes[i][pipe_reader], masterSet); // Agrega el pipe_reader-END de todos los pipes a readfds (por eso
-                                                  // necesita &readfds)
-
+        FD_SET(pipes[i][pipe_reader], masterSet);
         if (pipes[i][pipe_reader] > *maxFd) {
             *maxFd = pipes[i][pipe_reader];
         }
     }
+}
+
+void disconnect_player(player_t *player, int32_t pipes[][pipe_ends], fd_set *master_set, int8_t idx) {
+    player->state = false;
+    FD_CLR(pipes[idx][pipe_reader], master_set);
+    close(pipes[idx][pipe_reader]);
+}
+
+void close_active_pipes(int32_t pipes[][pipe_ends], player_t players[], int8_t count) {
+    for (int8_t i = 0; i < count; i++) {
+        if (players[i].state)
+            close(pipes[i][pipe_reader]);
+    }
+}
+
+void wait_and_print_results(player_t players[], int8_t count) {
+}
+void wait_view(pid_t view_pid) {
 }
