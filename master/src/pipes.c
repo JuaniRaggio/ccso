@@ -37,21 +37,23 @@ static pid_t new_process() {
     return pid;
 }
 
-// TODO / WARNING : Not const view_path, width and height may cause problems check!
-pid_t fork_view(char *view_path, char *width, char *height) {
+pid_t fork_view(const char *view_path, const char *width, const char *height) {
     if (view_path == NULL) {
-        manage_error(HERE, TRACE_NONE, errno);
+        manage_error(HERE, TRACE_NONE, invalid_argument_error);
         exit(EXIT_FAILURE);
     }
     pid_t view_pid = new_process();
     if (view_pid == 0) {
         char *args[] = {
-            [0] = view_path,
-            [1] = width,
-            [2] = height,
+            // note: casting const to non-const is valid cause
+            // might change but on another process so promise is
+            // still fulfilled
+            [0] = (char *)view_path,
+            [1] = (char *)width,
+            [2] = (char *)height,
         };
         execve(view_path, args, NULL);
-        manage_error(HERE, TRACE_NONE, errno);
+        manage_error(HERE, TRACE_NONE, unreachable);
         _exit(EXIT_FAILURE);
     }
     return view_pid;
@@ -66,23 +68,16 @@ void fork_players(int pipes[][pipe_ends], int playersCount, game_state_t *game_s
             close_other_pipes(pipes, playersCount, invalid_pipe, pipe_reader);
             close_other_pipes(pipes, playersCount, i, pipe_writer);
 
-            // Redirigir stdout -> pipe
-            // dup2 cierra el FD "stdout" y lo abre con el write-end del pipe
-            // Redirige la salida del proceso al pipe (EJ: Si hago un printf(), se imprime en el write-end del pipe)
             if (dup2(pipes[i][pipe_writer], STDOUT_FILENO) == -1) {
                 manage_error(HERE, TRACE_NONE, errno);
                 _exit(EXIT_FAILURE);
             }
 
-            // Cierro el FD original (ya esta duplicado gracias a dup2)
             close(pipes[i][pipe_writer]);
 
-            // Ejecutamos el programa player[i].name
             char *args[] = {game_state->players[i].name, NULL};
             execve(game_state->players[i].name, args, NULL);
-
-            // Si llego aca es porque execve fallo. Ya que sino execve no retorna
-            manage_error(HERE, TRACE_NONE, errno);
+            manage_error(HERE, TRACE_NONE, unreachable);
             _exit(EXIT_FAILURE);
         }
         game_state->players[i].player_id = new_player;

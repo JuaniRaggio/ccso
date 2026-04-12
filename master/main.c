@@ -47,7 +47,7 @@ int main(int argc, char *argv[]) {
 
     const bool has_view = parameters.view_path != NULL;
     if (has_view) {
-        // TODO: make view process
+        fork_view(parameters.view_path, parameters.c_width, parameters.c_height);
     }
 
     int pipes[MAX_PLAYERS][pipe_ends], players_count;
