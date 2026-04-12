@@ -49,17 +49,12 @@ int main(int argc, char *argv[]) {
         // TODO: make view process
     }
 
-    //  -----------------------------------------------------------------------------------------------
-
-    // Creamos los pipes, los procesos hijos, cargamos cada player y lo corremos
-    int pipes[MAX_PLAYERS][2], players_count;
+    int pipes[MAX_PLAYERS][pipe_ends], players_count;
     players_count = game.state->players_count;
 
     create_pipes(pipes, players_count);
     fork_players(pipes, players_count, game.state);
-    close_pipes(pipes, pipe_writer, players_count); // Cierro todos los writes-ends del master
-
-    // ------------------------------------------------------------------------------------------------
+    close_pipes(pipes, pipe_writer, players_count);
 
     /*
     IDEA: crear un masterSet y ahi cargar todos los filesDescriptors. Para el SELECT, usar el readFds, ya que el select
