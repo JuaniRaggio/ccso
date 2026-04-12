@@ -29,8 +29,8 @@ void register_move(game_state_t *state, bool is_valid_move, int8_t playerId);
 
 bool process_player_move(game_state_t *state, uint8_t player_idx, direction_wire_t direction);
 
-bool handle_player_turn(game_t *game, int32_t pipes[][2], fd_set *readFds,
-                        fd_set *masterSet, int8_t idx, bool *out_valid);
+bool handle_player_turn(game_t *game, int32_t pipes[][2], fd_set *readFds, fd_set *masterSet, int8_t idx,
+                        bool *out_valid);
 
 void register_players_from_paths(game_state_t *state, const char *paths[]);
 
