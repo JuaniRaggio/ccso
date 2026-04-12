@@ -10,6 +10,7 @@ typedef enum {
     invalid_argument_error = EINVAL,
     mapping_error,
     connection_error,
+    unreachable,
 } error_code_t;
 
 typedef struct {
