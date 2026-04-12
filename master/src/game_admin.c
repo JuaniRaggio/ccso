@@ -72,7 +72,7 @@ bool is_move_allowed(game_state_t *state, uint16_t vertical_coord, uint16_t hori
         return false;
     }
     int index = vertical_coord * state->width + horizontal_coord;
-    if (state->board[index] < 0) {
+    if (state->board[index] <= 0) {
         return false;
     }
     return true;
@@ -83,10 +83,13 @@ void apply_move(game_state_t *state, uint16_t vertical_coord, uint16_t horizonta
     if (!is_move_allowed(state, vertical_coord, horizontal_coord)) {
         valid_move = false;
     } else {
-        state->board[get_board_offset(state, vertical_coord, horizontal_coord)] = -player_id;
+        size_t offset = get_board_offset(state, vertical_coord, horizontal_coord);
+        state->players[player_id].score += state->board[offset];
+        state->players[player_id].x = horizontal_coord;
+        state->players[player_id].y = vertical_coord;
+        state->board[offset] = -player_id;
     }
     register_move(state, valid_move, player_id);
-    return;
 }
 
 void register_move(game_state_t *state, const bool is_valid_move, int8_t player_id) {
@@ -109,4 +112,22 @@ void process_player_move(game_state_t *state, uint8_t player_idx, direction_wire
     apply_direction(p->x, p->y, direction, &new_x, &new_y);
 
     apply_move(state, new_y, new_x, player_idx);
+}
+
+void place_players_on_board(game_state_t *state) {
+    int n = state->players_count;
+    int cols = 1;
+    while (cols * cols < n)
+        cols++;
+    int rows = (n + cols - 1) / cols;
+    int step_x = state->width / (cols + 1);
+    int step_y = state->height / (rows + 1);
+    for (int i = 0; i < n; i++) {
+        uint16_t x = (uint16_t)((i % cols + 1) * step_x);
+        uint16_t y = (uint16_t)((i / cols + 1) * step_y);
+        state->players[i].x = x;
+        state->players[i].y = y;
+        size_t offset = (size_t)y * state->width + x;
+        state->board[offset] = -(int8_t)i;
+    }
 }
