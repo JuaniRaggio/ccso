@@ -48,7 +48,6 @@ int main(int argc, char *argv[]) {
 
     game_t game = new_game(player, .height = height, .width = width);
 
-    // TO DO: Player Loop
     int8_t my_idx = find_player_index(game.state);
     if (my_idx < 0) {
         game_disconnect(&game);
@@ -60,7 +59,16 @@ int main(int argc, char *argv[]) {
         if (should_exit || !game.state->running) {
             break;
         }
+        game_sync_reader_enter(game.sync);
+        direction_wire_t dir = compute_next_move(
+            game.state->board,
+            game.state->width,
+            game.state->height,
+            game.state->players[my_idx].x,
+            game.state->players[my_idx].y
+        );
         game_sync_reader_exit(game.sync);
+
         send_direction(STDOUT_FILENO, dir);
     }
 
