@@ -52,7 +52,7 @@ int main(int argc, char *argv[]) {
     }
 
     view_cleanup(&view);
-    game_disconnect(&game);
+    game_disconnect(&game, view);
 
     return 0;
 }

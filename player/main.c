@@ -50,7 +50,7 @@ int main(int argc, char *argv[]) {
 
     int8_t my_idx = find_player_index(game.state);
     if (my_idx < 0) {
-        game_disconnect(&game);
+        game_disconnect(&game, player);
         return 1;
     }
 
@@ -74,6 +74,6 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    game_disconnect(&game);
+    game_disconnect(&game, player);
     return 0;
 }
