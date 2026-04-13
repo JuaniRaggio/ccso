@@ -3,16 +3,9 @@
 #include <game_sync.h>
 #include <player_movement.h>
 #include <player_protocol.h>
-#include <signal.h>
-#include <stdbool.h>
+#include <signals.h>
 #include <stdint.h>
 #include <unistd.h>
-
-static volatile sig_atomic_t should_exit = 0;
-
-static void signal_handler(int32_t sig) {
-    should_exit = 1;
-}
 
 static int8_t find_player_index(game_state_t *state) {
     pid_t my_pid = getpid();
@@ -24,8 +17,7 @@ static int8_t find_player_index(game_state_t *state) {
 }
 
 void player_run(game_t *game) {
-    signal(SIGINT, signal_handler);
-    signal(SIGTERM, signal_handler);
+    setup_signals();
 
     int8_t my_idx = find_player_index(game->state);
     if (my_idx < 0)
@@ -33,7 +25,7 @@ void player_run(game_t *game) {
 
     game_sync_player_wait_turn(game->sync, (uint8_t)my_idx);
 
-    while (!should_exit) {
+    while (!was_interrupted()) {
         game_sync_reader_enter(game->sync);
         direction_wire_t dir = compute_next_move(game->state->board, game->state->width, game->state->height,
                                                  game->state->players[my_idx].x, game->state->players[my_idx].y);
