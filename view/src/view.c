@@ -1,20 +1,13 @@
-#define _GNU_SOURCE
 #include "view.h"
 #include "view_internal.h"
 #include <game_state.h>
 #include <game_sync.h>
 #include <locale.h>
 #include <ncurses.h>
-#include <signal.h>
+#include <signals.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-
-static volatile sig_atomic_t should_exit = 0;
-
-static void signal_handler(int32_t sig) {
-    should_exit = 1;
-}
 
 const char *display_name(const char *name) {
     if (strncmp(name, PLAYER_PREFIX, PLAYER_PREFIX_LEN) == 0)
@@ -86,8 +79,7 @@ void view_init(view_t *view, uint16_t board_width, uint16_t board_height) {
     if (getenv("TERM") == NULL)
         setenv("TERM", "xterm-256color", 0);
 
-    signal(SIGINT, signal_handler);
-    signal(SIGTERM, signal_handler);
+    setup_signals();
 
     setup_ncurses();
     view->frame_count = 0;
@@ -117,7 +109,7 @@ static void view_draw_all(view_t *view, game_state_t *state) {
 void view_run(view_t *view, game_t *game, uint16_t width, uint16_t height) {
     while (1) {
         game_sync_view_wait_frame(game->sync);
-        if (should_exit || !game->state->running) {
+        if (was_interrupted() || !game->state->running) {
             game_sync_view_frame_done(game->sync);
             break;
         }
@@ -131,7 +123,7 @@ void view_run(view_t *view, game_t *game, uint16_t width, uint16_t height) {
 }
 
 void view_show_results(view_t *view, game_state_t *state) {
-    if (should_exit)
+    if (was_interrupted())
         return;
     view_draw_all(view, state);
     view_draw_endscreen(view, state);

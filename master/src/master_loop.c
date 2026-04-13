@@ -3,19 +3,12 @@
 #include "game_sync.h"
 #include "pipes.h"
 #include <errno.h>
-#include <signal.h>
-#include <stdbool.h>
+#include <signals.h>
 #include <stdint.h>
 #include <sys/select.h>
 #include <sys/wait.h>
 #include <time.h>
 #include <unistd.h>
-
-static volatile sig_atomic_t should_exit = 0;
-
-static void signal_handler(int32_t sig) {
-    should_exit = 1;
-}
 
 static void sync_view_frame(game_t *game, pid_t view_pid, bool *has_view) {
     if (waitpid(view_pid, NULL, WNOHANG) != 0) {
@@ -30,8 +23,7 @@ static bool check_timeout(time_t last_valid_move, uint32_t timeout) {
 }
 
 bool master_run(game_t *game, parameters_t *params, int32_t pipes[][pipe_ends], pid_t view_pid, bool *has_view) {
-    signal(SIGINT, signal_handler);
-    signal(SIGTERM, signal_handler);
+    setup_signals();
 
     int32_t maxFd;
     fd_set masterSet;
@@ -40,7 +32,7 @@ bool master_run(game_t *game, parameters_t *params, int32_t pipes[][pipe_ends], 
     time_t last_valid_move = time(NULL);
     int8_t start_player = 0;
 
-    while (!should_exit && any_player_alive(game->state)) {
+    while (!was_interrupted() && any_player_alive(game->state)) {
         if (check_timeout(last_valid_move, params->timeout))
             break;
 
@@ -79,5 +71,5 @@ bool master_run(game_t *game, parameters_t *params, int32_t pipes[][pipe_ends], 
             usleep(params->delay * 1000);
     }
 
-    return should_exit != 0;
+    return was_interrupted();
 }
