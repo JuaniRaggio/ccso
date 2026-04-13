@@ -40,8 +40,8 @@ typedef int8_t direction_wire_t;
  * @brief Displacement vector for a single movement step.
  */
 typedef struct {
-    int8_t dx; /**< Column delta (-1, 0, or +1). */
-    int8_t dy; /**< Row delta (-1, 0, or +1). */
+    int8_t dx;
+    int8_t dy;
 } move_delta_t;
 
 /** @brief Lookup table mapping each @ref direction_t to its displacement. */
