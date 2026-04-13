@@ -5,3 +5,8 @@ compile_flags.txt
 /ChompChamps
 /ChompChamps-2
 .bash_history
+
+# PVS-Studio
+compile_commands.json
+pvs-report.log
+pvs-report.txt

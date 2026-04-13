@@ -1,0 +1,33 @@
+name: PVS-Studio
+
+on:
+  push:
+    branches:
+      - '**'
+    paths:
+      - '**/*.c'
+      - '**/*.h'
+      - Makefile
+      - .github/workflows/pvs-studio.yml
+  pull_request:
+    branches:
+      - '**'
+    paths:
+      - '**/*.c'
+      - '**/*.h'
+      - Makefile
+      - .github/workflows/pvs-studio.yml
+
+jobs:
+  pvs-studio:
+    name: Run PVS-Studio analysis
+    runs-on: ubuntu-latest
+    container:
+      image: agodio/itba-so-multiarch:3.1
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run PVS-Studio
+        run: make _deps _pvs
