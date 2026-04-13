@@ -46,10 +46,10 @@ typedef struct {
  * empty; negative values encode the player index that occupies the cell.
  */
 typedef struct {
-    uint16_t width;                 /**< Board column count. */
-    uint16_t height;                /**< Board row count. */
-    int8_t players_count;           /**< Number of registered players. */
-    player_t players[MAX_PLAYERS];  /**< Player descriptors. */
-    bool running;                   /**< false once the game has ended. */
-    int8_t board[];                 /**< Row-major board: board[y * width + x]. */
+    uint16_t width;                /**< Board column count. */
+    uint16_t height;               /**< Board row count. */
+    int8_t players_count;          /**< Number of registered players. */
+    player_t players[MAX_PLAYERS]; /**< Player descriptors. */
+    bool running;                  /**< false once the game has ended. */
+    int8_t board[];                /**< Row-major board: board[y * width + x]. */
 } game_state_t;
