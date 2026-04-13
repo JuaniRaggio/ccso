@@ -209,8 +209,10 @@ static int16_t compute_ring_count(view_t *view) {
     int16_t max_h = view->board_x_offset / 3;
     int16_t max_v = view->board_y_offset / 2;
     int16_t rings = (max_h < max_v) ? max_h : max_v;
-    if (rings > 4) rings = 4;
-    if (rings < 1) rings = 1;
+    if (rings > 4)
+        rings = 4;
+    if (rings < 1)
+        rings = 1;
     return rings;
 }
 
@@ -309,8 +311,8 @@ static void draw_panel_stats_row(WINDOW *win, int16_t x, int16_t w, player_t *pl
     int16_t row = PLAYER_PANEL_Y_OFFSET + 2;
     wattron(win, COLOR_PAIR(idx + COLOR_PAIR_OFFSET));
     mvwaddch(win, row, x, '|');
-    mvwprintw(win, row, x + 2, "(%u,%u)  V:%-4u I:%-4u", player->x, player->y,
-              player->valid_moves, player->invalid_moves);
+    mvwprintw(win, row, x + 2, "(%u,%u)  V:%-4u I:%-4u", player->x, player->y, player->valid_moves,
+              player->invalid_moves);
     mvwaddch(win, row, x + w - 1, '|');
     wattroff(win, COLOR_PAIR(idx + COLOR_PAIR_OFFSET));
 }
@@ -448,8 +450,10 @@ static void view_draw_endscreen(view_t *view, game_state_t *state) {
     int16_t box_h = (int16_t)(ENDSCREEN_HEIGHT_OFFSET + state->players_count);
     int16_t box_x = (view->term_cols - box_w) / 2;
     int16_t box_y = (view->board_rows - box_h) / 2;
-    if (box_x < 0) box_x = 0;
-    if (box_y < 0) box_y = 0;
+    if (box_x < 0)
+        box_x = 0;
+    if (box_y < 0)
+        box_y = 0;
 
     WINDOW *win = view->board_win;
     wattron(win, COLOR_PAIR(COLOR_BOARD));
