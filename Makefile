@@ -32,8 +32,8 @@ $(if $(filter 세희,$(1)),GREEDY_FLOOD,\
 $(if $(filter 후아니,$(1)),FLOOD,\
 $(if $(filter 모레나,$(1)),GREEDY_LOOKAHEAD,\
 $(if $(filter 단테,$(1)),GREEDY,\
-$(if $(filter 마티아스,$(1)),MIN_REWARD))))))
 $(if $(filter el_intrepido,$(1)),NAIVE,\
+$(if $(filter 마티아스,$(1)),MIN_REWARD))))))
 endef
 
 DOCKER_IMAGE = agodio/itba-so-multiarch:3.1
