@@ -465,6 +465,10 @@ static void view_draw_endscreen(view_t *view, game_state_t *state) {
     wrefresh(win);
 }
 
+// ============================================================
+//  Public API
+// ============================================================
+
 void view_run(view_t *view, game_t *game, uint16_t width, uint16_t height) {
     while (1) {
         game_sync_view_wait_frame(game->sync);
@@ -473,9 +477,8 @@ void view_run(view_t *view, game_t *game, uint16_t width, uint16_t height) {
             break;
         }
 
-        if (getch() == KEY_RESIZE) {
+        if (getch() == KEY_RESIZE)
             view_handle_resize(view, width, height);
-        }
 
         view_draw_all(view, game->state);
         game_sync_view_frame_done(game->sync);
