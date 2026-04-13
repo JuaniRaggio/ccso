@@ -332,7 +332,8 @@ void view_draw_endscreen(view_t *view, game_state_t *state) {
 
     int16_t col_x = box_x + 2;
     wattron(win, COLOR_PAIR(COLOR_BOARD) | A_BOLD);
-    mvwprintw(win, box_y + ENDSCREEN_TABLE_Y_OFFSET, col_x, " #  %-7s %-12s %5s %5s %5s", "Avatar", "Player", "Score", "Valid", "Inv");
+    mvwprintw(win, box_y + ENDSCREEN_TABLE_Y_OFFSET, col_x, " #  %-7s %-12s %5s %5s %5s", "Avatar", "Player", "Score",
+              "Valid", "Inv");
     wattroff(win, COLOR_PAIR(COLOR_BOARD) | A_BOLD);
 
     for (int8_t pos = 0; pos < state->players_count; pos++) {
@@ -350,12 +351,13 @@ void view_draw_endscreen(view_t *view, game_state_t *state) {
         wprintw(win, "     "); // Padding after emoji (it's 2 cells wide typically)
         waddwstr(win, ws_name);
         int16_t pad = ENDSCREEN_TABLE_PADDING - nwidth;
-        if (pad < 0) pad = 0;
-        for (int16_t i = 0; i < pad; i++) waddch(win, ' ');
+        if (pad < 0)
+            pad = 0;
+        for (int16_t i = 0; i < pad; i++)
+            waddch(win, ' ');
         wprintw(win, " %5u %5u %5u", p->score, p->valid_moves, p->invalid_moves);
         wattroff(win, COLOR_PAIR(idx + COLOR_PAIR_OFFSET));
     }
-
 
     const char *prompt = "Press any key to exit";
     int16_t px = box_x + (box_w - (int16_t)strlen(prompt)) / 2;
