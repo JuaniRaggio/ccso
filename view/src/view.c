@@ -163,9 +163,9 @@ static void draw_player_panel(WINDOW *win, int16_t x, int16_t w, player_t *playe
     if (!player->state)
         wattroff(win, A_DIM);
 
-    char line1[64], line2[64];
-    snprintf(line1, sizeof(line1), " %s  Score: %-5u", face, player->score);
-    snprintf(line2, sizeof(line2), " (%u,%u)  V:%-4u I:%-4u", player->x, player->y, player->valid_moves,
+    char line1[LINE_BUFFER_SIZE], line2[LINE_BUFFER_SIZE];
+    snprintf(line1, LINE_BUFFER_SIZE, " %s  Score: %-5u", face, player->score);
+    snprintf(line2, LINE_BUFFER_SIZE, " (%u,%u)  V:%-4u I:%-4u", player->x, player->y, player->valid_moves,
              player->invalid_moves);
 
     mvwaddch(win, 1, x, '|');
@@ -205,8 +205,8 @@ void view_draw_panels(view_t *view, game_state_t *state) {
     sort_players_by_score(state, order);
 
     int16_t panel_w = view->term_cols / state->players_count;
-    if (panel_w < 12)
-        panel_w = 12;
+    if (panel_w < MIN_PANEL_WIDTH)
+        panel_w = MIN_PANEL_WIDTH;
 
     for (int8_t pos = 0; pos < state->players_count; pos++) {
         int8_t idx = order[pos];
@@ -261,7 +261,7 @@ void view_draw_endscreen(view_t *view, game_state_t *state) {
     const char *title = "Game Over";
     int16_t tx = box_x + (box_w - (int16_t)strlen(title)) / 2;
     wattron(win, COLOR_PAIR(COLOR_BOARD) | A_BOLD);
-    mvwprintw(win, box_y + ENDSCREEN_Y_OFFSET_1, tx, "%s", title);
+    mvwprintw(win, box_y + ENDSCREEN_TITLE_Y_OFFSET, tx, "%s", title);
     wattroff(win, COLOR_PAIR(COLOR_BOARD) | A_BOLD);
 
     wchar_t winner_msg[WIDE_BUFFER_SIZE];
@@ -273,12 +273,12 @@ void view_draw_endscreen(view_t *view, game_state_t *state) {
     if (wx < box_x + 1)
         wx = box_x + 1;
     wattron(win, COLOR_PAIR(winner + COLOR_PAIR_OFFSET) | A_BOLD);
-    mvwaddwstr(win, box_y + ENDSCREEN_Y_OFFSET_2, wx, winner_msg);
+    mvwaddwstr(win, box_y + ENDSCREEN_WINNER_Y_OFFSET, wx, winner_msg);
     wattroff(win, COLOR_PAIR(winner + COLOR_PAIR_OFFSET) | A_BOLD);
 
     int16_t col_x = box_x + 2;
     wattron(win, COLOR_PAIR(COLOR_BOARD) | A_BOLD);
-    mvwprintw(win, box_y + ENDSCREEN_Y_OFFSET_TABLE, col_x, " #  %-12s %5s %5s %5s", "Player", "Score", "Valid", "Inv");
+    mvwprintw(win, box_y + ENDSCREEN_TABLE_Y_OFFSET, col_x, " #  %-12s %5s %5s %5s", "Player", "Score", "Valid", "Inv");
     wattroff(win, COLOR_PAIR(COLOR_BOARD) | A_BOLD);
 
     for (int8_t pos = 0; pos < state->players_count; pos++) {
@@ -288,10 +288,10 @@ void view_draw_endscreen(view_t *view, game_state_t *state) {
         mbstowcs(ws_name, display_name(p->name), MAX_NAME_LENGTH);
         int16_t nwidth = (int16_t)wcswidth(ws_name, wcslen(ws_name));
         wattron(win, COLOR_PAIR(idx + COLOR_PAIR_OFFSET));
-        mvwaddwstr(win, box_y + ENDSCREEN_Y_OFFSET_TABLE + 1 + pos, col_x, L" ");
+        mvwaddwstr(win, box_y + ENDSCREEN_TABLE_Y_OFFSET + 1 + pos, col_x, L" ");
         wprintw(win, "%d  ", idx);
         waddwstr(win, ws_name);
-        int16_t pad = 12 - nwidth;
+        int16_t pad = ENDSCREEN_TABLE_PADDING - nwidth;
         if (pad < 0)
             pad = 0;
         for (int16_t i = 0; i < pad; i++)
@@ -303,7 +303,7 @@ void view_draw_endscreen(view_t *view, game_state_t *state) {
     const char *prompt = "Press any key to exit";
     int16_t px = box_x + (box_w - (int16_t)strlen(prompt)) / 2;
     wattron(win, COLOR_PAIR(COLOR_BOARD));
-    mvwprintw(win, box_y + box_h - ENDSCREEN_Y_OFFSET_PROMPT, px, "%s", prompt);
+    mvwprintw(win, box_y + box_h - ENDSCREEN_PROMPT_Y_OFFSET, px, "%s", prompt);
     wattroff(win, COLOR_PAIR(COLOR_BOARD));
     wrefresh(win);
 }
