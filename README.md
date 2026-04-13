@@ -27,9 +27,9 @@ make build       # compile master, players and view
 ### Run
 
 ```bash
-make run                                                              # all strategies, defaults
-make run ARGS="-v ./build/view -p ./build/Dante -p ./build/Morena"    # custom players
-make run ARGS="-v ./build/view -p ./build/Dante -w 30 -h 30"         # custom size
+make run                                                        # all strategies, defaults
+make run ARGS="-p ./build/Dante -p ./build/Morena"              # custom players
+make run ARGS="-p ./build/Dante -w 30 -h 30"                   # custom size
 ```
 
 ### Tests

@@ -37,7 +37,7 @@ DOCKER_RUN   = docker run --rm -v "$(CURDIR):/root/ccso" -w /root/ccso $(DOCKER_
 DOCKER_RUN_IT = docker run --rm -it -e LC_ALL=C.UTF-8 -e LANG=C.UTF-8 \
                 -v "$(CURDIR):/root/ccso" -w /root/ccso $(DOCKER_IMAGE)
 
-DEFAULT_ARGS = -v ./$(VIEW_BIN) $(foreach p,$(STRATEGIES),-p ./$(BUILD_DIR)/$(p))
+DEFAULT_ARGS = -w 20 -h 20 $(foreach p,$(STRATEGIES),-p ./$(BUILD_DIR)/$(p))
 
 .PHONY: pull build run test memcheck pvs clean compile_flags
 
@@ -49,7 +49,7 @@ build:
 
 run:
 	$(DOCKER_RUN_IT) bash -c "make _deps _all && \
-		./$(MASTER_BIN) $(if $(ARGS),$(ARGS),$(DEFAULT_ARGS))"
+		./$(MASTER_BIN) -v ./$(VIEW_BIN) $(if $(ARGS),$(ARGS),$(DEFAULT_ARGS))"
 
 test:
 	$(DOCKER_RUN) make _deps _test
