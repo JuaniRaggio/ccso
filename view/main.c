@@ -52,6 +52,13 @@ int main(int argc, char *argv[]) {
         game_sync_view_frame_done(game.sync);
     }
 
+    if (!should_exit) {
+        view_draw_all(&game_view, game.state);
+        view_draw_endscreen(&game_view, game.state);
+        nodelay(stdscr, FALSE);
+        getch();
+    }
+
     view_cleanup(&game_view);
     game_disconnect(&game);
 

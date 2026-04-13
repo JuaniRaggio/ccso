@@ -29,7 +29,11 @@ PLAYER_BINS = $(addprefix $(BUILD_DIR)/player-,$(STRATEGIES))
 # Map strategy name to -D flag (uppercase)
 strategy_flag = $(shell echo $(1) | tr 'a-z' 'A-Z')
 
-.PHONY: all players run clean compile_flags test memcheck deps $(addprefix player-,$(STRATEGIES))
+DOCKER_IMAGE = agodio/itba-so-multiarch:3.1
+DOCKER_RUN   = docker run --rm -v "$(CURDIR):/root/ccso" -w /root/ccso $(DOCKER_IMAGE)
+
+.PHONY: all players run clean compile_flags test memcheck deps $(addprefix player-,$(STRATEGIES)) \
+        docker-build docker-test docker-run docker-memcheck
 
 deps:
 	@dpkg -s libncurses-dev > /dev/null 2>&1 || (echo "Installing libncurses-dev..." && apt-get update -qq && apt-get install -y -qq libncurses-dev)
@@ -126,3 +130,17 @@ compile_flags:
 	@printf "%s\n" "-Wall" "-g" "-Iinclude" > common/compile_flags.txt
 	@printf "%s\n" "-Wall" "-g" "-Ivendor/cutest" "-Iinclude" "-I../common/include" "-I../master/include" "-I../master/utils" > tests/compile_flags.txt
 	@echo "compile_flags.txt generated for all modules"
+
+# ==== Docker wrappers (run from macOS host) ====
+docker-build:
+	$(DOCKER_RUN) bash -c "make clean && make deps && make all"
+
+docker-test:
+	$(DOCKER_RUN) bash -c "make clean && make deps && make build/master players build/view && make test"
+
+docker-run:
+	docker run --rm -it -v "$(CURDIR):/root/ccso" -w /root/ccso $(DOCKER_IMAGE) \
+		bash -c "make deps && make all && make run WIDTH=$(WIDTH) HEIGHT=$(HEIGHT) PLAYERS='$(PLAYERS)'"
+
+docker-memcheck:
+	$(DOCKER_RUN) bash -c "make clean && make deps && make build/master players && make memcheck"

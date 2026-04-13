@@ -111,7 +111,8 @@ void view_draw_board(view_t *view, game_state_t *state) {
     wrefresh(view->board_win);
 }
 
-static void draw_player_panel(WINDOW *win, int16_t x, int16_t w, player_t *player, int8_t idx) {
+static void draw_player_panel(WINDOW *win, int16_t x, int16_t w, player_t *player, int8_t idx,
+                              int8_t rank) {
     int16_t color = idx + COLOR_PAIR_OFFSET;
     const char *name = display_name(player->name);
     const char *face = PLAYER_FACES[idx % MAX_PLAYERS];
@@ -119,15 +120,14 @@ static void draw_player_panel(WINDOW *win, int16_t x, int16_t w, player_t *playe
 
     wattron(win, COLOR_PAIR(color));
 
-    // Line 0: top border  +=== P0: naive [ALIVE] ===+
     mvwaddch(win, 0, x, '+');
     for (int16_t i = 1; i < w - 1; i++) {
         mvwaddch(win, 0, x + i, '=');
     }
     mvwaddch(win, 0, x + w - 1, '+');
 
-    char header[LABEL_BUFFER_SIZE];
-    snprintf(header, sizeof(header), " P%d: %s [%s] ", idx, name, status);
+    char header[LABEL_BUFFER_SIZE + 8];
+    snprintf(header, sizeof(header), " #%d P%d: %s [%s] ", rank, idx, name, status);
     int16_t hlen = (int16_t)strlen(header);
     int16_t hstart = x + (w - hlen) / 2;
     if (hstart < x + 1) {
@@ -174,14 +174,29 @@ void view_draw_panels(view_t *view, game_state_t *state) {
         return;
     }
 
+    // Build index array sorted by score (descending)
+    int8_t order[MAX_PLAYERS];
+    for (int8_t i = 0; i < state->players_count; i++)
+        order[i] = i;
+    for (int8_t i = 0; i < state->players_count - 1; i++) {
+        for (int8_t j = i + 1; j < state->players_count; j++) {
+            if (state->players[order[j]].score > state->players[order[i]].score) {
+                int8_t tmp = order[i];
+                order[i] = order[j];
+                order[j] = tmp;
+            }
+        }
+    }
+
     int16_t panel_w = view->term_cols / state->players_count;
     if (panel_w < 12) {
         panel_w = 12;
     }
-    for (int8_t i = 0; i < state->players_count; i++) {
-        int16_t x_offset = i * panel_w;
-        int16_t w = (i == state->players_count - 1) ? (view->term_cols - x_offset) : panel_w;
-        draw_player_panel(view->panel_win, x_offset, w, &state->players[i], i);
+    for (int8_t pos = 0; pos < state->players_count; pos++) {
+        int8_t idx = order[pos];
+        int16_t x_offset = pos * panel_w;
+        int16_t w = (pos == state->players_count - 1) ? (view->term_cols - x_offset) : panel_w;
+        draw_player_panel(view->panel_win, x_offset, w, &state->players[idx], idx, pos + 1);
     }
 
     wrefresh(view->panel_win);
@@ -190,4 +205,89 @@ void view_draw_panels(view_t *view, game_state_t *state) {
 void view_draw_all(view_t *view, game_state_t *state) {
     view_draw_board(view, state);
     view_draw_panels(view, state);
+}
+
+static void draw_box(WINDOW *win, int16_t y, int16_t x, int16_t h, int16_t w) {
+    mvwaddch(win, y, x, ACS_ULCORNER);
+    for (int16_t i = 1; i < w - 1; i++)
+        mvwaddch(win, y, x + i, ACS_HLINE);
+    mvwaddch(win, y, x + w - 1, ACS_URCORNER);
+
+    for (int16_t r = 1; r < h - 1; r++) {
+        mvwaddch(win, y + r, x, ACS_VLINE);
+        for (int16_t i = 1; i < w - 1; i++)
+            mvwaddch(win, y + r, x + i, ' ');
+        mvwaddch(win, y + r, x + w - 1, ACS_VLINE);
+    }
+
+    mvwaddch(win, y + h - 1, x, ACS_LLCORNER);
+    for (int16_t i = 1; i < w - 1; i++)
+        mvwaddch(win, y + h - 1, x + i, ACS_HLINE);
+    mvwaddch(win, y + h - 1, x + w - 1, ACS_LRCORNER);
+}
+
+void view_draw_endscreen(view_t *view, game_state_t *state) {
+    int8_t order[MAX_PLAYERS];
+    for (int8_t i = 0; i < state->players_count; i++)
+        order[i] = i;
+    for (int8_t i = 0; i < state->players_count - 1; i++) {
+        for (int8_t j = i + 1; j < state->players_count; j++) {
+            if (state->players[order[j]].score > state->players[order[i]].score) {
+                int8_t tmp = order[i];
+                order[i] = order[j];
+                order[j] = tmp;
+            }
+        }
+    }
+    int8_t winner = order[0];
+
+    int16_t box_w = 44;
+    int16_t box_h = (int16_t)(8 + state->players_count);
+    int16_t box_x = (view->term_cols - box_w) / 2;
+    int16_t box_y = (view->board_rows - box_h) / 2;
+    if (box_x < 0) box_x = 0;
+    if (box_y < 0) box_y = 0;
+
+    WINDOW *win = view->board_win;
+
+    wattron(win, COLOR_PAIR(COLOR_BOARD));
+    draw_box(win, box_y, box_x, box_h, box_w);
+    wattroff(win, COLOR_PAIR(COLOR_BOARD));
+
+    const char *title = "Game Over";
+    int16_t tx = box_x + (box_w - (int16_t)strlen(title)) / 2;
+    wattron(win, COLOR_PAIR(COLOR_BOARD) | A_BOLD);
+    mvwprintw(win, box_y + 1, tx, "%s", title);
+    wattroff(win, COLOR_PAIR(COLOR_BOARD) | A_BOLD);
+
+    char winner_msg[48];
+    const char *wname = display_name(state->players[winner].name);
+    snprintf(winner_msg, sizeof(winner_msg), "P%d: %s wins!", winner, wname);
+    int16_t wx = box_x + (box_w - (int16_t)strlen(winner_msg)) / 2;
+    wattron(win, COLOR_PAIR(winner + COLOR_PAIR_OFFSET) | A_BOLD);
+    mvwprintw(win, box_y + 2, wx, "%s", winner_msg);
+    wattroff(win, COLOR_PAIR(winner + COLOR_PAIR_OFFSET) | A_BOLD);
+
+    int16_t col_x = box_x + 2;
+    wattron(win, COLOR_PAIR(COLOR_BOARD) | A_BOLD);
+    mvwprintw(win, box_y + 4, col_x, " #  %-12s %5s %5s %5s", "Player", "Score", "Valid", "Inv");
+    wattroff(win, COLOR_PAIR(COLOR_BOARD) | A_BOLD);
+
+    for (int8_t pos = 0; pos < state->players_count; pos++) {
+        int8_t idx = order[pos];
+        player_t *p = &state->players[idx];
+        const char *name = display_name(p->name);
+        wattron(win, COLOR_PAIR(idx + COLOR_PAIR_OFFSET));
+        mvwprintw(win, box_y + 5 + pos, col_x, " %d  %-12s %5u %5u %5u",
+                  idx, name, p->score, p->valid_moves, p->invalid_moves);
+        wattroff(win, COLOR_PAIR(idx + COLOR_PAIR_OFFSET));
+    }
+
+    const char *prompt = "Press any key to exit";
+    int16_t px = box_x + (box_w - (int16_t)strlen(prompt)) / 2;
+    wattron(win, COLOR_PAIR(COLOR_BOARD));
+    mvwprintw(win, box_y + box_h - 2, px, "%s", prompt);
+    wattroff(win, COLOR_PAIR(COLOR_BOARD));
+
+    wrefresh(win);
 }

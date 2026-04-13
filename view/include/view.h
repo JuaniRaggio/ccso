@@ -36,3 +36,4 @@ void view_cleanup(view_t *view);
 void view_draw_board(view_t *view, game_state_t *state);
 void view_draw_panels(view_t *view, game_state_t *state);
 void view_draw_all(view_t *view, game_state_t *state);
+void view_draw_endscreen(view_t *view, game_state_t *state);
