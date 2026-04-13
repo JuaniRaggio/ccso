@@ -131,7 +131,8 @@ bool handle_player_turn(game_t *game, int32_t pipes[][pipe_ends], fd_set *readFd
     game_sync_writer_exit(game->sync);
 
     game_sync_player_grant_turn(game->sync, idx);
-    if (valid) *out_valid = true;
+    if (valid)
+        *out_valid = true;
     return true;
 }
 
@@ -173,14 +174,16 @@ void register_players_from_paths(game_state_t *state, const char *paths[]) {
 
 bool any_player_alive(game_state_t *state) {
     for (int8_t i = 0; i < state->players_count; i++) {
-        if (state->players[i].state) return true;
+        if (state->players[i].state)
+            return true;
     }
     return false;
 }
 
 static void calculate_grid_dimensions(int n, int *cols, int *rows) {
     *cols = 1;
-    while ((*cols) * (*cols) < n) (*cols)++;
+    while ((*cols) * (*cols) < n)
+        (*cols)++;
     *rows = (n + (*cols) - 1) / (*cols);
 }
 

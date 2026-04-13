@@ -54,7 +54,8 @@ static void run_game_loop(view_t *view, game_t *game, uint16_t width, uint16_t h
 }
 
 static void show_final_results(view_t *view, game_state_t *state) {
-    if (should_exit) return;
+    if (should_exit)
+        return;
     view_draw_all(view, state);
     view_draw_endscreen(view, state);
     nodelay(stdscr, FALSE);

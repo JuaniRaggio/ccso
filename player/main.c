@@ -26,7 +26,8 @@ static void signal_handler(int32_t sig) {
 static int8_t find_player_index(game_state_t *state) {
     pid_t my_pid = getpid();
     for (int8_t i = 0; i < state->players_count; i++) {
-        if (state->players[i].player_id == my_pid) return i;
+        if (state->players[i].player_id == my_pid)
+            return i;
     }
     return -1;
 }
@@ -38,7 +39,8 @@ static void setup_signals() {
 
 static int8_t initialize_player(game_t *game) {
     int8_t my_idx = find_player_index(game->state);
-    if (my_idx < 0) return -1;
+    if (my_idx < 0)
+        return -1;
     game_sync_player_wait_turn(game->sync, (uint8_t)my_idx);
     return my_idx;
 }
@@ -50,11 +52,13 @@ static void run_player_loop(game_t *game, int8_t my_idx) {
                                                  game->state->players[my_idx].x, game->state->players[my_idx].y);
         game_sync_reader_exit(game->sync);
 
-        if (dir == NO_VALID_MOVE) break;
+        if (dir == NO_VALID_MOVE)
+            break;
 
         send_direction(STDOUT_FILENO, dir);
         game_sync_player_wait_turn(game->sync, (uint8_t)my_idx);
-        if (!game->state->running) break;
+        if (!game->state->running)
+            break;
     }
 }
 
