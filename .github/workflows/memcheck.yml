@@ -30,4 +30,4 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Run memcheck
-        run: make memcheck
+        run: make _deps _memcheck
