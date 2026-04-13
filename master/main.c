@@ -50,13 +50,22 @@ static void run_master_loop(game_t *game, parameters_t *params, int32_t pipes[][
             break;
 
         fd_set readFds = *masterSet;
-        struct timeval tv = {.tv_sec = params->timeout - (time(NULL) - last_valid_move), .tv_usec = 0};
+        time_t remaining = (time_t)params->timeout - (time(NULL) - last_valid_move);
+        if (remaining <= 0)
+            break;
+        struct timeval tv = {
+            .tv_sec = remaining > 1 ? 1 : remaining,
+            .tv_usec = 0,
+        };
 
-        if (select(maxFd + 1, &readFds, NULL, NULL, &tv) <= 0) {
+        int sel = select(maxFd + 1, &readFds, NULL, NULL, &tv);
+        if (sel < 0) {
             if (errno == EINTR)
                 continue;
             break;
         }
+        if (sel == 0)
+            continue;
 
         round_result_t round = process_round(game, pipes, &readFds, masterSet, start_player);
         start_player = round.next_start_player;
