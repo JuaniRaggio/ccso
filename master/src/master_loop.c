@@ -29,8 +29,7 @@ static bool check_timeout(time_t last_valid_move, uint32_t timeout) {
     return (uint32_t)(time(NULL) - last_valid_move) >= timeout;
 }
 
-bool master_run(game_t *game, parameters_t *params, int32_t pipes[][pipe_ends],
-                pid_t view_pid, bool *has_view) {
+bool master_run(game_t *game, parameters_t *params, int32_t pipes[][pipe_ends], pid_t view_pid, bool *has_view) {
     signal(SIGINT, signal_handler);
     signal(SIGTERM, signal_handler);
 
