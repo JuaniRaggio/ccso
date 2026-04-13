@@ -85,8 +85,10 @@ void view_draw_endscreen(view_t *view, game_state_t *state) {
     int16_t box_h = (int16_t)(ENDSCREEN_HEIGHT_OFFSET + state->players_count);
     int16_t box_x = (view->term_cols - box_w) / 2;
     int16_t box_y = (view->board_rows - box_h) / 2;
-    if (box_x < 0) box_x = 0;
-    if (box_y < 0) box_y = 0;
+    if (box_x < 0)
+        box_x = 0;
+    if (box_y < 0)
+        box_y = 0;
 
     WINDOW *win = view->board_win;
     wattron(win, COLOR_PAIR(COLOR_BOARD));

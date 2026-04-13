@@ -56,8 +56,8 @@ static void draw_panel_stats_row(WINDOW *win, int16_t x, int16_t w, player_t *pl
     int16_t row = PLAYER_PANEL_Y_OFFSET + 2;
     wattron(win, COLOR_PAIR(idx + COLOR_PAIR_OFFSET));
     mvwaddch(win, row, x, '|');
-    mvwprintw(win, row, x + 2, "(%u,%u)  V:%-4u I:%-4u", player->x, player->y,
-              player->valid_moves, player->invalid_moves);
+    mvwprintw(win, row, x + 2, "(%u,%u)  V:%-4u I:%-4u", player->x, player->y, player->valid_moves,
+              player->invalid_moves);
     mvwaddch(win, row, x + w - 1, '|');
     wattroff(win, COLOR_PAIR(idx + COLOR_PAIR_OFFSET));
 }

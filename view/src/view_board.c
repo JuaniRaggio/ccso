@@ -82,8 +82,10 @@ static void draw_stadium_border(view_t *view, uint16_t width, uint16_t height) {
     int16_t max_h = view->board_x_offset / 3;
     int16_t max_v = view->board_y_offset / 2;
     int16_t rings = (max_h < max_v) ? max_h : max_v;
-    if (rings > 4) rings = 4;
-    if (rings < 1) rings = 1;
+    if (rings > 4)
+        rings = 4;
+    if (rings < 1)
+        rings = 1;
 
     for (int16_t r = rings - 1; r >= 0; r--) {
         int16_t x1 = view->board_x_offset - 2 - r * 2;
