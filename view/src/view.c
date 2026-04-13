@@ -100,18 +100,20 @@ static void draw_trail_at(WINDOW *win, int16_t y, int16_t x, int8_t value) {
 
 static void draw_stadium_border(view_t *view, uint16_t width, uint16_t height) {
     int16_t colors[] = {COLOR_CYAN, COLOR_MAGENTA, COLOR_BLUE, COLOR_YELLOW};
-    
+
     // Calculate how many rings fit in the available margins
     int16_t max_h_rings = view->board_x_offset / 3;
     int16_t max_v_rings = view->board_y_offset / 2;
     int16_t rings = (max_h_rings < max_v_rings) ? max_h_rings : max_v_rings;
-    if (rings > 4) rings = 4;
-    if (rings < 1) rings = 1;
+    if (rings > 4)
+        rings = 4;
+    if (rings < 1)
+        rings = 1;
 
     for (int16_t r = rings - 1; r >= 0; r--) {
         int16_t offset_x = r * 2;
         int16_t offset_y = r * 1;
-        
+
         int16_t x1 = view->board_x_offset - 2 - offset_x;
         int16_t y1 = view->board_y_offset - 1 - offset_y;
         int16_t x2 = view->board_x_offset + width * CELL_WIDTH + offset_x;
@@ -119,7 +121,7 @@ static void draw_stadium_border(view_t *view, uint16_t width, uint16_t height) {
 
         int16_t color = colors[(view->frame_count / 2 + r) % 4];
         wattron(view->board_win, COLOR_PAIR(color + COLOR_PAIR_OFFSET) | A_BOLD);
-        
+
         // Horizontal lines
         for (int16_t x = x1; x <= x2; x++) {
             mvwaddch(view->board_win, y1, x, ACS_CKBOARD);
@@ -138,7 +140,7 @@ static void draw_stadium_border(view_t *view, uint16_t width, uint16_t height) {
             int16_t tx = x1 + (x2 - x1 - (int16_t)strlen(title)) / 2;
             mvwprintw(view->board_win, y1, tx, "%s", title);
         }
-        
+
         wattroff(view->board_win, COLOR_PAIR(color + COLOR_PAIR_OFFSET) | A_BOLD);
     }
 }
@@ -217,8 +219,8 @@ static void draw_player_panel(WINDOW *win, int16_t x, int16_t w, player_t *playe
     mvwaddch(win, PLAYER_PANEL_Y_OFFSET + 1, x + w - 1, '|');
 
     mvwaddch(win, PLAYER_PANEL_Y_OFFSET + 2, x, '|');
-    mvwprintw(win, PLAYER_PANEL_Y_OFFSET + 2, x + 2, "(%u,%u)  V:%-4u I:%-4u", player->x, player->y, player->valid_moves,
-             player->invalid_moves);
+    mvwprintw(win, PLAYER_PANEL_Y_OFFSET + 2, x + 2, "(%u,%u)  V:%-4u I:%-4u", player->x, player->y,
+              player->valid_moves, player->invalid_moves);
     mvwaddch(win, PLAYER_PANEL_Y_OFFSET + 2, x + w - 1, '|');
 
     draw_panel_border(win, PLAYER_PANEL_Y_OFFSET + 3, x, w);
