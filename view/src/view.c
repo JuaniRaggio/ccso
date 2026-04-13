@@ -97,7 +97,7 @@ static void draw_reward_at(WINDOW *win, int16_t y, int16_t x, int8_t value) {
 
 static void draw_trail_at(WINDOW *win, int16_t y, int16_t x, int8_t value) {
     int8_t eater = (int8_t)(-value);
-    const char *trail = PLAYER_FACES[eater % MAX_PLAYERS];
+    const char *trail = PLAYER_THEMES[eater % MAX_PLAYERS].flag;
     wchar_t ws_trail[8];
     mbstowcs(ws_trail, trail, 7);
 
@@ -197,7 +197,7 @@ static void draw_panel_border(WINDOW *win, int16_t y, int16_t x, int16_t w) {
 static void draw_player_panel(WINDOW *win, int16_t x, int16_t w, player_t *player, int8_t idx, int8_t rank) {
     int16_t color = idx + COLOR_PAIR_OFFSET;
     const char *name = display_name(player->name);
-    const char *face = PLAYER_FACES[idx % MAX_PLAYERS];
+    const char *face = PLAYER_THEMES[idx % MAX_PLAYERS].flag;
     const char *status = player->state ? "ALIVE" : "DEAD";
 
     wchar_t ws_name[MAX_NAME_LENGTH + 1], ws_status[STATUS_BUFFER_SIZE], ws_face[8];
@@ -349,7 +349,7 @@ void view_draw_endscreen(view_t *view, game_state_t *state) {
     for (int8_t pos = 0; pos < state->players_count; pos++) {
         int8_t idx = order[pos];
         player_t *p = &state->players[idx];
-        const char *face = PLAYER_FACES[idx % MAX_PLAYERS];
+        const char *face = PLAYER_THEMES[idx % MAX_PLAYERS].flag;
         wchar_t ws_name[MAX_NAME_LENGTH + 1], ws_face[8];
         mbstowcs(ws_name, display_name(p->name), MAX_NAME_LENGTH);
         mbstowcs(ws_face, face, 7);
