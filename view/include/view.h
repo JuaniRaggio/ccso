@@ -32,8 +32,21 @@
 
 static const int8_t NO_PLAYER = -1;
 
-static const char *const PLAYER_FACES[] = {
-    "🇰🇷", "🇨🇳", "🇮🇹", "🇬🇧", "🇧🇷", "🇨🇷", "🇩🇪", "🇪🇸", "🇫🇷",
+typedef struct {
+    const char *head; // Cultural object (player position on board)
+    const char *flag; // Country flag (trail on board + panel avatar)
+} player_theme_t;
+
+static const player_theme_t PLAYER_THEMES[] = {
+    {"🍚", "🇰🇷"}, // Korea
+    {"🐉", "🇨🇳"}, // China
+    {"🍕", "🇮🇹"}, // Italy
+    {"☕", "🇬🇧"}, // UK
+    {"⚽", "🇧🇷"}, // Brazil
+    {"🦜", "🇨🇷"}, // Costa Rica
+    {"🍺", "🇩🇪"}, // Germany
+    {"🐂", "🇪🇸"}, // Spain
+    {"🥐", "🇫🇷"}, // France
 };
 
 typedef struct {

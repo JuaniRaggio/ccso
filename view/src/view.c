@@ -80,12 +80,12 @@ void view_cleanup(view_t *view) {
 }
 
 static void draw_player_at(WINDOW *win, int16_t y, int16_t x, int8_t pidx) {
-    const char *face = PLAYER_FACES[pidx % MAX_PLAYERS];
-    wchar_t ws_face[8];
-    mbstowcs(ws_face, face, 7);
+    const char *head = PLAYER_HEADS[pidx % MAX_PLAYERS];
+    wchar_t ws_head[8];
+    mbstowcs(ws_head, head, 7);
 
     wattron(win, COLOR_PAIR(pidx + COLOR_PAIR_OFFSET) | A_BOLD);
-    mvwaddwstr(win, y, x, ws_face);
+    mvwaddwstr(win, y, x, ws_head);
     wattroff(win, COLOR_PAIR(pidx + COLOR_PAIR_OFFSET) | A_BOLD);
 }
 
@@ -97,8 +97,12 @@ static void draw_reward_at(WINDOW *win, int16_t y, int16_t x, int8_t value) {
 
 static void draw_trail_at(WINDOW *win, int16_t y, int16_t x, int8_t value) {
     int8_t eater = (int8_t)(-value);
+    const char *trail = PLAYER_FACES[eater % MAX_PLAYERS];
+    wchar_t ws_trail[8];
+    mbstowcs(ws_trail, trail, 7);
+
     wattron(win, COLOR_PAIR(eater + COLOR_PAIR_OFFSET) | A_DIM);
-    mvwprintw(win, y, x, " *");
+    mvwaddwstr(win, y, x, ws_trail);
     wattroff(win, COLOR_PAIR(eater + COLOR_PAIR_OFFSET) | A_DIM);
 }
 
@@ -140,7 +144,7 @@ static void draw_stadium_border(view_t *view, uint16_t width, uint16_t height) {
         }
 
         if (r == 0) {
-            const char *title = "  CHOMP CHAMPS STADIUM  ";
+            const char *title = "  CHOMP CHAMPS WORLD CUP  ";
             int16_t tx = x1 + (x2 - x1 - (int16_t)strlen(title)) / 2;
             mvwprintw(view->board_win, y1, tx, "%s", title);
         }
