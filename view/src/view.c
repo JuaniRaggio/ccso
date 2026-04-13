@@ -80,7 +80,7 @@ void view_cleanup(view_t *view) {
 }
 
 static void draw_player_at(WINDOW *win, int16_t y, int16_t x, int8_t pidx) {
-    const char *head = PLAYER_HEADS[pidx % MAX_PLAYERS];
+    const char *head = PLAYER_THEMES[pidx % MAX_PLAYERS].head;
     wchar_t ws_head[8];
     mbstowcs(ws_head, head, 7);
 
