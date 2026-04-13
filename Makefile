@@ -39,7 +39,7 @@ DOCKER_RUN_IT = docker run --rm -it -e LC_ALL=C.UTF-8 -e LANG=C.UTF-8 \
 
 DEFAULT_ARGS = -w 20 -h 20 $(foreach p,$(STRATEGIES),-p ./$(BUILD_DIR)/$(p))
 
-.PHONY: pull build run test memcheck pvs clean compile_flags
+.PHONY: pull build run test memcheck pvs clean compile_flags best_player
 
 pull:
 	docker pull $(DOCKER_IMAGE)
@@ -62,6 +62,9 @@ DOCKER_RUN_AMD64 = docker run --platform linux/amd64 --rm -v "$(CURDIR):/root/cc
 pvs:
 	$(DOCKER_RUN_AMD64) make _deps _pvs
 
+best_player:
+	$(DOCKER_RUN) make _deps _all _best_player
+
 clean:
 	rm -rf $(BUILD_DIR)
 
@@ -76,7 +79,7 @@ compile_flags:
 # ============================================================
 #  Internal targets (run inside Docker container)
 # ============================================================
-.PHONY: _deps _all _players _test _memcheck _pvs_deps _pvs
+.PHONY: _deps _all _players _best_player _test _memcheck _pvs_deps _pvs
 
 _deps:
 	@dpkg -s libncursesw5-dev > /dev/null 2>&1 || (echo "Installing libncursesw5-dev..." && apt-get update -qq && apt-get install -y -qq libncursesw5-dev)
@@ -96,6 +99,12 @@ _pvs_deps:
 _all: $(MASTER_BIN) _players $(VIEW_BIN)
 
 _players: $(PLAYER_BINS)
+
+BEST_STRATEGY = 세희
+
+_best_player: _all
+	@echo "Best strategy: $(BEST_STRATEGY)"
+	@cp $(BUILD_DIR)/$(BEST_STRATEGY) $(BUILD_DIR)/best_player
 
 $(PLAYER_BINS): $(BUILD_DIR)/%: $(PLAYER_SRCS) $(COMMON_SRCS)
 	@mkdir -p $(BUILD_DIR)

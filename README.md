@@ -115,6 +115,12 @@ make run ARGS="-p ./build/Dante -p ./build/Morena"              # custom players
 make run ARGS="-p ./build/Dante -w 30 -h 30"                   # custom size
 ```
 
+### Benchmark
+
+```bash
+make best_player   # benchmark all strategies, compile winner as build/best_player
+```
+
 ### Tests
 
 ```bash
