@@ -33,7 +33,7 @@
 static const int8_t NO_PLAYER = -1;
 
 static const char *const PLAYER_FACES[] = {
-    "[^_^]", "[o_O]", "[>_<]", "[-_-]", "[T_T]", "[=_=]", "[*_*]", "[@_@]", "[!_!]",
+    "🇰🇷", "🇦🇷", "🇯🇵", "🇧🇷", "🇺🇸", "🇩🇪", "🇪🇸", "🇫🇷", "🇮🇹",
 };
 
 typedef struct {
@@ -44,6 +44,7 @@ typedef struct {
     int16_t board_rows;
     int16_t board_x_offset; // horizontal offset to center the board
     int16_t board_y_offset; // vertical offset to center the board
+    uint32_t frame_count;   // For flashy animations
 } view_t;
 
 void view_init(view_t *view, uint16_t board_width, uint16_t board_height);

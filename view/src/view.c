@@ -62,6 +62,7 @@ void view_init(view_t *view, uint16_t board_width, uint16_t board_height) {
     nodelay(stdscr, TRUE);
     start_color();
 
+    view->frame_count = 0;
     init_player_colors();
     getmaxyx(stdscr, view->term_rows, view->term_cols);
     calculate_board_layout(view, board_width, board_height);
@@ -97,8 +98,54 @@ static void draw_trail_at(WINDOW *win, int16_t y, int16_t x, int8_t value) {
     wattroff(win, COLOR_PAIR(eater + COLOR_PAIR_OFFSET) | A_DIM);
 }
 
+static void draw_stadium_border(view_t *view, uint16_t width, uint16_t height) {
+    int16_t colors[] = {COLOR_CYAN, COLOR_MAGENTA, COLOR_BLUE, COLOR_YELLOW};
+    
+    // Calculate how many rings fit in the available margins
+    int16_t max_h_rings = view->board_x_offset / 3;
+    int16_t max_v_rings = view->board_y_offset / 2;
+    int16_t rings = (max_h_rings < max_v_rings) ? max_h_rings : max_v_rings;
+    if (rings > 4) rings = 4;
+    if (rings < 1) rings = 1;
+
+    for (int16_t r = rings - 1; r >= 0; r--) {
+        int16_t offset_x = r * 2;
+        int16_t offset_y = r * 1;
+        
+        int16_t x1 = view->board_x_offset - 2 - offset_x;
+        int16_t y1 = view->board_y_offset - 1 - offset_y;
+        int16_t x2 = view->board_x_offset + width * CELL_WIDTH + offset_x;
+        int16_t y2 = view->board_y_offset + height + offset_y;
+
+        int16_t color = colors[(view->frame_count / 2 + r) % 4];
+        wattron(view->board_win, COLOR_PAIR(color + COLOR_PAIR_OFFSET) | A_BOLD);
+        
+        // Horizontal lines
+        for (int16_t x = x1; x <= x2; x++) {
+            mvwaddch(view->board_win, y1, x, ACS_CKBOARD);
+            mvwaddch(view->board_win, y2, x, ACS_CKBOARD);
+        }
+        // Vertical lines
+        for (int16_t y = y1; y <= y2; y++) {
+            mvwaddch(view->board_win, y, x1, ACS_CKBOARD);
+            mvwaddch(view->board_win, y, x1 + 1, ACS_CKBOARD);
+            mvwaddch(view->board_win, y, x2, ACS_CKBOARD);
+            mvwaddch(view->board_win, y, x2 + 1, ACS_CKBOARD);
+        }
+
+        if (r == 0) {
+            const char *title = "  CHOMP CHAMPS STADIUM  ";
+            int16_t tx = x1 + (x2 - x1 - (int16_t)strlen(title)) / 2;
+            mvwprintw(view->board_win, y1, tx, "%s", title);
+        }
+        
+        wattroff(view->board_win, COLOR_PAIR(color + COLOR_PAIR_OFFSET) | A_BOLD);
+    }
+}
+
 void view_draw_board(view_t *view, game_state_t *state) {
     werase(view->board_win);
+    draw_stadium_border(view, state->width, state->height);
 
     for (uint16_t row = 0; row < state->height; row++) {
         int16_t y = view->board_y_offset + (int16_t)row;
@@ -143,9 +190,10 @@ static void draw_player_panel(WINDOW *win, int16_t x, int16_t w, player_t *playe
     const char *face = PLAYER_FACES[idx % MAX_PLAYERS];
     const char *status = player->state ? "ALIVE" : "DEAD";
 
-    wchar_t ws_name[MAX_NAME_LENGTH + 1], ws_status[STATUS_BUFFER_SIZE];
+    wchar_t ws_name[MAX_NAME_LENGTH + 1], ws_status[STATUS_BUFFER_SIZE], ws_face[8];
     mbstowcs(ws_name, name, MAX_NAME_LENGTH);
     mbstowcs(ws_status, status, STATUS_BUFFER_SIZE - 1);
+    mbstowcs(ws_face, face, 7);
 
     wattron(win, COLOR_PAIR(color));
     draw_panel_border(win, PLAYER_PANEL_Y_OFFSET + 0, x, w);
@@ -163,17 +211,14 @@ static void draw_player_panel(WINDOW *win, int16_t x, int16_t w, player_t *playe
     if (!player->state)
         wattroff(win, A_DIM);
 
-    char line1[LINE_BUFFER_SIZE], line2[LINE_BUFFER_SIZE];
-    snprintf(line1, LINE_BUFFER_SIZE, " %s  Score: %-5u", face, player->score);
-    snprintf(line2, LINE_BUFFER_SIZE, " (%u,%u)  V:%-4u I:%-4u", player->x, player->y, player->valid_moves,
-             player->invalid_moves);
-
     mvwaddch(win, PLAYER_PANEL_Y_OFFSET + 1, x, '|');
-    mvwprintw(win, PLAYER_PANEL_Y_OFFSET + 1, x + 1, "%-*s", w - 2, line1);
+    mvwaddwstr(win, PLAYER_PANEL_Y_OFFSET + 1, x + 2, ws_face);
+    mvwprintw(win, PLAYER_PANEL_Y_OFFSET + 1, x + 6, "Score: %-5u", player->score);
     mvwaddch(win, PLAYER_PANEL_Y_OFFSET + 1, x + w - 1, '|');
 
     mvwaddch(win, PLAYER_PANEL_Y_OFFSET + 2, x, '|');
-    mvwprintw(win, PLAYER_PANEL_Y_OFFSET + 2, x + 1, "%-*s", w - 2, line2);
+    mvwprintw(win, PLAYER_PANEL_Y_OFFSET + 2, x + 2, "(%u,%u)  V:%-4u I:%-4u", player->x, player->y, player->valid_moves,
+             player->invalid_moves);
     mvwaddch(win, PLAYER_PANEL_Y_OFFSET + 2, x + w - 1, '|');
 
     draw_panel_border(win, PLAYER_PANEL_Y_OFFSET + 3, x, w);
@@ -226,6 +271,7 @@ void view_draw_panels(view_t *view, game_state_t *state) {
 }
 
 void view_draw_all(view_t *view, game_state_t *state) {
+    view->frame_count++;
     view_draw_board(view, state);
     view_draw_panels(view, state);
 }
@@ -293,12 +339,15 @@ void view_draw_endscreen(view_t *view, game_state_t *state) {
         int8_t idx = order[pos];
         player_t *p = &state->players[idx];
         const char *face = PLAYER_FACES[idx % MAX_PLAYERS];
-        wchar_t ws_name[MAX_NAME_LENGTH + 1];
+        wchar_t ws_name[MAX_NAME_LENGTH + 1], ws_face[8];
         mbstowcs(ws_name, display_name(p->name), MAX_NAME_LENGTH);
+        mbstowcs(ws_face, face, 7);
         int16_t nwidth = (int16_t)wcswidth(ws_name, wcslen(ws_name));
 
         wattron(win, COLOR_PAIR(idx + COLOR_PAIR_OFFSET));
-        mvwprintw(win, box_y + ENDSCREEN_TABLE_Y_OFFSET + 1 + pos, col_x, " %d  %-7s ", idx, face);
+        mvwprintw(win, box_y + ENDSCREEN_TABLE_Y_OFFSET + 1 + pos, col_x, " %d  ", idx);
+        waddwstr(win, ws_face);
+        wprintw(win, "     "); // Padding after emoji (it's 2 cells wide typically)
         waddwstr(win, ws_name);
         int16_t pad = ENDSCREEN_TABLE_PADDING - nwidth;
         if (pad < 0) pad = 0;
