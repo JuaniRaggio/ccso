@@ -115,10 +115,16 @@ make run ARGS="-p ./build/Dante -p ./build/Morena"              # custom players
 make run ARGS="-p ./build/Dante -w 30 -h 30"                   # custom size
 ```
 
-### Benchmark
+### Best player
 
 ```bash
-make best_player   # benchmark all strategies, compile winner as build/best_player
+make best_player   # compile the best strategy (세희 / Greedy Flood) as build/best_player
+```
+
+Para re-evaluar las estrategias manualmente:
+
+```bash
+./scripts/benchmark.sh ./build/master build "세희 胡安尼 Morena Dante el_intrepido Matias DJSanti"
 ```
 
 ### Tests
