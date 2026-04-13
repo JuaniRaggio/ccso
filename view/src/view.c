@@ -1,4 +1,3 @@
-#define _GNU_SOURCE
 #include "view.h"
 #include "view_internal.h"
 #include <game_state.h>

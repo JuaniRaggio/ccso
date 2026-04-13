@@ -92,7 +92,7 @@ $(MASTER_BIN): $(MASTER_SRCS) $(COMMON_SRCS)
 
 $(VIEW_BIN): $(VIEW_SRCS) $(COMMON_SRCS)
 	@mkdir -p $(BUILD_DIR)
-	$(CC) $(CFLAGS) -I$(COMMON_INC) -Iview/include $^ -o $@ $(LDFLAGS) -lncursesw
+	$(CC) $(CFLAGS) -D_GNU_SOURCE -I$(COMMON_INC) -Iview/include $^ -o $@ $(LDFLAGS) -lncursesw
 
 # ==== Tests (CuTest) ====
 TEST_DIR         = tests
