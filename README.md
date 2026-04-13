@@ -136,8 +136,12 @@ make memcheck    # run tests under Valgrind
 
 ### Static analysis
 
+Run `make clean` first if the project was already compiled, otherwise `bear`
+may not capture the compilation commands and PVS-Studio will miss headers.
+
 ```bash
-make pvs         # run PVS-Studio analysis
+make clean       # ensure a fresh build for bear to capture all commands
+make pvs         # run PVS-Studio analysis (requires x86_64; emulated via QEMU on ARM)
 ```
 
 ### Clean
