@@ -111,8 +111,7 @@ void view_draw_board(view_t *view, game_state_t *state) {
     wrefresh(view->board_win);
 }
 
-static void draw_player_panel(WINDOW *win, int16_t x, int16_t w, player_t *player, int8_t idx,
-                              int8_t rank) {
+static void draw_player_panel(WINDOW *win, int16_t x, int16_t w, player_t *player, int8_t idx, int8_t rank) {
     int16_t color = idx + COLOR_PAIR_OFFSET;
     const char *name = display_name(player->name);
     const char *face = PLAYER_FACES[idx % MAX_PLAYERS];
@@ -245,8 +244,10 @@ void view_draw_endscreen(view_t *view, game_state_t *state) {
     int16_t box_h = (int16_t)(8 + state->players_count);
     int16_t box_x = (view->term_cols - box_w) / 2;
     int16_t box_y = (view->board_rows - box_h) / 2;
-    if (box_x < 0) box_x = 0;
-    if (box_y < 0) box_y = 0;
+    if (box_x < 0)
+        box_x = 0;
+    if (box_y < 0)
+        box_y = 0;
 
     WINDOW *win = view->board_win;
 
@@ -278,8 +279,8 @@ void view_draw_endscreen(view_t *view, game_state_t *state) {
         player_t *p = &state->players[idx];
         const char *name = display_name(p->name);
         wattron(win, COLOR_PAIR(idx + COLOR_PAIR_OFFSET));
-        mvwprintw(win, box_y + 5 + pos, col_x, " %d  %-12s %5u %5u %5u",
-                  idx, name, p->score, p->valid_moves, p->invalid_moves);
+        mvwprintw(win, box_y + 5 + pos, col_x, " %d  %-12s %5u %5u %5u", idx, name, p->score, p->valid_moves,
+                  p->invalid_moves);
         wattroff(win, COLOR_PAIR(idx + COLOR_PAIR_OFFSET));
     }
 
