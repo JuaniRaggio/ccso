@@ -150,6 +150,13 @@ make pvs         # run PVS-Studio analysis (requires x86_64; emulated via QEMU o
 make clean       # remove build artifacts
 ```
 
+## Known issues
+
+There is a small delay at the end of the game before the endscreen appears.
+This is likely caused by the master waiting for the inactivity timeout to
+expire after all players have finished, but we are not 100% sure of the
+exact cause.
+
 ## Master flags
 
 - `-w <width>` board width
