@@ -27,10 +27,9 @@ make build       # compile master, players and view
 ### Run
 
 ```bash
-make run                                    # all strategies, defaults
-make run PLAYERS="Dante el_intrepido"       # subset of players
-make run ARGS="-w 30 -h 30"                # custom board size
-make run ARGS="-d 100 -s 42"               # custom delay and seed
+make run                                                              # all strategies, defaults
+make run ARGS="-v ./build/view -p ./build/Dante -p ./build/Morena"    # custom players
+make run ARGS="-v ./build/view -p ./build/Dante -w 30 -h 30"         # custom size
 ```
 
 ### Tests
