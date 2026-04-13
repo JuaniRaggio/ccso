@@ -45,7 +45,7 @@ static void run_master_loop(game_t *game, parameters_t *params, int32_t pipes[][
     time_t last_valid_move = time(NULL);
     int8_t start_player = 0;
 
-    while (!should_exit) {
+    while (!should_exit && any_player_alive(game->state)) {
         if (check_timeout(last_valid_move, params->timeout))
             break;
 
@@ -63,12 +63,13 @@ static void run_master_loop(game_t *game, parameters_t *params, int32_t pipes[][
 
         if (round.any_valid)
             last_valid_move = time(NULL);
-        if (round.any_move && *has_view)
+
+        if (*has_view) {
             sync_view_frame(game, view_pid, has_view);
+        }
+
         if (round.any_move)
             usleep(params->delay * 1000);
-        if (!any_player_alive(game->state))
-            break;
     }
 }
 
