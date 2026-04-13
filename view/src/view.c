@@ -148,7 +148,7 @@ static void draw_player_panel(WINDOW *win, int16_t x, int16_t w, player_t *playe
     mbstowcs(ws_status, status, STATUS_BUFFER_SIZE - 1);
 
     wattron(win, COLOR_PAIR(color));
-    draw_panel_border(win, 0, x, w);
+    draw_panel_border(win, PLAYER_PANEL_Y_OFFSET + 0, x, w);
 
     wchar_t header[WIDE_BUFFER_SIZE];
     swprintf(header, WIDE_BUFFER_SIZE, L" %ls [%ls] ", ws_name, ws_status);
@@ -159,7 +159,7 @@ static void draw_player_panel(WINDOW *win, int16_t x, int16_t w, player_t *playe
 
     if (!player->state)
         wattron(win, A_DIM);
-    mvwaddwstr(win, 0, hstart, header);
+    mvwaddwstr(win, PLAYER_PANEL_Y_OFFSET + 0, hstart, header);
     if (!player->state)
         wattroff(win, A_DIM);
 
@@ -168,15 +168,15 @@ static void draw_player_panel(WINDOW *win, int16_t x, int16_t w, player_t *playe
     snprintf(line2, LINE_BUFFER_SIZE, " (%u,%u)  V:%-4u I:%-4u", player->x, player->y, player->valid_moves,
              player->invalid_moves);
 
-    mvwaddch(win, 1, x, '|');
-    mvwprintw(win, 1, x + 1, "%-*s", w - 2, line1);
-    mvwaddch(win, 1, x + w - 1, '|');
+    mvwaddch(win, PLAYER_PANEL_Y_OFFSET + 1, x, '|');
+    mvwprintw(win, PLAYER_PANEL_Y_OFFSET + 1, x + 1, "%-*s", w - 2, line1);
+    mvwaddch(win, PLAYER_PANEL_Y_OFFSET + 1, x + w - 1, '|');
 
-    mvwaddch(win, 2, x, '|');
-    mvwprintw(win, 2, x + 1, "%-*s", w - 2, line2);
-    mvwaddch(win, 2, x + w - 1, '|');
+    mvwaddch(win, PLAYER_PANEL_Y_OFFSET + 2, x, '|');
+    mvwprintw(win, PLAYER_PANEL_Y_OFFSET + 2, x + 1, "%-*s", w - 2, line2);
+    mvwaddch(win, PLAYER_PANEL_Y_OFFSET + 2, x + w - 1, '|');
 
-    draw_panel_border(win, 3, x, w);
+    draw_panel_border(win, PLAYER_PANEL_Y_OFFSET + 3, x, w);
     wattroff(win, COLOR_PAIR(color));
 }
 
@@ -200,6 +200,14 @@ void view_draw_panels(view_t *view, game_state_t *state) {
         wrefresh(view->panel_win);
         return;
     }
+
+    const char *label = "--- LEADERBOARD ---";
+    int16_t lx = (view->term_cols - (int16_t)strlen(label)) / 2;
+    if (lx < 0)
+        lx = 0;
+    wattron(view->panel_win, COLOR_PAIR(COLOR_BOARD) | A_BOLD);
+    mvwprintw(view->panel_win, LEADERBOARD_LABEL_Y, lx, "%s", label);
+    wattroff(view->panel_win, COLOR_PAIR(COLOR_BOARD) | A_BOLD);
 
     int8_t order[MAX_PLAYERS];
     sort_players_by_score(state, order);

@@ -10,7 +10,9 @@
 #define COLOR_PAIR_OFFSET 1
 
 #define CELL_WIDTH 3   // "XX " per cell
-#define PANEL_HEIGHT 4 // top border + face/score + stats + bottom border
+#define PANEL_HEIGHT 5 // label + top border + face/score + stats + bottom border
+#define LEADERBOARD_LABEL_Y 0
+#define PLAYER_PANEL_Y_OFFSET 1
 #define LABEL_BUFFER_SIZE 32
 #define PLAYER_PREFIX "player-"
 #define PLAYER_PREFIX_LEN 7
