@@ -80,8 +80,12 @@ void view_cleanup(view_t *view) {
 }
 
 static void draw_player_at(WINDOW *win, int16_t y, int16_t x, int8_t pidx) {
+    const char *face = PLAYER_FACES[pidx % MAX_PLAYERS];
+    wchar_t ws_face[8];
+    mbstowcs(ws_face, face, 7);
+
     wattron(win, COLOR_PAIR(pidx + COLOR_PAIR_OFFSET) | A_BOLD);
-    mvwprintw(win, y, x, "P%d", pidx);
+    mvwaddwstr(win, y, x, ws_face);
     wattroff(win, COLOR_PAIR(pidx + COLOR_PAIR_OFFSET) | A_BOLD);
 }
 
@@ -212,7 +216,7 @@ static void draw_player_panel(WINDOW *win, int16_t x, int16_t w, player_t *playe
         wattroff(win, A_DIM);
 
     mvwaddch(win, PLAYER_PANEL_Y_OFFSET + 1, x, '|');
-    mvwaddwstr(win, PLAYER_PANEL_Y_OFFSET + 1, x + 2, ws_face);
+    mvwaddwstr(win, PLAYER_PANEL_Y_OFFSET + 1, x + 3, ws_face);
     mvwprintw(win, PLAYER_PANEL_Y_OFFSET + 1, x + 6, "Score: %-5u", player->score);
     mvwaddch(win, PLAYER_PANEL_Y_OFFSET + 1, x + w - 1, '|');
 
@@ -346,9 +350,9 @@ void view_draw_endscreen(view_t *view, game_state_t *state) {
         int16_t nwidth = (int16_t)wcswidth(ws_name, wcslen(ws_name));
 
         wattron(win, COLOR_PAIR(idx + COLOR_PAIR_OFFSET));
-        mvwprintw(win, box_y + ENDSCREEN_TABLE_Y_OFFSET + 1 + pos, col_x, " %d  ", idx);
+        mvwprintw(win, box_y + ENDSCREEN_TABLE_Y_OFFSET + 1 + pos, col_x, " %d   ", idx);
         waddwstr(win, ws_face);
-        wprintw(win, "     "); // Padding after emoji (it's 2 cells wide typically)
+        wprintw(win, "    "); // Reduced padding to keep name aligned
         waddwstr(win, ws_name);
         int16_t pad = ENDSCREEN_TABLE_PADDING - nwidth;
         if (pad < 0)

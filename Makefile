@@ -12,7 +12,7 @@ BUILD_DIR = build
 COMMON_INC = common/include
 
 # Player strategies
-STRATEGIES = 세희 후아니 모레나 단테 헤로니모 마티아스
+STRATEGIES = 세희 후아니 모레나 단테 el_intrepido 마티아스
 PLAYERS ?= $(STRATEGIES)
 
 # Source discovery (main.c at module root + sources in src/ and utils/)
@@ -32,8 +32,8 @@ $(if $(filter 세희,$(1)),GREEDY_FLOOD,\
 $(if $(filter 후아니,$(1)),FLOOD,\
 $(if $(filter 모레나,$(1)),GREEDY_LOOKAHEAD,\
 $(if $(filter 단테,$(1)),GREEDY,\
-$(if $(filter 헤로니모,$(1)),NAIVE,\
 $(if $(filter 마티아스,$(1)),MIN_REWARD))))))
+$(if $(filter el_intrepido,$(1)),NAIVE,\
 endef
 
 DOCKER_IMAGE = agodio/itba-so-multiarch:3.1
