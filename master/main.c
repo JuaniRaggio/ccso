@@ -127,14 +127,23 @@ int main(int argc, char *argv[]) {
         game_sync_notify_view(game.sync);
     close_active_pipes(pipes, game.state->players, params.players_count);
 
-    for (int8_t i = 0; i < params.players_count; i++)
-        waitpid(game.state->players[i].player_id, NULL, 0);
-    if (has_view)
-        waitpid(view_pid, NULL, 0);
+    for (int8_t i = 0; i < params.players_count; i++) {
+        if (waitpid(game.state->players[i].player_id, NULL, WNOHANG) == 0)
+            waitpid(game.state->players[i].player_id, NULL, 0);
+    }
+    if (has_view) {
+        if (waitpid(view_pid, NULL, WNOHANG) == 0)
+            waitpid(view_pid, NULL, 0);
+    }
 
     print_game_results(game.state);
     game_sync_destroy(game.sync);
     game_disconnect(&game);
+
+    if (should_exit) {
+        signal(SIGINT, SIG_DFL);
+        raise(SIGINT);
+    }
 
     return 0;
 }
