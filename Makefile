@@ -38,8 +38,6 @@ DOCKER_RUN_IT = docker run --rm -it -e LC_ALL=C.UTF-8 -e LANG=C.UTF-8 \
                 -v "$(CURDIR):/root/ccso" -w /root/ccso $(DOCKER_IMAGE)
 
 PLAYER_RUN_ARGS = $(foreach p,$(PLAYERS),-p ./$(BUILD_DIR)/$(p))
-WIDTH  ?= 20
-HEIGHT ?= 20
 
 .PHONY: pull build run test memcheck pvs clean compile_flags
 
@@ -51,7 +49,7 @@ build:
 
 run:
 	$(DOCKER_RUN_IT) bash -c "make _deps _all && \
-		./$(MASTER_BIN) -w $(WIDTH) -h $(HEIGHT) -v ./$(VIEW_BIN) $(PLAYER_RUN_ARGS)"
+		./$(MASTER_BIN) -v ./$(VIEW_BIN) $(PLAYER_RUN_ARGS) $(ARGS)"
 
 test:
 	$(DOCKER_RUN) make _deps _test

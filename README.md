@@ -27,9 +27,10 @@ make build       # compile master, players and view
 ### Run
 
 ```bash
-make run                                    # all strategies, 20x20 board
+make run                                    # all strategies, defaults
 make run PLAYERS="Dante el_intrepido"       # subset of players
-make run WIDTH=30 HEIGHT=30                 # custom board size
+make run ARGS="-w 30 -h 30"                # custom board size
+make run ARGS="-d 100 -s 42"               # custom delay and seed
 ```
 
 ### Tests
