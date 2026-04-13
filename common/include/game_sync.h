@@ -32,13 +32,13 @@ extern const char game_sync_memory_name[];
  * the view handshake, and the per-player turn control.
  */
 typedef struct {
-    sem_t view_may_render;                       /**< Signalled when the view may start rendering. */
-    sem_t view_rendered;                         /**< Signalled when the view has finished rendering. */
-    sem_t master_writing;                        /**< Writer-preference turnstile semaphore. */
-    sem_t gamestate_mutex;                       /**< Protects the game state from concurrent writes. */
-    sem_t readers_count_mutex;                   /**< Protects the @c readers_count counter. */
-    uint32_t readers_count;                      /**< Number of active readers. */
-    sem_t player_may_send_movement[MAX_PLAYERS]; /**< Per-player turn semaphores. */
+    sem_t view_may_render;
+    sem_t view_rendered;
+    sem_t master_writing;
+    sem_t gamestate_mutex;
+    sem_t readers_count_mutex;
+    uint32_t readers_count;
+    sem_t player_may_send_movement[MAX_PLAYERS];
 } game_sync_t;
 
 /**

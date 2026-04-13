@@ -28,14 +28,14 @@ extern const char game_state_memory_name[];
  * Negative board cell values encode the player index that occupies the cell.
  */
 typedef struct {
-    char name[MAX_NAME_LENGTH]; /**< Display name (basename of the binary). */
-    uint32_t score;             /**< Accumulated score from collected cells. */
-    uint32_t invalid_moves;     /**< Number of invalid moves attempted. */
-    uint32_t valid_moves;       /**< Number of valid moves executed. */
-    uint16_t x;                 /**< Current column on the board. */
-    uint16_t y;                 /**< Current row on the board. */
-    pid_t player_id;            /**< PID of the player child process. */
-    bool state;                 /**< true if alive, false if disconnected. */
+    char name[MAX_NAME_LENGTH];
+    uint32_t score;
+    uint32_t invalid_moves;
+    uint32_t valid_moves;
+    uint16_t x;
+    uint16_t y;
+    pid_t player_id;
+    bool state;
 } player_t;
 
 /**
@@ -46,10 +46,10 @@ typedef struct {
  * empty; negative values encode the player index that occupies the cell.
  */
 typedef struct {
-    uint16_t width;                /**< Board column count. */
-    uint16_t height;               /**< Board row count. */
-    int8_t players_count;          /**< Number of registered players. */
-    player_t players[MAX_PLAYERS]; /**< Player descriptors. */
-    bool running;                  /**< false once the game has ended. */
-    int8_t board[];                /**< Row-major board: board[y * width + x]. */
+    uint16_t width;
+    uint16_t height;
+    int8_t players_count;
+    player_t players[MAX_PLAYERS];
+    bool running;
+    int8_t board[];
 } game_state_t;
