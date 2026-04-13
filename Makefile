@@ -163,9 +163,11 @@ PVS_KEY  ?= FREE-FREE-FREE-FREE
 
 _pvs: _pvs_deps _deps
 	pvs-studio-analyzer credentials "$(PVS_NAME)" "$(PVS_KEY)"
+	./scripts/pvs-comments.sh add
 	rm -rf $(BUILD_DIR)
 	bear -- make _all
-	pvs-studio-analyzer analyze -f compile_commands.json -o pvs-report.log -j1
-	plog-converter -t errorfile pvs-report.log -o pvs-report.txt
-	@cat pvs-report.txt
-	@! grep -q ':.*:.*: error\|:.*:.*: warning' pvs-report.txt
+	pvs-studio-analyzer analyze -f compile_commands.json -o pvs-report.log -j1; \
+	status=$$?; \
+	./scripts/pvs-comments.sh remove; \
+	plog-converter -a 'GA:1,2,3;64:1,2,3;OP:1,2,3;CS:1,2,3;MISRA:1,2,3' -t errorfile pvs-report.log; \
+	exit $$status
