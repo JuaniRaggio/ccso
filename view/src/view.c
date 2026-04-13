@@ -101,6 +101,24 @@ static void create_windows(view_t *view, uint16_t width, uint16_t height) {
     view->panel_win = newwin(PANEL_HEIGHT, view->term_cols, view->board_rows, 0);
 }
 
+// ============================================================
+//  Lifecycle
+// ============================================================
+
+void view_init(view_t *view, uint16_t board_width, uint16_t board_height) {
+    if (!setlocale(LC_ALL, "C.utf8"))
+        setlocale(LC_ALL, "");
+    if (getenv("TERM") == NULL)
+        setenv("TERM", "xterm-256color", 0);
+
+    signal(SIGINT, signal_handler);
+    signal(SIGTERM, signal_handler);
+
+    setup_ncurses();
+    view->frame_count = 0;
+    create_windows(view, board_width, board_height);
+}
+
 void view_cleanup(view_t *view) {
     if (view->board_win != NULL)
         delwin(view->board_win);
@@ -111,20 +129,8 @@ void view_cleanup(view_t *view) {
 
 static void view_handle_resize(view_t *view, uint16_t width, uint16_t height) {
     view_cleanup(view);
-    initscr();
-    cbreak();
-    noecho();
-    curs_set(0);
-    keypad(stdscr, TRUE);
-    nodelay(stdscr, TRUE);
-    start_color();
-
-    init_player_colors();
-    getmaxyx(stdscr, view->term_rows, view->term_cols);
-    calculate_board_layout(view, width, height);
-
-    view->board_win = newwin(view->board_rows, view->term_cols, 0, 0);
-    view->panel_win = newwin(PANEL_HEIGHT, view->term_cols, view->board_rows, 0);
+    setup_ncurses();
+    create_windows(view, width, height);
 }
 
 static void draw_player_at(WINDOW *win, int16_t y, int16_t x, int8_t pidx) {
