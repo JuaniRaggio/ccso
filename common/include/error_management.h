@@ -20,7 +20,7 @@ typedef enum {
     resource_busy_error = EAGAIN,
     permission_error = EPERM,
     exec_format_error = ENOEXEC,
-    mapping_error,
+    mapping_error = 200,
     connection_error,
     unreachable,
 } error_code_t;
