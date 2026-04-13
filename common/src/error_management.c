@@ -22,8 +22,32 @@ static const char *description_for(error_code_t code) {
         return "Value out of range";
     case unreachable:
         return "Unreachable code reached";
+    case no_memory_error:
+        return "Cannot allocate memory";
+    case no_entry_error:
+        return "No such file or directory";
+    case bad_fd_error:
+        return "Bad file descriptor";
+    case io_error:
+        return "Input/output error";
+    case broken_pipe_error:
+        return "Broken pipe";
+    case interrupted_error:
+        return "Interrupted system call";
+    case too_many_files_error:
+        return "Too many open files";
+    case file_table_full_error:
+        return "Too many open files in system";
+    case no_space_error:
+        return "No space left on device";
+    case resource_busy_error:
+        return "Resource temporarily unavailable";
+    case permission_error:
+        return "Operation not permitted";
+    case exec_format_error:
+        return "Exec format error";
     default:
-        return strerror(code);
+        return "Unknown error";
     }
 }
 
