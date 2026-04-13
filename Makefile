@@ -12,7 +12,7 @@ BUILD_DIR = build
 COMMON_INC = common/include
 
 # Player strategies
-STRATEGIES = 세희 후아니 모레나 단테 헤로니모 마티아스
+STRATEGIES = 세희 胡安尼 Morena Dante el_intrepido Matias
 PLAYERS ?= $(STRATEGIES)
 
 # Source discovery (main.c at module root + sources in src/ and utils/)
@@ -29,11 +29,11 @@ PLAYER_BINS = $(addprefix $(BUILD_DIR)/,$(STRATEGIES))
 # Map strategy name to -D flag
 define get_flag
 $(if $(filter 세희,$(1)),GREEDY_FLOOD,\
-$(if $(filter 후아니,$(1)),FLOOD,\
-$(if $(filter 모레나,$(1)),GREEDY_LOOKAHEAD,\
-$(if $(filter 단테,$(1)),GREEDY,\
-$(if $(filter 헤로니모,$(1)),NAIVE,\
-$(if $(filter 마티아스,$(1)),MIN_REWARD))))))
+$(if $(filter 胡安尼,$(1)),FLOOD,\
+$(if $(filter Morena,$(1)),GREEDY_LOOKAHEAD,\
+$(if $(filter Dante,$(1)),GREEDY,\
+$(if $(filter el_intrepido,$(1)),NAIVE,\
+$(if $(filter Matias,$(1)),MIN_REWARD))))))
 endef
 
 DOCKER_IMAGE = agodio/itba-so-multiarch:3.1
