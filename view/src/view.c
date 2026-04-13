@@ -133,13 +133,17 @@ static void view_handle_resize(view_t *view, uint16_t width, uint16_t height) {
     create_windows(view, width, height);
 }
 
+// ============================================================
+//  Board cell drawing
+// ============================================================
+
 static void draw_player_at(WINDOW *win, int16_t y, int16_t x, int8_t pidx) {
     const char *head = PLAYER_THEMES[pidx % MAX_PLAYERS].head;
-    wchar_t ws_head[8];
-    mbstowcs(ws_head, head, 7);
+    wchar_t ws[8];
+    mbstowcs(ws, head, 7);
 
     wattron(win, COLOR_PAIR(pidx + COLOR_PAIR_OFFSET) | A_BOLD);
-    mvwaddwstr(win, y, x, ws_head);
+    mvwaddwstr(win, y, x, ws);
     wattroff(win, COLOR_PAIR(pidx + COLOR_PAIR_OFFSET) | A_BOLD);
 }
 
@@ -152,28 +156,26 @@ static void draw_reward_at(WINDOW *win, int16_t y, int16_t x, int8_t value) {
 static void draw_trail_at(WINDOW *win, int16_t y, int16_t x, int8_t value) {
     int8_t eater = (int8_t)(-value);
     const char *trail = PLAYER_THEMES[eater % MAX_PLAYERS].flag;
-    wchar_t ws_trail[8];
-    mbstowcs(ws_trail, trail, 7);
+    wchar_t ws[8];
+    mbstowcs(ws, trail, 7);
 
     wattron(win, COLOR_PAIR(eater + COLOR_PAIR_OFFSET) | A_DIM);
-    mvwaddwstr(win, y, x, ws_trail);
+    mvwaddwstr(win, y, x, ws);
     wattroff(win, COLOR_PAIR(eater + COLOR_PAIR_OFFSET) | A_DIM);
 }
 
-static void draw_stadium_border(view_t *view, uint16_t width, uint16_t height) {
-    int16_t colors[] = {COLOR_CYAN, COLOR_MAGENTA, COLOR_BLUE, COLOR_YELLOW};
+static void draw_cell(WINDOW *win, game_state_t *state, int16_t y, int16_t x, uint16_t col, uint16_t row) {
+    int8_t value = state->board[row * state->width + col];
+    int8_t pidx = player_at(state, col, row);
 
-    int16_t max_h_rings = view->board_x_offset / 3;
-    int16_t max_v_rings = view->board_y_offset / 2;
-    int16_t rings = (max_h_rings < max_v_rings) ? max_h_rings : max_v_rings;
-    if (rings > 4)
-        rings = 4;
-    if (rings < 1)
-        rings = 1;
+    if (pidx != NO_PLAYER)
+        draw_player_at(win, y, x, pidx);
+    else if (value > 0)
+        draw_reward_at(win, y, x, value);
+    else
+        draw_trail_at(win, y, x, value);
+}
 
-    for (int16_t r = rings - 1; r >= 0; r--) {
-        int16_t offset_x = r * 2;
-        int16_t offset_y = r * 1;
 
         int16_t x1 = view->board_x_offset - 2 - offset_x;
         int16_t y1 = view->board_y_offset - 1 - offset_y;
