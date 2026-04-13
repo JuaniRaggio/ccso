@@ -71,8 +71,10 @@ void view_init(view_t *view, uint16_t board_width, uint16_t board_height) {
 }
 
 void view_cleanup(view_t *view) {
-    if (view->board_win != NULL) delwin(view->board_win);
-    if (view->panel_win != NULL) delwin(view->panel_win);
+    if (view->board_win != NULL)
+        delwin(view->board_win);
+    if (view->panel_win != NULL)
+        delwin(view->panel_win);
     endwin();
 }
 
@@ -100,11 +102,13 @@ void view_draw_board(view_t *view, game_state_t *state) {
 
     for (uint16_t row = 0; row < state->height; row++) {
         int16_t y = view->board_y_offset + (int16_t)row;
-        if (y < 0 || y >= view->board_rows) continue;
+        if (y < 0 || y >= view->board_rows)
+            continue;
 
         for (uint16_t col = 0; col < state->width; col++) {
             int16_t x = view->board_x_offset + col * CELL_WIDTH;
-            if (x < 0 || x + CELL_WIDTH > view->term_cols) continue;
+            if (x < 0 || x + CELL_WIDTH > view->term_cols)
+                continue;
 
             int8_t value = state->board[row * state->width + col];
             int8_t pidx = player_at(state, col, row);
@@ -150,15 +154,19 @@ static void draw_player_panel(WINDOW *win, int16_t x, int16_t w, player_t *playe
     swprintf(header, sizeof(header) / sizeof(wchar_t), L" %ls [%ls] ", ws_name, ws_status);
     int16_t hwidth = (int16_t)wcswidth(header, wcslen(header));
     int16_t hstart = x + (w - hwidth) / 2;
-    if (hstart < x + 1) hstart = x + 1;
+    if (hstart < x + 1)
+        hstart = x + 1;
 
-    if (!player->state) wattron(win, A_DIM);
+    if (!player->state)
+        wattron(win, A_DIM);
     mvwaddwstr(win, 0, hstart, header);
-    if (!player->state) wattroff(win, A_DIM);
+    if (!player->state)
+        wattroff(win, A_DIM);
 
     char line1[64], line2[64];
     snprintf(line1, sizeof(line1), " %s  Score: %-5u", face, player->score);
-    snprintf(line2, sizeof(line2), " (%u,%u)  V:%-4u I:%-4u", player->x, player->y, player->valid_moves, player->invalid_moves);
+    snprintf(line2, sizeof(line2), " (%u,%u)  V:%-4u I:%-4u", player->x, player->y, player->valid_moves,
+             player->invalid_moves);
 
     mvwaddch(win, 1, x, '|');
     mvwprintw(win, 1, x + 1, "%-*s", w - 2, line1);
@@ -173,7 +181,8 @@ static void draw_player_panel(WINDOW *win, int16_t x, int16_t w, player_t *playe
 }
 
 static void sort_players_by_score(game_state_t *state, int8_t order[]) {
-    for (int8_t i = 0; i < state->players_count; i++) order[i] = i;
+    for (int8_t i = 0; i < state->players_count; i++)
+        order[i] = i;
     for (int8_t i = 0; i < state->players_count - 1; i++) {
         for (int8_t j = i + 1; j < state->players_count; j++) {
             if (state->players[order[j]].score > state->players[order[i]].score) {
@@ -196,7 +205,8 @@ void view_draw_panels(view_t *view, game_state_t *state) {
     sort_players_by_score(state, order);
 
     int16_t panel_w = view->term_cols / state->players_count;
-    if (panel_w < 12) panel_w = 12;
+    if (panel_w < 12)
+        panel_w = 12;
 
     for (int8_t pos = 0; pos < state->players_count; pos++) {
         int8_t idx = order[pos];
@@ -214,17 +224,20 @@ void view_draw_all(view_t *view, game_state_t *state) {
 
 static void draw_box(WINDOW *win, int16_t y, int16_t x, int16_t h, int16_t w) {
     mvwaddch(win, y, x, ACS_ULCORNER);
-    for (int16_t i = 1; i < w - 1; i++) mvwaddch(win, y, x + i, ACS_HLINE);
+    for (int16_t i = 1; i < w - 1; i++)
+        mvwaddch(win, y, x + i, ACS_HLINE);
     mvwaddch(win, y, x + w - 1, ACS_URCORNER);
 
     for (int16_t r = 1; r < h - 1; r++) {
         mvwaddch(win, y + r, x, ACS_VLINE);
-        for (int16_t i = 1; i < w - 1; i++) mvwaddch(win, y + r, x + i, ' ');
+        for (int16_t i = 1; i < w - 1; i++)
+            mvwaddch(win, y + r, x + i, ' ');
         mvwaddch(win, y + r, x + w - 1, ACS_VLINE);
     }
 
     mvwaddch(win, y + h - 1, x, ACS_LLCORNER);
-    for (int16_t i = 1; i < w - 1; i++) mvwaddch(win, y + h - 1, x + i, ACS_HLINE);
+    for (int16_t i = 1; i < w - 1; i++)
+        mvwaddch(win, y + h - 1, x + i, ACS_HLINE);
     mvwaddch(win, y + h - 1, x + w - 1, ACS_LRCORNER);
 }
 
@@ -235,8 +248,10 @@ void view_draw_endscreen(view_t *view, game_state_t *state) {
 
     int16_t box_w = 44, box_h = (int16_t)(8 + state->players_count);
     int16_t box_x = (view->term_cols - box_w) / 2, box_y = (view->board_rows - box_h) / 2;
-    if (box_x < 0) box_x = 0;
-    if (box_y < 0) box_y = 0;
+    if (box_x < 0)
+        box_x = 0;
+    if (box_y < 0)
+        box_y = 0;
 
     WINDOW *win = view->board_win;
     wattron(win, COLOR_PAIR(COLOR_BOARD));
@@ -255,7 +270,8 @@ void view_draw_endscreen(view_t *view, game_state_t *state) {
     swprintf(winner_msg, sizeof(winner_msg) / sizeof(wchar_t), L"P%d: %ls wins!", winner, ws_wname);
     int16_t wwidth = (int16_t)wcswidth(winner_msg, wcslen(winner_msg));
     int16_t wx = box_x + (box_w - wwidth) / 2;
-    if (wx < box_x + 1) wx = box_x + 1;
+    if (wx < box_x + 1)
+        wx = box_x + 1;
     wattron(win, COLOR_PAIR(winner + COLOR_PAIR_OFFSET) | A_BOLD);
     mvwaddwstr(win, box_y + 2, wx, winner_msg);
     wattroff(win, COLOR_PAIR(winner + COLOR_PAIR_OFFSET) | A_BOLD);
@@ -276,8 +292,10 @@ void view_draw_endscreen(view_t *view, game_state_t *state) {
         wprintw(win, "%d  ", idx);
         waddwstr(win, ws_name);
         int16_t pad = 12 - nwidth;
-        if (pad < 0) pad = 0;
-        for (int16_t i = 0; i < pad; i++) waddch(win, ' ');
+        if (pad < 0)
+            pad = 0;
+        for (int16_t i = 0; i < pad; i++)
+            waddch(win, ' ');
         wprintw(win, " %5u %5u %5u", p->score, p->valid_moves, p->invalid_moves);
         wattroff(win, COLOR_PAIR(idx + COLOR_PAIR_OFFSET));
     }

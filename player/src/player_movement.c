@@ -28,7 +28,8 @@ static inline bool is_free_neighbor(int8_t board[], uint16_t width, uint16_t hei
 static int32_t flood_count(int8_t board[], uint16_t width, uint16_t height, int16_t sx, int16_t sy) {
     int32_t total = width * height;
     uint8_t *visited = calloc(total, sizeof(uint8_t));
-    if (!visited) return 0;
+    if (!visited)
+        return 0;
 
     int16_t *stack = malloc(total * 2 * sizeof(int16_t));
     if (!stack) {
@@ -47,9 +48,11 @@ static int32_t flood_count(int8_t board[], uint16_t width, uint16_t height, int1
         int16_t cx = stack[--top];
         int16_t nx, ny;
         for (int8_t d = 0; d < dir_count; d++) {
-            if (!is_free_neighbor(board, width, height, cx, cy, d, &nx, &ny)) continue;
+            if (!is_free_neighbor(board, width, height, cx, cy, d, &nx, &ny))
+                continue;
             int32_t idx = ny * width + nx;
-            if (visited[idx]) continue;
+            if (visited[idx])
+                continue;
             visited[idx] = 1;
             count++;
             stack[top++] = nx;
@@ -85,7 +88,8 @@ int8_t compute_next_move(int8_t board[], uint16_t width, uint16_t height, uint16
     int8_t best_val = 0;
     for (int8_t dir = 0; dir < dir_count; dir++) {
         int16_t nx, ny;
-        if (!is_free_neighbor(board, width, height, x, y, dir, &nx, &ny)) continue;
+        if (!is_free_neighbor(board, width, height, x, y, dir, &nx, &ny))
+            continue;
         int8_t cell = board_at(board, width, nx, ny);
         if (cell > best_val) {
             best_val = cell;
@@ -101,24 +105,29 @@ int8_t compute_next_move(int8_t board[], uint16_t width, uint16_t height, uint16
 
 static bool path_contains(int16_t path_x[], int16_t path_y[], int8_t path_len, int16_t x, int16_t y) {
     for (int8_t p = 0; p < path_len; p++) {
-        if (path_x[p] == x && path_y[p] == y) return true;
+        if (path_x[p] == x && path_y[p] == y)
+            return true;
     }
     return false;
 }
 
 static int32_t lookahead(int8_t board[], uint16_t width, uint16_t height, int16_t cx, int16_t cy, int8_t depth,
                          int16_t path_x[], int16_t path_y[], int8_t path_len) {
-    if (depth == 0) return 0;
+    if (depth == 0)
+        return 0;
     int32_t best = 0;
     for (int8_t dir = 0; dir < dir_count; dir++) {
         int16_t nx, ny;
-        if (!is_free_neighbor(board, width, height, cx, cy, dir, &nx, &ny)) continue;
-        if (path_contains(path_x, path_y, path_len, nx, ny)) continue;
+        if (!is_free_neighbor(board, width, height, cx, cy, dir, &nx, &ny))
+            continue;
+        if (path_contains(path_x, path_y, path_len, nx, ny))
+            continue;
         path_x[path_len] = nx;
         path_y[path_len] = ny;
         int32_t val = board_at(board, width, nx, ny) +
                       lookahead(board, width, height, nx, ny, depth - 1, path_x, path_y, path_len + 1);
-        if (val > best) best = val;
+        if (val > best)
+            best = val;
     }
     return best;
 }
@@ -130,8 +139,10 @@ int8_t compute_next_move(int8_t board[], uint16_t width, uint16_t height, uint16
 
     for (int8_t dir = 0; dir < dir_count; dir++) {
         int16_t nx, ny;
-        if (!is_free_neighbor(board, width, height, x, y, dir, &nx, &ny)) continue;
-        path_x[0] = nx; path_y[0] = ny;
+        if (!is_free_neighbor(board, width, height, x, y, dir, &nx, &ny))
+            continue;
+        path_x[0] = nx;
+        path_y[0] = ny;
         int32_t val = board_at(board, width, nx, ny) +
                       lookahead(board, width, height, nx, ny, LOOKAHEAD_DEPTH - 1, path_x, path_y, 1);
         if (val > best_val) {
@@ -149,7 +160,8 @@ int8_t compute_next_move(int8_t board[], uint16_t width, uint16_t height, uint16
     int32_t best_space = -1;
     for (int8_t dir = 0; dir < dir_count; dir++) {
         int16_t nx, ny;
-        if (!is_free_neighbor(board, width, height, x, y, dir, &nx, &ny)) continue;
+        if (!is_free_neighbor(board, width, height, x, y, dir, &nx, &ny))
+            continue;
         int32_t space = flood_count(board, width, height, nx, ny);
         if (space > best_space) {
             best_space = space;
@@ -179,18 +191,21 @@ int8_t compute_next_move(int8_t board[], uint16_t width, uint16_t height, uint16
 
     for (int8_t dir = 0; dir < dir_count; dir++) {
         int16_t nx, ny;
-        if (!is_free_neighbor(board, width, height, x, y, dir, &nx, &ny)) continue;
+        if (!is_free_neighbor(board, width, height, x, y, dir, &nx, &ny))
+            continue;
         valid[dir] = true;
         rewards[dir] = board_at(board, width, nx, ny);
         floods[dir] = flood_count(board, width, height, nx, ny);
-        if (floods[dir] > max_flood) max_flood = floods[dir];
+        if (floods[dir] > max_flood)
+            max_flood = floods[dir];
     }
 
     int8_t best_dir = -1, best_reward = 0;
     int32_t best_flood = -1;
 
     for (int8_t d = 0; d < dir_count; d++) {
-        if (!valid[d] || !is_within_survival_threshold(floods[d], max_flood)) continue;
+        if (!valid[d] || !is_within_survival_threshold(floods[d], max_flood))
+            continue;
         if (is_better_reward(rewards[d], floods[d], best_reward, best_flood)) {
             best_reward = rewards[d];
             best_flood = floods[d];
@@ -215,7 +230,8 @@ int8_t compute_next_move(int8_t board[], uint16_t width, uint16_t height, uint16
     int8_t best_dir = -1, min_val = 127;
     for (int8_t dir = 0; dir < dir_count; dir++) {
         int16_t nx, ny;
-        if (!is_free_neighbor(board, width, height, x, y, dir, &nx, &ny)) continue;
+        if (!is_free_neighbor(board, width, height, x, y, dir, &nx, &ny))
+            continue;
         int8_t cell = board_at(board, width, nx, ny);
         if (cell < min_val) {
             min_val = cell;
@@ -231,7 +247,8 @@ int8_t decide_move(game_state_t *state, uint16_t width, uint16_t height, uint16_
     int16_t x = state->players[idx].x, y = state->players[idx].y;
     for (int8_t dir = 0; dir < dir_count; dir++) {
         int16_t nx, ny;
-        if (is_free_neighbor(state->board, width, height, x, y, dir, &nx, &ny)) return (uint8_t)dir;
+        if (is_free_neighbor(state->board, width, height, x, y, dir, &nx, &ny))
+            return (uint8_t)dir;
     }
     return NO_VALID_MOVE;
 }
