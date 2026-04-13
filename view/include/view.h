@@ -45,6 +45,7 @@ static const player_theme_t PLAYER_THEMES[] = {
     {"⚽", "🇧🇷"}, // Brazil
     {"🦜", "🇨🇷"}, // Costa Rica
     {"🍺", "🇩🇪"}, // Germany
+    {"🧉", "🇦🇷"}, // Argentina
     {"🐂", "🇪🇸"}, // Spain
     {"🥐", "🇫🇷"}, // France
 };

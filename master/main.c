@@ -68,6 +68,9 @@ static void run_master_loop(game_t *game, parameters_t *params, int32_t pipes[][
             sync_view_frame(game, view_pid, has_view);
         }
 
+        if (!any_player_alive(game->state))
+            break;
+
         if (round.any_move)
             usleep(params->delay * 1000);
     }
