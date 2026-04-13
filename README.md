@@ -1,17 +1,6 @@
 # CCSO - Chomp Champs Sistemas Operativos
 
-## Preguntas
-
-- Para manejar los jugadores, tendriamos que recibir punteros a los jugadores desde el binario de players o
-  deberiamos hacer un switch enorme y dependiendo del pid actual, obtener el player id y en base a eso hacer
-  los movimientos?
-
-- Como hacer para tener memoria compartida entre procesos? No tendria sentido enviar un puntero por un pipe
-  ya que como se menciono cada proceso tiene un mapeo de memoria distinto
-  
-  _Se traduce todo usando shm_overview / mmap / unmap, probablemente se vea en la clase de memoria compartida_
-
-# AI - Player strategies
+## AI - Player strategies
 
 - Naive (random, no checks)
 - Greedy (highest adjacent reward)
@@ -19,73 +8,47 @@
 - Flood (flood fill, maximizes reachable area)
 - Greedy Flood (greedy + survival threshold via flood fill)
 
-# Build & Run
+## Build & Run
 
-## Docker setup
+All commands run from the host via Docker. No need to enter the container manually.
 
-### Pull the container image
+### Prerequisites
 
 ```bash
-docker pull agodio/itba-so-multiarch:3.1
+make pull        # download the Docker image
 ```
 
-### Run the container with the project mounted
-
-From the repository root:
+### Build
 
 ```bash
-docker run -it --rm -v "${PWD}:/root/ccso" -w /root/ccso agodio/itba-so-multiarch:3.1 bash
+make build       # compile master, players and view
 ```
 
-### Build and run inside the container
-
-Once inside the shell:
+### Run
 
 ```bash
-make clean
-make all
-make run
+make run                                    # all strategies, 20x20 board
+make run PLAYERS="Dante el_intrepido"       # subset of players
+make run WIDTH=30 HEIGHT=30                 # custom board size
 ```
 
-## Build individual targets
+### Tests
 
 ```bash
-make master               # just the master
-make view                 # just the view
-make players              # all player strategies
-make player-greedy        # a single player strategy
-make player-greedy_flood  # another single strategy
+make test        # run CuTest suite
+make memcheck    # run tests under Valgrind
 ```
 
-## Run with defaults (all strategies)
+### Static analysis
 
 ```bash
-make run
+make pvs         # run PVS-Studio analysis
 ```
 
-Internally this executes:
+### Clean
 
 ```bash
-./build/master -v ./build/view \
-    -p ./build/player-naive \
-    -p ./build/player-greedy \
-    -p ./build/player-greedy_lookahead \
-    -p ./build/player-flood \
-    -p ./build/player-greedy_flood
-```
-
-> [!IMPORTANT]
-> The parser expects one `-p` flag per player binary. Do not put multiple
-> paths after a single `-p`.
-
-## Run with a subset of players
-
-The `PLAYERS` variable controls which strategies are launched:
-
-```bash
-make run PLAYERS="naive greedy"        # only 2 players
-make run PLAYERS="greedy_flood"        # single-player run
-make run PLAYERS="flood greedy_flood"  # compare two strategies
+make clean       # remove build artifacts
 ```
 
 ## Master flags
@@ -97,12 +60,6 @@ make run PLAYERS="flood greedy_flood"  # compare two strategies
 - `-s <seed>` random seed
 - `-v <path>` path to view binary
 - `-p <path>` path to a player binary
-
-## Take into account
-
-- Si un jugador calcular que va a ir a una posicion {a, b}, podria pasar que siga calculando los siguientes
-  movimientos pero eso implicaria que si justo otro jugador decide moverse a {a, b}, entonces va a cometer un
-  movimiento invalido lo cual invalida todos los siguientes movimientos que queria hacer este jugador
 
 ## Type lengths
 
@@ -126,4 +83,3 @@ Size int: 4
 Size u short: 2
 Size u char: 1
 ```
-
