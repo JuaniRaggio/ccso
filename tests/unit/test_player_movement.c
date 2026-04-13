@@ -16,7 +16,7 @@
  *     (0..7) or NO_VALID_MOVE (-1). The behavior depends on the strategy
  *     selected at compile time via #ifdef (NAIVE, GREEDY, etc.).
  *
- *   - decidir_movimiento(state, width, height, idx): reads player position
+ *   - decide_move(state, width, height, idx): reads player position
  *     from state->players[idx] and finds the first valid neighbor direction
  *     in order 0..7. Returns that direction or NO_VALID_MOVE.
  *
@@ -25,7 +25,7 @@
  *
  * Helper functions in_bounds, board_at, is_free, is_free_neighbor are
  * all static inline in player_movement.c and are exercised indirectly
- * through compute_next_move and decidir_movimiento.
+ * through compute_next_move and decide_move.
  */
 
 /* Helper: create a flat board of width*height filled with a given value. */
@@ -182,13 +182,13 @@ static void test_greedy_prefers_higher_value(CuTest *tc) {
     free(board);
 }
 
-/* ---------- decidir_movimiento ---------- */
+/* ---------- decide_move ---------- */
 
 /*
- * decidir_movimiento uses the player's position from state->players[idx]
+ * decide_move uses the player's position from state->players[idx]
  * and finds the first free neighbor direction in order 0..7.
  */
-static void test_decidir_movimiento_first_free_direction(CuTest *tc) {
+static void test_decide_move_first_free_direction(CuTest *tc) {
     const uint16_t w = 5, h = 5;
     game_state_t *state = make_state(w, h, 1);
     CuAssertPtrNotNull(tc, state);
@@ -196,7 +196,7 @@ static void test_decidir_movimiento_first_free_direction(CuTest *tc) {
     state->players[0].x = 2;
     state->players[0].y = 2;
 
-    int8_t result = decidir_movimiento(state, w, h, 0);
+    int8_t result = decide_move(state, w, h, 0);
     /* All neighbors free, so the first direction (dir_up=0) should be chosen
        because the loop goes 0..7 and returns the first free one. */
     CuAssertIntEquals(tc, (int)dir_up, (int)result);
@@ -205,10 +205,10 @@ static void test_decidir_movimiento_first_free_direction(CuTest *tc) {
 }
 
 /*
- * If only one direction is free (e.g. down), decidir_movimiento must
+ * If only one direction is free (e.g. down), decide_move must
  * pick that direction.
  */
-static void test_decidir_movimiento_only_one_free(CuTest *tc) {
+static void test_decide_move_only_one_free(CuTest *tc) {
     const uint16_t w = 5, h = 5;
     game_state_t *state = make_state(w, h, -1); /* all claimed */
     CuAssertPtrNotNull(tc, state);
@@ -219,16 +219,16 @@ static void test_decidir_movimiento_only_one_free(CuTest *tc) {
     /* Make only the down cell (2, 3) free. board index: 3*5+2 = 17. */
     state->board[3 * w + 2] = 5;
 
-    int8_t result = decidir_movimiento(state, w, h, 0);
+    int8_t result = decide_move(state, w, h, 0);
     CuAssertIntEquals(tc, (int)dir_down, (int)result);
 
     free(state);
 }
 
 /*
- * Completely surrounded: decidir_movimiento must return NO_VALID_MOVE.
+ * Completely surrounded: decide_move must return NO_VALID_MOVE.
  */
-static void test_decidir_movimiento_surrounded(CuTest *tc) {
+static void test_decide_move_surrounded(CuTest *tc) {
     const uint16_t w = 5, h = 5;
     game_state_t *state = make_state(w, h, -1); /* all claimed */
     CuAssertPtrNotNull(tc, state);
@@ -236,7 +236,7 @@ static void test_decidir_movimiento_surrounded(CuTest *tc) {
     state->players[0].x = 2;
     state->players[0].y = 2;
 
-    int8_t result = decidir_movimiento(state, w, h, 0);
+    int8_t result = decide_move(state, w, h, 0);
     CuAssertIntEquals(tc, (int)NO_VALID_MOVE, (int)result);
 
     free(state);
@@ -247,7 +247,7 @@ static void test_decidir_movimiento_surrounded(CuTest *tc) {
  * If all three are free, the first in enum order is dir_right (index 2),
  * because dir_up (0) and dir_up_right (1) are out of bounds.
  */
-static void test_decidir_movimiento_corner(CuTest *tc) {
+static void test_decide_move_corner(CuTest *tc) {
     const uint16_t w = 5, h = 5;
     game_state_t *state = make_state(w, h, 5);
     CuAssertPtrNotNull(tc, state);
@@ -255,7 +255,7 @@ static void test_decidir_movimiento_corner(CuTest *tc) {
     state->players[0].x = 0;
     state->players[0].y = 0;
 
-    int8_t result = decidir_movimiento(state, w, h, 0);
+    int8_t result = decide_move(state, w, h, 0);
     /* dir_up (dy=-1 -> y=-1 OOB), dir_up_right (OOB), dir_right (1,0 valid).
        First valid is dir_right (index 2). */
     CuAssertIntEquals(tc, (int)dir_right, (int)result);
@@ -273,10 +273,10 @@ CuSuite *player_movement_get_suite(void) {
     SUITE_ADD_TEST(suite, test_greedy_corner_position);
     SUITE_ADD_TEST(suite, test_greedy_1x1_board);
     SUITE_ADD_TEST(suite, test_greedy_prefers_higher_value);
-    /* decidir_movimiento */
-    SUITE_ADD_TEST(suite, test_decidir_movimiento_first_free_direction);
-    SUITE_ADD_TEST(suite, test_decidir_movimiento_only_one_free);
-    SUITE_ADD_TEST(suite, test_decidir_movimiento_surrounded);
-    SUITE_ADD_TEST(suite, test_decidir_movimiento_corner);
+    /* decide_move */
+    SUITE_ADD_TEST(suite, test_decide_move_first_free_direction);
+    SUITE_ADD_TEST(suite, test_decide_move_only_one_free);
+    SUITE_ADD_TEST(suite, test_decide_move_surrounded);
+    SUITE_ADD_TEST(suite, test_decide_move_corner);
     return suite;
 }

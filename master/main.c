@@ -23,6 +23,11 @@ static void signal_handler(int32_t sig) {
     should_exit = 1;
 }
 
+static void setup_signals() {
+    signal(SIGINT, signal_handler);
+    signal(SIGTERM, signal_handler);
+}
+
 static void sync_view_frame(game_t *game, pid_t view_pid, bool *has_view) {
     if (waitpid(view_pid, NULL, WNOHANG) != 0) {
         *has_view = false;
@@ -31,110 +36,90 @@ static void sync_view_frame(game_t *game, pid_t view_pid, bool *has_view) {
     }
 }
 
-int main(int argc, char *argv[]) {
-    signal(SIGINT, signal_handler);
-    signal(SIGTERM, signal_handler);
-    errno = 0;
-    parameters_t parameters = (parameters_t){
-        .width = default_width,
-        .c_width = (char *)default_c_width,
-        .height = default_heigh,
-        .c_height = (char *)default_c_height,
-        .delay = default_delay,
-        .timeout = default_timeout,
-        .seed = time(NULL),
-        .view_path = default_view_path,
-    };
+static bool check_timeout(time_t last_valid_move, uint32_t timeout) {
+    return (uint32_t)(time(NULL) - last_valid_move) >= timeout;
+}
 
-    parameter_status_t status = parse(argc, argv, &parameters);
-    if (status != success || parameters.players_count == 0) {
-        fprintf(stderr, "Usage: master -w <width> -h <height> -p <player> [-p <player> ...] "
-                        "[-v <view>] [-d <delay>] [-t <timeout>] [-s <seed>]\n");
-        return manage_error(HERE, TRACE_NONE, invalid_argument_error);
-    }
-
-    errno = 0;
-    game_t game = new_game(master, .height = parameters.height, .width = parameters.width, .seed = parameters.seed);
-    game_state_init(&game, parameters.width, parameters.height, parameters.seed, parameters.players_count);
-
-    int32_t pipes[MAX_PLAYERS][pipe_ends];
-    int8_t players_count = game.state->players_count;
-
-    create_pipes(pipes, players_count);
-
-    bool has_view = parameters.view_path != NULL;
-    pid_t view_pid = 0;
-    if (has_view) {
-        view_pid = fork_view(parameters.view_path, parameters.c_width, parameters.c_height);
-    }
-
-    fork_players(pipes, players_count, game.state, parameters.players_paths, parameters.c_width, parameters.c_height);
-    close_other_pipes(pipes, players_count, invalid_pipe, pipe_writer);
-
-    register_players_from_paths(game.state, parameters.players_paths);
-    place_players_on_board(game.state);
-    game.state->running = true;
-
-    int32_t maxFd;
-    fd_set masterSet, readFds;
-    init_fd_set(&masterSet, pipes, players_count, &maxFd);
-
+static void run_master_loop(game_t *game, parameters_t *params, int32_t pipes[][pipe_ends], fd_set *masterSet,
+                            int32_t maxFd, pid_t view_pid, bool *has_view) {
     time_t last_valid_move = time(NULL);
     int8_t start_player = 0;
 
     while (!should_exit) {
-        time_t now = time(NULL);
-        int64_t remaining = (int64_t)parameters.timeout - (int64_t)(now - last_valid_move);
-        if (remaining <= 0)
+        if (check_timeout(last_valid_move, params->timeout))
             break;
 
-        readFds = masterSet;
-        struct timeval tv = {
-            .tv_sec = remaining,
-            .tv_usec = 0,
-        };
-        int32_t ready = select(maxFd + 1, &readFds, NULL, NULL, &tv);
+        fd_set readFds = *masterSet;
+        struct timeval tv = {.tv_sec = params->timeout - (time(NULL) - last_valid_move), .tv_usec = 0};
 
-        if (ready < 0) {
+        if (select(maxFd + 1, &readFds, NULL, NULL, &tv) <= 0) {
             if (errno == EINTR)
                 continue;
-            manage_error(HERE, TRACE_NONE, errno);
             break;
         }
-        if (ready == 0)
-            break;
 
-        round_result_t round = process_round(&game, pipes, &readFds, &masterSet, start_player);
+        round_result_t round = process_round(game, pipes, &readFds, masterSet, start_player);
         start_player = round.next_start_player;
 
         if (round.any_valid)
             last_valid_move = time(NULL);
-
-        if (round.any_move && has_view)
-            sync_view_frame(&game, view_pid, &has_view);
-
+        if (round.any_move && *has_view)
+            sync_view_frame(game, view_pid, has_view);
         if (round.any_move)
-            usleep(parameters.delay * 1000);
-
-        if (!any_player_alive(game.state))
+            usleep(params->delay * 1000);
+        if (!any_player_alive(game->state))
             break;
     }
+}
+
+int main(int argc, char *argv[]) {
+    setup_signals();
+    parameters_t params = {.width = default_width,
+                           .height = default_heigh,
+                           .delay = default_delay,
+                           .timeout = default_timeout,
+                           .seed = time(NULL),
+                           .view_path = default_view_path};
+
+    if (parse(argc, argv, &params) != success || params.players_count == 0) {
+        fprintf(stderr, "Usage: master -w <width> -h <height> -p <player> [-p <player> ...] [-v <view>] [-d <delay>] "
+                        "[-t <timeout>] [-s <seed>]\n");
+        return manage_error(HERE, TRACE_NONE, invalid_argument_error);
+    }
+
+    game_t game = new_game(master, .height = params.height, .width = params.width, .seed = params.seed);
+    game_state_init(&game, params.width, params.height, params.seed, params.players_count);
+
+    int32_t pipes[MAX_PLAYERS][pipe_ends];
+    create_pipes(pipes, params.players_count);
+
+    bool has_view = params.view_path != NULL;
+    pid_t view_pid = has_view ? fork_view(params.view_path, params.c_width, params.c_height) : 0;
+
+    fork_players(pipes, params.players_count, game.state, params.players_paths, params.c_width, params.c_height);
+    close_other_pipes(pipes, params.players_count, invalid_pipe, pipe_writer);
+
+    register_players_from_paths(game.state, params.players_paths);
+    place_players_on_board(game.state);
+    game.state->running = true;
+
+    int32_t maxFd;
+    fd_set masterSet;
+    init_fd_set(&masterSet, pipes, params.players_count, &maxFd);
+
+    run_master_loop(&game, &params, pipes, &masterSet, maxFd, view_pid, &has_view);
 
     game_end(&game);
-
     if (has_view)
         game_sync_notify_view(game.sync);
+    close_active_pipes(pipes, game.state->players, params.players_count);
 
-    close_active_pipes(pipes, game.state->players, players_count);
-
-    for (int8_t i = 0; i < players_count; i++) {
+    for (int8_t i = 0; i < params.players_count; i++)
         waitpid(game.state->players[i].player_id, NULL, 0);
-    }
     if (has_view)
         waitpid(view_pid, NULL, 0);
 
     print_game_results(game.state);
-
     game_sync_destroy(game.sync);
     game_disconnect(&game);
 

@@ -30,6 +30,7 @@ static int32_t flood_count(int8_t board[], uint16_t width, uint16_t height, int1
     uint8_t *visited = calloc(total, sizeof(uint8_t));
     if (!visited)
         return 0;
+
     int16_t *stack = malloc(total * 2 * sizeof(int16_t));
     if (!stack) {
         free(visited);
@@ -100,8 +101,6 @@ int8_t compute_next_move(int8_t board[], uint16_t width, uint16_t height, uint16
 
 #elif defined(GREEDY_LOOKAHEAD)
 
-// Greedy con lookahead de profundidad 3.
-// Evalua recursivamente combinaciones de movimientos (8^3 = 512 nodos max).
 #define LOOKAHEAD_DEPTH 3
 
 static bool path_contains(int16_t path_x[], int16_t path_y[], int8_t path_len, int16_t x, int16_t y) {
@@ -136,8 +135,8 @@ static int32_t lookahead(int8_t board[], uint16_t width, uint16_t height, int16_
 int8_t compute_next_move(int8_t board[], uint16_t width, uint16_t height, uint16_t x, uint16_t y) {
     int8_t best_dir = -1;
     int32_t best_val = 0;
-    int16_t path_x[LOOKAHEAD_DEPTH + 1];
-    int16_t path_y[LOOKAHEAD_DEPTH + 1];
+    int16_t path_x[LOOKAHEAD_DEPTH + 1], path_y[LOOKAHEAD_DEPTH + 1];
+
     for (int8_t dir = 0; dir < dir_count; dir++) {
         int16_t nx, ny;
         if (!is_free_neighbor(board, width, height, x, y, dir, &nx, &ny))
@@ -174,15 +173,21 @@ int8_t compute_next_move(int8_t board[], uint16_t width, uint16_t height, uint16
 
 #elif defined(GREEDY_FLOOD)
 
-// Combina greedy + flood fill.
 #define SURVIVAL_NUM 3
 #define SURVIVAL_DEN 10
 
+static bool is_better_reward(int8_t r, int32_t f, int8_t best_r, int32_t best_f) {
+    return r > best_r || (r == best_r && f > best_f);
+}
+
+static bool is_within_survival_threshold(int32_t flood, int32_t max_flood) {
+    return flood >= (max_flood * SURVIVAL_NUM / SURVIVAL_DEN);
+}
+
 int8_t compute_next_move(int8_t board[], uint16_t width, uint16_t height, uint16_t x, uint16_t y) {
-    int32_t floods[dir_count] = {0};
+    int32_t floods[dir_count] = {0}, max_flood = 0;
     int8_t rewards[dir_count] = {0};
     bool valid[dir_count] = {false};
-    int32_t max_flood = 0;
 
     for (int8_t dir = 0; dir < dir_count; dir++) {
         int16_t nx, ny;
@@ -195,48 +200,55 @@ int8_t compute_next_move(int8_t board[], uint16_t width, uint16_t height, uint16
             max_flood = floods[dir];
     }
 
-    int32_t threshold = max_flood * SURVIVAL_NUM / SURVIVAL_DEN;
-    int8_t best_dir = -1;
-    int8_t best_reward = 0;
+    int8_t best_dir = -1, best_reward = 0;
     int32_t best_flood = -1;
 
-    for (int8_t dir = 0; dir < dir_count; dir++) {
-        if (!valid[dir] || floods[dir] < threshold)
+    for (int8_t d = 0; d < dir_count; d++) {
+        if (!valid[d] || !is_within_survival_threshold(floods[d], max_flood))
             continue;
-        if (rewards[dir] > best_reward || (rewards[dir] == best_reward && floods[dir] > best_flood)) {
-            best_reward = rewards[dir];
-            best_flood = floods[dir];
-            best_dir = dir;
+        if (is_better_reward(rewards[d], floods[d], best_reward, best_flood)) {
+            best_reward = rewards[d];
+            best_flood = floods[d];
+            best_dir = d;
         }
     }
 
     if (best_dir == -1) {
-        best_flood = -1;
-        for (int8_t dir = 0; dir < dir_count; dir++) {
-            if (!valid[dir])
-                continue;
-            if (floods[dir] > best_flood) {
-                best_flood = floods[dir];
-                best_dir = dir;
+        for (int8_t d = 0; d < dir_count; d++) {
+            if (valid[d] && floods[d] > best_flood) {
+                best_flood = floods[d];
+                best_dir = d;
             }
         }
     }
+    return best_dir >= 0 ? best_dir : NO_VALID_MOVE;
+}
 
+#elif defined(MIN_REWARD)
+
+int8_t compute_next_move(int8_t board[], uint16_t width, uint16_t height, uint16_t x, uint16_t y) {
+    int8_t best_dir = -1, min_val = 127;
+    for (int8_t dir = 0; dir < dir_count; dir++) {
+        int16_t nx, ny;
+        if (!is_free_neighbor(board, width, height, x, y, dir, &nx, &ny))
+            continue;
+        int8_t cell = board_at(board, width, nx, ny);
+        if (cell < min_val) {
+            min_val = cell;
+            best_dir = dir;
+        }
+    }
     return best_dir >= 0 ? best_dir : NO_VALID_MOVE;
 }
 
 #endif
 
-int8_t decidir_movimiento(game_state_t *state, uint16_t width, uint16_t height, uint16_t idx) {
-    int16_t x = state->players[idx].x;
-    int16_t y = state->players[idx].y;
-
+int8_t decide_move(game_state_t *state, uint16_t width, uint16_t height, uint16_t idx) {
+    int16_t x = state->players[idx].x, y = state->players[idx].y;
     for (int8_t dir = 0; dir < dir_count; dir++) {
         int16_t nx, ny;
-        if (!is_free_neighbor(state->board, width, height, x, y, dir, &nx, &ny))
-            continue;
-        return (uint8_t)dir;
+        if (is_free_neighbor(state->board, width, height, x, y, dir, &nx, &ny))
+            return (uint8_t)dir;
     }
-
     return NO_VALID_MOVE;
 }

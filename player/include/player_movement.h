@@ -10,7 +10,7 @@
 
 int8_t compute_next_move(int8_t board[], uint16_t width, uint16_t height, uint16_t x, uint16_t y);
 
-int8_t decidir_movimiento(game_state_t *state, uint16_t width, uint16_t height, uint16_t idx);
+int8_t decide_move(game_state_t *state, uint16_t width, uint16_t height, uint16_t idx);
 
 /**
  * @brief: gets a set of available movements (8 bits, each bit is a direction -
