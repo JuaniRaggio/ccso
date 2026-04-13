@@ -3,6 +3,7 @@
 #include <game.h>
 #include <game_state.h>
 #include <game_sync.h>
+#include <locale.h>
 #include <ncurses.h>
 #include <signal.h>
 #include <stdbool.h>
@@ -19,6 +20,9 @@ static void signal_handler(int32_t sig) {
 }
 
 int main(int argc, char *argv[]) {
+    if (!setlocale(LC_ALL, "C.utf8")) {
+        setlocale(LC_ALL, "");
+    }
     signal(SIGINT, signal_handler);
     signal(SIGTERM, signal_handler);
 

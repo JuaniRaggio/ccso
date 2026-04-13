@@ -1,8 +1,11 @@
+#define _GNU_SOURCE
 #include "view.h"
 #include <game_state.h>
 #include <ncurses.h>
 #include <stdint.h>
 #include <string.h>
+#include <wchar.h>
+#include <locale.h>
 
 static int8_t player_at(game_state_t *state, uint16_t col, uint16_t row) {
     for (int8_t i = 0; i < state->players_count; i++) {
@@ -87,8 +90,11 @@ void view_draw_board(view_t *view, game_state_t *state) {
             int8_t pidx = player_at(state, col, row);
             int16_t x = view->board_x_offset + col * CELL_WIDTH;
 
+            if (x < 0 || x + CELL_WIDTH > view->term_cols) {
+                continue;
+            }
+
             if (pidx != NO_PLAYER) {
-                wattron(view->board_win, COLOR_PAIR(pidx + COLOR_PAIR_OFFSET) | A_BOLD);
                 mvwprintw(view->board_win, y, x, "P%d", pidx);
                 wattroff(view->board_win, COLOR_PAIR(pidx + COLOR_PAIR_OFFSET) | A_BOLD);
             } else if (value > 0) {
@@ -117,6 +123,11 @@ static void draw_player_panel(WINDOW *win, int16_t x, int16_t w, player_t *playe
     const char *face = PLAYER_FACES[idx % MAX_PLAYERS];
     const char *status = player->state ? "ALIVE" : "DEAD";
 
+    wchar_t ws_name[MAX_NAME_LENGTH + 1];
+    wchar_t ws_status[16];
+    mbstowcs(ws_name, name, MAX_NAME_LENGTH);
+    mbstowcs(ws_status, status, 15);
+
     wattron(win, COLOR_PAIR(color));
 
     mvwaddch(win, 0, x, '+');
@@ -125,17 +136,17 @@ static void draw_player_panel(WINDOW *win, int16_t x, int16_t w, player_t *playe
     }
     mvwaddch(win, 0, x + w - 1, '+');
 
-    char header[LABEL_BUFFER_SIZE + 8];
-    snprintf(header, sizeof(header), " #%d P%d: %s [%s] ", rank, idx, name, status);
-    int16_t hlen = (int16_t)strlen(header);
-    int16_t hstart = x + (w - hlen) / 2;
+    wchar_t header[LABEL_BUFFER_SIZE + 32];
+    swprintf(header, sizeof(header) / sizeof(wchar_t), L" %ls [%ls] ", ws_name, ws_status);
+    int16_t hwidth = (int16_t)wcswidth(header, wcslen(header));
+    int16_t hstart = x + (w - hwidth) / 2;
     if (hstart < x + 1) {
         hstart = x + 1;
     }
     if (!player->state) {
         wattron(win, A_DIM);
     }
-    mvwprintw(win, 0, hstart, "%s", header);
+    mvwaddwstr(win, 0, hstart, header);
     if (!player->state) {
         wattroff(win, A_DIM);
     }
@@ -261,12 +272,16 @@ void view_draw_endscreen(view_t *view, game_state_t *state) {
     mvwprintw(win, box_y + 1, tx, "%s", title);
     wattroff(win, COLOR_PAIR(COLOR_BOARD) | A_BOLD);
 
-    char winner_msg[48];
+    wchar_t winner_msg[64];
     const char *wname = display_name(state->players[winner].name);
-    snprintf(winner_msg, sizeof(winner_msg), "P%d: %s wins!", winner, wname);
-    int16_t wx = box_x + (box_w - (int16_t)strlen(winner_msg)) / 2;
+    wchar_t ws_wname[MAX_NAME_LENGTH + 1];
+    mbstowcs(ws_wname, wname, MAX_NAME_LENGTH);
+    swprintf(winner_msg, sizeof(winner_msg) / sizeof(wchar_t), L"P%d: %ls wins!", winner, ws_wname);
+    int16_t wwidth = (int16_t)wcswidth(winner_msg, wcslen(winner_msg));
+    int16_t wx = box_x + (box_w - wwidth) / 2;
+    if (wx < box_x + 1) wx = box_x + 1;
     wattron(win, COLOR_PAIR(winner + COLOR_PAIR_OFFSET) | A_BOLD);
-    mvwprintw(win, box_y + 2, wx, "%s", winner_msg);
+    mvwaddwstr(win, box_y + 2, wx, winner_msg);
     wattroff(win, COLOR_PAIR(winner + COLOR_PAIR_OFFSET) | A_BOLD);
 
     int16_t col_x = box_x + 2;
@@ -278,9 +293,17 @@ void view_draw_endscreen(view_t *view, game_state_t *state) {
         int8_t idx = order[pos];
         player_t *p = &state->players[idx];
         const char *name = display_name(p->name);
+        wchar_t ws_name[MAX_NAME_LENGTH + 1];
+        mbstowcs(ws_name, name, MAX_NAME_LENGTH);
+        int16_t nwidth = (int16_t)wcswidth(ws_name, wcslen(ws_name));
         wattron(win, COLOR_PAIR(idx + COLOR_PAIR_OFFSET));
-        mvwprintw(win, box_y + 5 + pos, col_x, " %d  %-12s %5u %5u %5u", idx, name, p->score, p->valid_moves,
-                  p->invalid_moves);
+        mvwaddwstr(win, box_y + 5 + pos, col_x, L" ");
+        wprintw(win, "%d  ", idx);
+        waddwstr(win, ws_name);
+        int16_t pad = 12 - nwidth;
+        if (pad < 0) pad = 0;
+        for (int16_t i = 0; i < pad; i++) waddch(win, ' ');
+        wprintw(win, " %5u %5u %5u", p->score, p->valid_moves, p->invalid_moves);
         wattroff(win, COLOR_PAIR(idx + COLOR_PAIR_OFFSET));
     }
 
