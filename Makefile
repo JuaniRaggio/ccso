@@ -41,7 +41,7 @@ PLAYER_RUN_ARGS = $(foreach p,$(PLAYERS),-p ./$(BUILD_DIR)/$(p))
 WIDTH  ?= 20
 HEIGHT ?= 20
 
-.PHONY: pull build run test memcheck clean compile_flags
+.PHONY: pull build run test memcheck pvs clean compile_flags
 
 pull:
 	docker pull $(DOCKER_IMAGE)
@@ -59,6 +59,11 @@ test:
 memcheck:
 	$(DOCKER_RUN) make _deps _memcheck
 
+DOCKER_RUN_AMD64 = docker run --platform linux/amd64 --rm -v "$(CURDIR):/root/ccso" -w /root/ccso $(DOCKER_IMAGE)
+
+pvs:
+	$(DOCKER_RUN_AMD64) make _deps _pvs
+
 clean:
 	rm -rf $(BUILD_DIR)
 
@@ -73,10 +78,22 @@ compile_flags:
 # ============================================================
 #  Internal targets (run inside Docker container)
 # ============================================================
-.PHONY: _deps _all _players _test _memcheck
+.PHONY: _deps _all _players _test _memcheck _pvs_deps _pvs
 
 _deps:
 	@dpkg -s libncursesw5-dev > /dev/null 2>&1 || (echo "Installing libncursesw5-dev..." && apt-get update -qq && apt-get install -y -qq libncursesw5-dev)
+
+_pvs_deps:
+	@which bear > /dev/null 2>&1 || (echo "Installing bear..." && apt-get update -qq && apt-get install -y -qq bear)
+	@which pvs-studio-analyzer > /dev/null 2>&1 || ( \
+		echo "Installing PVS-Studio..." && \
+		apt-get update -qq && \
+		apt-get install -y -qq wget gnupg2 && \
+		wget -q -O - https://files.pvs-studio.com/etc/pubkey.txt | gpg --dearmor -o /usr/share/keyrings/pvs-studio.gpg && \
+		echo 'deb [signed-by=/usr/share/keyrings/pvs-studio.gpg] https://files.pvs-studio.com/deb viva64 main' > /etc/apt/sources.list.d/pvs-studio.list && \
+		apt-get update -qq && \
+		apt-get install -y -qq pvs-studio \
+	)
 
 _all: $(MASTER_BIN) _players $(VIEW_BIN)
 
@@ -140,3 +157,15 @@ _memcheck: $(TEST_BIN)
 	         --track-origins=yes \
 	         --error-exitcode=1 \
 	         ./$(TEST_BIN)
+
+PVS_NAME ?= PVS-Studio Free
+PVS_KEY  ?= FREE-FREE-FREE-FREE
+
+_pvs: _pvs_deps _deps
+	pvs-studio-analyzer credentials "$(PVS_NAME)" "$(PVS_KEY)"
+	rm -rf $(BUILD_DIR)
+	bear -- make _all
+	pvs-studio-analyzer analyze -f compile_commands.json -o pvs-report.log -j1
+	plog-converter -t errorfile pvs-report.log -o pvs-report.txt
+	@cat pvs-report.txt
+	@! grep -q ':.*:.*: error\|:.*:.*: warning' pvs-report.txt
