@@ -1,11 +1,20 @@
 #define _GNU_SOURCE
 #include "view.h"
 #include <game_state.h>
+#include <game_sync.h>
+#include <locale.h>
 #include <ncurses.h>
+#include <signal.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include <string.h>
 #include <wchar.h>
-#include <locale.h>
+
+static volatile sig_atomic_t should_exit = 0;
+
+static void signal_handler(int32_t sig) {
+    should_exit = 1;
+}
 
 static int8_t player_at(game_state_t *state, uint16_t col, uint16_t row) {
     for (int8_t i = 0; i < state->players_count; i++) {
@@ -54,6 +63,16 @@ static void calculate_board_layout(view_t *view, uint16_t board_width, uint16_t 
 }
 
 void view_init(view_t *view, uint16_t board_width, uint16_t board_height) {
+    if (!setlocale(LC_ALL, "C.utf8")) {
+        setlocale(LC_ALL, "");
+    }
+    if (getenv("TERM") == NULL) {
+        setenv("TERM", "xterm-256color", 0);
+    }
+
+    signal(SIGINT, signal_handler);
+    signal(SIGTERM, signal_handler);
+
     initscr();
     cbreak();
     noecho();
@@ -77,6 +96,24 @@ void view_cleanup(view_t *view) {
     if (view->panel_win != NULL)
         delwin(view->panel_win);
     endwin();
+}
+
+static void view_handle_resize(view_t *view, uint16_t width, uint16_t height) {
+    view_cleanup(view);
+    initscr();
+    cbreak();
+    noecho();
+    curs_set(0);
+    keypad(stdscr, TRUE);
+    nodelay(stdscr, TRUE);
+    start_color();
+
+    init_player_colors();
+    getmaxyx(stdscr, view->term_rows, view->term_cols);
+    calculate_board_layout(view, width, height);
+
+    view->board_win = newwin(view->board_rows, view->term_cols, 0, 0);
+    view->panel_win = newwin(PANEL_HEIGHT, view->term_cols, view->board_rows, 0);
 }
 
 static void draw_player_at(WINDOW *win, int16_t y, int16_t x, int8_t pidx) {
@@ -109,7 +146,6 @@ static void draw_trail_at(WINDOW *win, int16_t y, int16_t x, int8_t value) {
 static void draw_stadium_border(view_t *view, uint16_t width, uint16_t height) {
     int16_t colors[] = {COLOR_CYAN, COLOR_MAGENTA, COLOR_BLUE, COLOR_YELLOW};
 
-    // Calculate how many rings fit in the available margins
     int16_t max_h_rings = view->board_x_offset / 3;
     int16_t max_v_rings = view->board_y_offset / 2;
     int16_t rings = (max_h_rings < max_v_rings) ? max_h_rings : max_v_rings;
@@ -130,12 +166,10 @@ static void draw_stadium_border(view_t *view, uint16_t width, uint16_t height) {
         int16_t color = colors[(view->frame_count / 2 + r) % 4];
         wattron(view->board_win, COLOR_PAIR(color + COLOR_PAIR_OFFSET) | A_BOLD);
 
-        // Horizontal lines
         for (int16_t x = x1; x <= x2; x++) {
             mvwaddch(view->board_win, y1, x, ACS_CKBOARD);
             mvwaddch(view->board_win, y2, x, ACS_CKBOARD);
         }
-        // Vertical lines
         for (int16_t y = y1; y <= y2; y++) {
             mvwaddch(view->board_win, y, x1, ACS_CKBOARD);
             mvwaddch(view->board_win, y, x1 + 1, ACS_CKBOARD);
@@ -153,7 +187,7 @@ static void draw_stadium_border(view_t *view, uint16_t width, uint16_t height) {
     }
 }
 
-void view_draw_board(view_t *view, game_state_t *state) {
+static void view_draw_board(view_t *view, game_state_t *state) {
     werase(view->board_win);
     draw_stadium_border(view, state->width, state->height);
 
@@ -249,7 +283,7 @@ static void sort_players_by_score(game_state_t *state, int8_t order[]) {
     }
 }
 
-void view_draw_panels(view_t *view, game_state_t *state) {
+static void view_draw_panels(view_t *view, game_state_t *state) {
     werase(view->panel_win);
     if (state->players_count <= 0) {
         wrefresh(view->panel_win);
@@ -280,7 +314,7 @@ void view_draw_panels(view_t *view, game_state_t *state) {
     wrefresh(view->panel_win);
 }
 
-void view_draw_all(view_t *view, game_state_t *state) {
+static void view_draw_all(view_t *view, game_state_t *state) {
     view->frame_count++;
     view_draw_board(view, state);
     view_draw_panels(view, state);
@@ -305,7 +339,7 @@ static void draw_box(WINDOW *win, int16_t y, int16_t x, int16_t h, int16_t w) {
     mvwaddch(win, y + h - 1, x + w - 1, ACS_LRCORNER);
 }
 
-void view_draw_endscreen(view_t *view, game_state_t *state) {
+static void view_draw_endscreen(view_t *view, game_state_t *state) {
     int8_t order[MAX_PLAYERS];
     sort_players_by_score(state, order);
     int8_t winner = order[0];
@@ -358,7 +392,7 @@ void view_draw_endscreen(view_t *view, game_state_t *state) {
         wattron(win, COLOR_PAIR(idx + COLOR_PAIR_OFFSET));
         mvwprintw(win, box_y + ENDSCREEN_TABLE_Y_OFFSET + 1 + pos, col_x, " %d   ", idx);
         waddwstr(win, ws_face);
-        wprintw(win, "    "); // Reduced padding to keep name aligned
+        wprintw(win, "    ");
         waddwstr(win, ws_name);
         int16_t pad = ENDSCREEN_TABLE_PADDING - nwidth;
         if (pad < 0)
@@ -375,4 +409,30 @@ void view_draw_endscreen(view_t *view, game_state_t *state) {
     mvwprintw(win, box_y + box_h - ENDSCREEN_PROMPT_Y_OFFSET, px, "%s", prompt);
     wattroff(win, COLOR_PAIR(COLOR_BOARD));
     wrefresh(win);
+}
+
+void view_run(view_t *view, game_t *game, uint16_t width, uint16_t height) {
+    while (1) {
+        game_sync_view_wait_frame(game->sync);
+        if (should_exit || !game->state->running) {
+            game_sync_view_frame_done(game->sync);
+            break;
+        }
+
+        if (getch() == KEY_RESIZE) {
+            view_handle_resize(view, width, height);
+        }
+
+        view_draw_all(view, game->state);
+        game_sync_view_frame_done(game->sync);
+    }
+}
+
+void view_show_results(view_t *view, game_state_t *state) {
+    if (should_exit)
+        return;
+    view_draw_all(view, state);
+    view_draw_endscreen(view, state);
+    nodelay(stdscr, FALSE);
+    getch();
 }

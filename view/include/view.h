@@ -1,5 +1,6 @@
 #pragma once
 
+#include <game.h>
 #include <game_state.h>
 #include <game_sync.h>
 #include <ncurses.h>
@@ -63,7 +64,5 @@ typedef struct {
 
 void view_init(view_t *view, uint16_t board_width, uint16_t board_height);
 void view_cleanup(view_t *view);
-void view_draw_board(view_t *view, game_state_t *state);
-void view_draw_panels(view_t *view, game_state_t *state);
-void view_draw_all(view_t *view, game_state_t *state);
-void view_draw_endscreen(view_t *view, game_state_t *state);
+void view_run(view_t *view, game_t *game, uint16_t width, uint16_t height);
+void view_show_results(view_t *view, game_state_t *state);
