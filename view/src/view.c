@@ -93,10 +93,10 @@ static void setup_ncurses() {
     start_color();
 }
 
+static void create_windows(view_t *view, uint16_t width, uint16_t height) {
     init_player_colors();
     getmaxyx(stdscr, view->term_rows, view->term_cols);
-    calculate_board_layout(view, board_width, board_height);
-
+    calculate_board_layout(view, width, height);
     view->board_win = newwin(view->board_rows, view->term_cols, 0, 0);
     view->panel_win = newwin(PANEL_HEIGHT, view->term_cols, view->board_rows, 0);
 }
