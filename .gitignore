@@ -10,3 +10,4 @@ compile_flags.txt
 compile_commands.json
 pvs-report.log
 pvs-report.txt
+/compile_commands.events.json
