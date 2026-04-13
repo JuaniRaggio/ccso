@@ -10,27 +10,51 @@
 #include <string.h>
 #include <wchar.h>
 
+// ============================================================
+//  Signal handling
+// ============================================================
+
 static volatile sig_atomic_t should_exit = 0;
 
 static void signal_handler(int32_t sig) {
     should_exit = 1;
 }
 
+// ============================================================
+//  Helpers
+// ============================================================
+
 static int8_t player_at(game_state_t *state, uint16_t col, uint16_t row) {
     for (int8_t i = 0; i < state->players_count; i++) {
-        if (state->players[i].x == col && state->players[i].y == row) {
+        if (state->players[i].x == col && state->players[i].y == row)
             return i;
-        }
     }
     return NO_PLAYER;
 }
 
 static const char *display_name(const char *name) {
-    if (strncmp(name, PLAYER_PREFIX, PLAYER_PREFIX_LEN) == 0) {
+    if (strncmp(name, PLAYER_PREFIX, PLAYER_PREFIX_LEN) == 0)
         return name + PLAYER_PREFIX_LEN;
-    }
     return name;
 }
+
+static void sort_players_by_score(game_state_t *state, int8_t order[]) {
+    for (int8_t i = 0; i < state->players_count; i++)
+        order[i] = i;
+    for (int8_t i = 0; i < state->players_count - 1; i++) {
+        for (int8_t j = i + 1; j < state->players_count; j++) {
+            if (state->players[order[j]].score > state->players[order[i]].score) {
+                int8_t tmp = order[i];
+                order[i] = order[j];
+                order[j] = tmp;
+            }
+        }
+    }
+}
+
+// ============================================================
+//  Ncurses setup
+// ============================================================
 
 static void init_player_colors() {
     int16_t player_colors[MAX_PLAYERS] = {
@@ -46,33 +70,20 @@ static void init_player_colors() {
 
 static void calculate_board_layout(view_t *view, uint16_t board_width, uint16_t board_height) {
     view->board_rows = view->term_rows - PANEL_HEIGHT;
-    if (view->board_rows < 1) {
+    if (view->board_rows < 1)
         view->board_rows = 1;
-    }
 
     int16_t board_char_width = (int16_t)(board_width * CELL_WIDTH);
     view->board_x_offset = (view->term_cols - board_char_width) / 2;
-    if (view->board_x_offset < 0) {
+    if (view->board_x_offset < 0)
         view->board_x_offset = 0;
-    }
 
     view->board_y_offset = (view->board_rows - (int16_t)board_height) / 2;
-    if (view->board_y_offset < 0) {
+    if (view->board_y_offset < 0)
         view->board_y_offset = 0;
-    }
 }
 
-void view_init(view_t *view, uint16_t board_width, uint16_t board_height) {
-    if (!setlocale(LC_ALL, "C.utf8")) {
-        setlocale(LC_ALL, "");
-    }
-    if (getenv("TERM") == NULL) {
-        setenv("TERM", "xterm-256color", 0);
-    }
-
-    signal(SIGINT, signal_handler);
-    signal(SIGTERM, signal_handler);
-
+static void setup_ncurses() {
     initscr();
     cbreak();
     noecho();
@@ -80,8 +91,8 @@ void view_init(view_t *view, uint16_t board_width, uint16_t board_height) {
     keypad(stdscr, TRUE);
     nodelay(stdscr, TRUE);
     start_color();
+}
 
-    view->frame_count = 0;
     init_player_colors();
     getmaxyx(stdscr, view->term_rows, view->term_cols);
     calculate_board_layout(view, board_width, board_height);
