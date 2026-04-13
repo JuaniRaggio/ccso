@@ -176,35 +176,64 @@ static void draw_cell(WINDOW *win, game_state_t *state, int16_t y, int16_t x, ui
         draw_trail_at(win, y, x, value);
 }
 
+// ============================================================
+//  Stadium border
+// ============================================================
 
-        int16_t x1 = view->board_x_offset - 2 - offset_x;
-        int16_t y1 = view->board_y_offset - 1 - offset_y;
-        int16_t x2 = view->board_x_offset + width * CELL_WIDTH + offset_x;
-        int16_t y2 = view->board_y_offset + height + offset_y;
+static void draw_stadium_ring(WINDOW *win, int16_t x1, int16_t y1, int16_t x2, int16_t y2, int16_t color) {
+    wattron(win, COLOR_PAIR(color + COLOR_PAIR_OFFSET) | A_BOLD);
 
+    for (int16_t x = x1; x <= x2; x++) {
+        mvwaddch(win, y1, x, ACS_CKBOARD);
+        mvwaddch(win, y2, x, ACS_CKBOARD);
+    }
+    for (int16_t y = y1; y <= y2; y++) {
+        mvwaddch(win, y, x1, ACS_CKBOARD);
+        mvwaddch(win, y, x1 + 1, ACS_CKBOARD);
+        mvwaddch(win, y, x2, ACS_CKBOARD);
+        mvwaddch(win, y, x2 + 1, ACS_CKBOARD);
+    }
+
+    wattroff(win, COLOR_PAIR(color + COLOR_PAIR_OFFSET) | A_BOLD);
+}
+
+static void draw_stadium_title(WINDOW *win, int16_t x1, int16_t x2, int16_t y, int16_t color) {
+    const char *title = "  CHOMP CHAMPS WORLD CUP  ";
+    int16_t tx = x1 + (x2 - x1 - (int16_t)strlen(title)) / 2;
+    wattron(win, COLOR_PAIR(color + COLOR_PAIR_OFFSET) | A_BOLD);
+    mvwprintw(win, y, tx, "%s", title);
+    wattroff(win, COLOR_PAIR(color + COLOR_PAIR_OFFSET) | A_BOLD);
+}
+
+static int16_t compute_ring_count(view_t *view) {
+    int16_t max_h = view->board_x_offset / 3;
+    int16_t max_v = view->board_y_offset / 2;
+    int16_t rings = (max_h < max_v) ? max_h : max_v;
+    if (rings > 4) rings = 4;
+    if (rings < 1) rings = 1;
+    return rings;
+}
+
+static void draw_stadium_border(view_t *view, uint16_t width, uint16_t height) {
+    int16_t colors[] = {COLOR_CYAN, COLOR_MAGENTA, COLOR_BLUE, COLOR_YELLOW};
+    int16_t rings = compute_ring_count(view);
+
+    for (int16_t r = rings - 1; r >= 0; r--) {
+        int16_t x1 = view->board_x_offset - 2 - r * 2;
+        int16_t y1 = view->board_y_offset - 1 - r;
+        int16_t x2 = view->board_x_offset + width * CELL_WIDTH + r * 2;
+        int16_t y2 = view->board_y_offset + height + r;
         int16_t color = colors[(view->frame_count / 2 + r) % 4];
-        wattron(view->board_win, COLOR_PAIR(color + COLOR_PAIR_OFFSET) | A_BOLD);
 
-        for (int16_t x = x1; x <= x2; x++) {
-            mvwaddch(view->board_win, y1, x, ACS_CKBOARD);
-            mvwaddch(view->board_win, y2, x, ACS_CKBOARD);
-        }
-        for (int16_t y = y1; y <= y2; y++) {
-            mvwaddch(view->board_win, y, x1, ACS_CKBOARD);
-            mvwaddch(view->board_win, y, x1 + 1, ACS_CKBOARD);
-            mvwaddch(view->board_win, y, x2, ACS_CKBOARD);
-            mvwaddch(view->board_win, y, x2 + 1, ACS_CKBOARD);
-        }
-
-        if (r == 0) {
-            const char *title = "  CHOMP CHAMPS WORLD CUP  ";
-            int16_t tx = x1 + (x2 - x1 - (int16_t)strlen(title)) / 2;
-            mvwprintw(view->board_win, y1, tx, "%s", title);
-        }
-
-        wattroff(view->board_win, COLOR_PAIR(color + COLOR_PAIR_OFFSET) | A_BOLD);
+        draw_stadium_ring(view->board_win, x1, y1, x2, y2, color);
+        if (r == 0)
+            draw_stadium_title(view->board_win, x1, x2, y1, color);
     }
 }
+
+// ============================================================
+//  Board
+// ============================================================
 
 static void view_draw_board(view_t *view, game_state_t *state) {
     werase(view->board_win);
@@ -214,26 +243,13 @@ static void view_draw_board(view_t *view, game_state_t *state) {
         int16_t y = view->board_y_offset + (int16_t)row;
         if (y < 0 || y >= view->board_rows)
             continue;
-
         for (uint16_t col = 0; col < state->width; col++) {
             int16_t x = view->board_x_offset + col * CELL_WIDTH;
             if (x < 0 || x + CELL_WIDTH > view->term_cols)
                 continue;
-
-            int8_t value = state->board[row * state->width + col];
-            int8_t pidx = player_at(state, col, row);
-
-            if (pidx != NO_PLAYER) {
-                draw_player_at(view->board_win, y, x, pidx);
-            } else if (value > 0) {
-                draw_reward_at(view->board_win, y, x, value);
-            } else {
-                draw_trail_at(view->board_win, y, x, value);
-            }
-
-            if (col < state->width - 1) {
+            draw_cell(view->board_win, state, y, x, col, row);
+            if (col < state->width - 1)
                 mvwaddch(view->board_win, y, x + 2, ' ');
-            }
         }
     }
     wrefresh(view->board_win);
