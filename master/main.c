@@ -13,12 +13,14 @@
 #include <parser.h>
 
 int main(int argc, char *argv[]) {
-    parameters_t params = {.width = default_width,
-                           .height = default_heigh,
-                           .delay = default_delay,
-                           .timeout = default_timeout,
-                           .seed = time(NULL),
-                           .view_path = default_view_path};
+    parameters_t params = {
+        .width = default_width,
+        .height = default_heigh,
+        .delay = default_delay,
+        .timeout = default_timeout,
+        .seed = time(NULL),
+        .view_path = default_view_path,
+    };
 
     if (parse(argc, argv, &params) != success || params.players_count == 0) {
         fprintf(stderr, "Usage: master -w <width> -h <height> -p <player> [-p <player> ...] [-v <view>] [-d <delay>] "
