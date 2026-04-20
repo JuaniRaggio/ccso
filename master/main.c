@@ -13,12 +13,16 @@
 #include <parser.h>
 
 int main(int argc, char *argv[]) {
-    parameters_t params = {.width = default_width,
-                           .height = default_heigh,
-                           .delay = default_delay,
-                           .timeout = default_timeout,
-                           .seed = time(NULL),
-                           .view_path = default_view_path};
+    parameters_t params = {
+        .c_width = default_c_width,
+        .c_height = default_c_height,
+        .width = default_width,
+        .height = default_heigh,
+        .delay = default_delay,
+        .timeout = default_timeout,
+        .seed = time(NULL),
+        .view_path = default_view_path,
+    };
 
     if (parse(argc, argv, &params) != success || params.players_count == 0) {
         fprintf(stderr, "Usage: master -w <width> -h <height> -p <player> [-p <player> ...] [-v <view>] [-d <delay>] "
@@ -40,7 +44,6 @@ int main(int argc, char *argv[]) {
 
     register_players_from_paths(game.state, params.players_paths);
     place_players_on_board(game.state);
-    // game.state->ended = false;
 
     bool interrupted = master_run(&game, &params, pipes, view_pid, &has_view);
 

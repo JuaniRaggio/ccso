@@ -18,9 +18,9 @@ typedef struct {
     uint64_t players_count;
     uint64_t seed;
     uint64_t width;
-    char *c_width;
+    const char *c_width;
     uint64_t height;
-    char *c_height;
+    const char *c_height;
     uint64_t delay;
     uint64_t timeout;
     const char *view_path;
