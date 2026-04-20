@@ -99,7 +99,7 @@ static void test_register_player_happy_path(CuTest *tc) {
     CuAssertIntEquals(tc, 0, (int)players[0].invalid_moves);
     CuAssertIntEquals(tc, 0, (int)players[0].x);
     CuAssertIntEquals(tc, 0, (int)players[0].y);
-    CuAssertTrue(tc, players[0].state);
+    CuAssertTrue(tc, !players[0].is_blocked);
 }
 
 /*
@@ -218,7 +218,7 @@ static void test_register_player_overrides_existing_slot(CuTest *tc) {
     players[2].score = 42;
     players[2].valid_moves = 10;
     strncpy(players[2].name, "zombie", MAX_NAME_LENGTH - 1);
-    players[2].state = false;
+    players[2].is_blocked = true;
 
     player_registration_requirements_t req = {
         .player_pid = 123,
@@ -231,7 +231,7 @@ static void test_register_player_overrides_existing_slot(CuTest *tc) {
     CuAssertStrEquals(tc, "ghost", players[2].name);
     CuAssertIntEquals(tc, 0, (int)players[2].score);
     CuAssertIntEquals(tc, 0, (int)players[2].valid_moves);
-    CuAssertTrue(tc, players[2].state);
+    CuAssertTrue(tc, !players[2].is_blocked);
 }
 
 /*
@@ -304,7 +304,7 @@ static void test_register_all_fills_every_slot(CuTest *tc) {
     for (int32_t i = 0; i < MAX_PLAYERS; i++) {
         CuAssertIntEquals(tc, 1000 + i, (int)players[i].player_id);
         CuAssertStrEquals(tc, names[i], players[i].name);
-        CuAssertTrue(tc, players[i].state);
+        CuAssertTrue(tc, !players[i].is_blocked);
     }
 }
 
@@ -391,7 +391,7 @@ static void free_game(game_t *game) {
 }
 
 /*
- * game_state_init must fill width, height, players_count, running, and
+ * game_state_init must fill width, height, players_count, ended, and
  * every board cell with a value in [MIN_CELL_REWARD, MAX_CELL_REWARD],
  * which by convention in this codebase is [1, 9].
  */
@@ -407,7 +407,7 @@ static void test_game_state_init_populates_board(CuTest *tc) {
     CuAssertIntEquals(tc, width, (int)game->state->width);
     CuAssertIntEquals(tc, height, (int)game->state->height);
     CuAssertIntEquals(tc, 3, (int)game->state->players_count);
-    CuAssertTrue(tc, !game->state->running);
+    CuAssertTrue(tc, !game->state->ended);
 
     for (int32_t i = 0; i < width * height; i++) {
         int32_t cell = game->state->board[i];
@@ -465,7 +465,7 @@ static void test_game_state_init_minimum_board(CuTest *tc) {
 }
 
 /*
- * running must always be reset to false regardless of whatever value
+ * ended must always be reset to false regardless of whatever value
  * it had before. The master is supposed to flip it to true only once
  * every player has been registered.
  */
@@ -476,10 +476,10 @@ static void test_game_state_init_resets_running_flag(CuTest *tc) {
     game_t *game = make_game(width, height);
     CuAssertPtrNotNull(tc, game);
 
-    /* Prime with running = true to prove init resets it. */
-    game->state->running = true;
+    /* Prime with ended = true to prove init resets it to false. */
+    game->state->ended = true;
     game_state_init(game, width, height, 1, 1);
-    CuAssertTrue(tc, !game->state->running);
+    CuAssertTrue(tc, !game->state->ended);
 
     free_game(game);
 }
