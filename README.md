@@ -93,44 +93,39 @@ ccso/
 
 ## Build & Run
 
-All project targets run inside the Docker container.
+All project targets run inside the Docker container (`agodio/itba-so-multiarch:3.1`).
 
 ### Enter the container
 
 ```bash
-make docker
+make docker          # enter the container (arm64)
+make docker-pvs      # enter the container (amd64, for PVS-Studio)
 ```
 
 ### Inside the container
 
 ```bash
-make install                                                          # install dependencies (ncurses)
-make build                                                            # install + compile everything
-make run                                                              # build + run with all strategies
-make run ARGS="-w 20 -h 20 -p ./build/Dante -p ./build/Morena"       # custom players
-make run ARGS="-w 30 -h 30 -p ./build/Dante"                         # custom size
-make test                                                             # run CuTest suite
-make memcheck                                                         # tests under Valgrind
-make best_player                                                      # compile best strategy as build/best_player
-make clean                                                            # remove build artifacts
+make install         # install dependencies
+make build           # install + compile everything
+make run             # build + run with all strategies
+make test            # compile and run CuTest suite
+make memcheck        # run tests under Valgrind
+make best_player     # compile best strategy (세희) as build/best_player
+make clean           # remove build artifacts
 ```
 
-> ARGS sobreescribe los argumentos por defecto. Siempre incluir `-w` y `-h`.
+### Custom game
+
+```bash
+make run ARGS="-w 20 -h 20 -p ./build/Dante -p ./build/Morena"
+make run ARGS="-w 30 -h 30 -p ./build/세희 -p ./build/Dante -p ./build/el_intrepido"
+```
 
 ### Static analysis (PVS-Studio)
 
-PVS-Studio requires x86_64. Enter an amd64 container:
-
 ```bash
-docker run --platform linux/amd64 --rm -it \
-  -v "$(pwd):/root/ccso" -w /root/ccso agodio/itba-so-multiarch:3.1 bash
-```
-
-Then:
-
-```bash
-make clean       # fresh build for bear to capture all commands
-make pvs         # run PVS-Studio analysis
+make clean
+make pvs
 ```
 
 ## Known issues
