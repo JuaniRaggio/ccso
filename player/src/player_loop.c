@@ -36,7 +36,7 @@ void player_run(game_t *game) {
 
         send_direction(STDOUT_FILENO, dir);
         game_sync_player_wait_turn(game->sync, (uint8_t)my_idx);
-        if (!game->state->running)
+        if (game->state->ended)
             break;
     }
 }

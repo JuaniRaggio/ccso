@@ -24,7 +24,7 @@ static void board_init(game_state_t *state, uint16_t width, uint16_t height, int
     state->width = width;
     state->height = height;
     state->players_count = players;
-    state->running = false;
+    state->ended = false;
     for (uint32_t i = 0; i < (uint32_t)height * width; i++) {
         state->board[i] = (random() % REWARD_RANGE) + MIN_CELL_REWARD;
     }
@@ -43,7 +43,7 @@ bool game_register_player(player_t current_players[MAX_PLAYERS], size_t idx,
     }
     current_players[idx] = (player_t){
         .player_id = to_register.player_pid,
-        .state = true,
+        .is_blocked = false,
         .score = 0,
         .invalid_moves = 0,
         .valid_moves = 0,
@@ -116,7 +116,7 @@ bool process_player_move(game_state_t *state, uint8_t player_idx, direction_wire
 bool handle_player_turn(game_t *game, int32_t pipes[][pipe_ends], fd_set *readFds, fd_set *masterSet, int8_t idx,
                         bool *out_valid) {
     player_t *p = &game->state->players[idx];
-    if (!p->state || !FD_ISSET(pipes[idx][pipe_reader], readFds)) {
+    if (p->is_blocked || !FD_ISSET(pipes[idx][pipe_reader], readFds)) {
         return false;
     }
 
@@ -174,7 +174,7 @@ void register_players_from_paths(game_state_t *state, const char *paths[]) {
 
 bool any_player_alive(game_state_t *state) {
     for (int8_t i = 0; i < state->players_count; i++) {
-        if (state->players[i].state)
+        if (!state->players[i].is_blocked)
             return true;
     }
     return false;

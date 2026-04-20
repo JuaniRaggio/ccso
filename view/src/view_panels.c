@@ -15,7 +15,7 @@ static void draw_panel_border(WINDOW *win, int16_t y, int16_t x, int16_t w) {
 
 static void draw_panel_header(WINDOW *win, int16_t x, int16_t w, player_t *player, int8_t idx) {
     const char *name = display_name(player->name);
-    const char *status = player->state ? "ALIVE" : "DEAD";
+    const char *status = player->is_blocked ? "DEAD" : "ALIVE";
     wchar_t ws_name[MAX_NAME_LENGTH + 1], ws_status[STATUS_BUFFER_SIZE];
     mbstowcs(ws_name, name, MAX_NAME_LENGTH);
     mbstowcs(ws_status, status, STATUS_BUFFER_SIZE - 1);
@@ -30,10 +30,10 @@ static void draw_panel_header(WINDOW *win, int16_t x, int16_t w, player_t *playe
     wattron(win, COLOR_PAIR(idx + COLOR_PAIR_OFFSET));
     draw_panel_border(win, PLAYER_PANEL_Y_OFFSET, x, w);
 
-    if (!player->state)
+    if (player->is_blocked)
         wattron(win, A_DIM);
     mvwaddwstr(win, PLAYER_PANEL_Y_OFFSET, hstart, header);
-    if (!player->state)
+    if (player->is_blocked)
         wattroff(win, A_DIM);
 
     wattroff(win, COLOR_PAIR(idx + COLOR_PAIR_OFFSET));

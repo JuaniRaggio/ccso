@@ -109,7 +109,7 @@ static void view_draw_all(view_t *view, game_state_t *state) {
 void view_run(view_t *view, game_t *game, uint16_t width, uint16_t height) {
     while (1) {
         game_sync_view_wait_frame(game->sync);
-        if (was_interrupted() || !game->state->running) {
+        if (was_interrupted() || game->state->ended) {
             game_sync_view_frame_done(game->sync);
             break;
         }

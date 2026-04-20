@@ -54,15 +54,15 @@ bool master_run(game_t *game, parameters_t *params, int32_t pipes[][pipe_ends], 
         if (sel == 0)
             continue;
 
+        if (*has_view) {
+            sync_view_frame(game, view_pid, has_view);
+        }
+
         round_result_t round = process_round(game, pipes, &readFds, &masterSet, start_player);
         start_player = round.next_start_player;
 
         if (round.any_valid)
             last_valid_move = time(NULL);
-
-        if (*has_view) {
-            sync_view_frame(game, view_pid, has_view);
-        }
 
         if (!any_player_alive(game->state))
             break;
