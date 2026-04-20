@@ -93,63 +93,44 @@ ccso/
 
 ## Build & Run
 
-All commands run from the host via Docker. No need to enter the container manually.
+All project targets run inside the Docker container.
 
-### Prerequisites
+### Enter the container
 
 ```bash
-make pull        # download the Docker image
+make docker
 ```
 
-### Build
+### Inside the container
 
 ```bash
-make build       # compile master, players and view
-```
-
-### Run
-
-```bash
-make run                                                              # all strategies, defaults
+make install                                                          # install dependencies (ncurses)
+make build                                                            # install + compile everything
+make run                                                              # build + run with all strategies
 make run ARGS="-w 20 -h 20 -p ./build/Dante -p ./build/Morena"       # custom players
 make run ARGS="-w 30 -h 30 -p ./build/Dante"                         # custom size
+make test                                                             # run CuTest suite
+make memcheck                                                         # tests under Valgrind
+make best_player                                                      # compile best strategy as build/best_player
+make clean                                                            # remove build artifacts
 ```
 
 > ARGS sobreescribe los argumentos por defecto. Siempre incluir `-w` y `-h`.
 
-### Best player
+### Static analysis (PVS-Studio)
+
+PVS-Studio requires x86_64. Enter an amd64 container:
 
 ```bash
-make best_player   # compile the best strategy (세희 / Greedy Flood) as build/best_player
+docker run --platform linux/amd64 --rm -it \
+  -v "$(pwd):/root/ccso" -w /root/ccso agodio/itba-so-multiarch:3.1 bash
 ```
 
-Para re-evaluar las estrategias manualmente:
+Then:
 
 ```bash
-./scripts/benchmark.sh ./build/master build "세희 胡安尼 Morena Dante el_intrepido Matias DJSanti"
-```
-
-### Tests
-
-```bash
-make test        # run CuTest suite
-make memcheck    # run tests under Valgrind
-```
-
-### Static analysis
-
-Run `make clean` first if the project was already compiled, otherwise `bear`
-may not capture the compilation commands and PVS-Studio will miss headers.
-
-```bash
-make clean       # ensure a fresh build for bear to capture all commands
-make pvs         # run PVS-Studio analysis (requires x86_64; emulated via QEMU on ARM)
-```
-
-### Clean
-
-```bash
-make clean       # remove build artifacts
+make clean       # fresh build for bear to capture all commands
+make pvs         # run PVS-Studio analysis
 ```
 
 ## Known issues

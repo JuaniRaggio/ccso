@@ -32,41 +32,57 @@ $(if $(filter Matias,$(1)),MIN_REWARD,\
 $(if $(filter DJSanti,$(1)),FLOOD)))))))
 endef
 
-DOCKER_IMAGE = agodio/itba-so-multiarch:3.1
-DOCKER_RUN   = docker run --rm -v "$(CURDIR):/root/ccso" -w /root/ccso $(DOCKER_IMAGE)
-DOCKER_RUN_IT = docker run --rm -it -e LC_ALL=C.UTF-8 -e LANG=C.UTF-8 \
-                -v "$(CURDIR):/root/ccso" -w /root/ccso $(DOCKER_IMAGE)
-
 DEFAULT_ARGS = -w 20 -h 20 $(foreach p,$(STRATEGIES),-p ./$(BUILD_DIR)/$(p))
 
-.PHONY: pull build run shell test memcheck pvs clean compile_flags best_player
+# ============================================================
+#  Docker entry (run from host)
+# ============================================================
+DOCKER_IMAGE = agodio/itba-so-multiarch:3.1
 
-pull:
-	docker pull $(DOCKER_IMAGE)
+.PHONY: docker docker-pvs
 
-build:
-	$(DOCKER_RUN) make _deps _all
+docker:
+	docker run --rm -it -e LC_ALL=C.UTF-8 -e LANG=C.UTF-8 \
+		-v "$(CURDIR):/root/ccso" -w /root/ccso $(DOCKER_IMAGE) bash
 
-shell:
-	$(DOCKER_RUN_IT) bash
+docker-pvs:
+	docker run --platform linux/amd64 --rm -it \
+		-v "$(CURDIR):/root/ccso" -w /root/ccso $(DOCKER_IMAGE) bash
 
-run:
-	$(DOCKER_RUN_IT) bash -c "make _deps _all && \
-		./$(MASTER_BIN) -v ./$(VIEW_BIN) $(if $(ARGS),$(ARGS),$(DEFAULT_ARGS))"
+# ============================================================
+#  Project targets (run inside Docker)
+# ============================================================
+.PHONY: install all players build run test memcheck pvs clean compile_flags best_player
 
-test:
-	$(DOCKER_RUN) make _deps _test
+install:
+	@dpkg -s libncursesw5-dev > /dev/null 2>&1 || \
+		(echo "Installing libncursesw5-dev..." && apt-get update -qq && apt-get install -y -qq libncursesw5-dev)
 
-memcheck:
-	$(DOCKER_RUN) make _deps _memcheck
+all: $(MASTER_BIN) players $(VIEW_BIN)
 
-DOCKER_RUN_AMD64 = docker run --platform linux/amd64 --rm -v "$(CURDIR):/root/ccso" -w /root/ccso $(DOCKER_IMAGE)
+players: $(PLAYER_BINS)
 
-pvs:
-	$(DOCKER_RUN_AMD64) make _deps _pvs
+build: install all
 
-best_player:
-	$(DOCKER_RUN) make _deps _all _best_player
+run: build
+	./$(MASTER_BIN) -v ./$(VIEW_BIN) $(if $(ARGS),$(ARGS),$(DEFAULT_ARGS))
+
+test: install $(TEST_BIN)
+	./$(TEST_BIN)
+
+memcheck: install $(TEST_BIN)
+	valgrind --leak-check=full \
+	         --show-leak-kinds=all \
+	         --errors-for-leak-kinds=all \
+	         --track-origins=yes \
+	         --error-exitcode=1 \
+	         ./$(TEST_BIN)
+
+BEST_STRATEGY = 세희
+
+best_player: all
+	@echo "Best strategy: $(BEST_STRATEGY)"
+	@cp $(BUILD_DIR)/$(BEST_STRATEGY) $(BUILD_DIR)/best_player
 
 clean:
 	rm -rf $(BUILD_DIR)
@@ -80,35 +96,8 @@ compile_flags:
 	@echo "compile_flags.txt generated for all modules"
 
 # ============================================================
-#  Internal targets (run inside Docker container)
+#  Compilation rules
 # ============================================================
-.PHONY: _deps _all _players _best_player _test _memcheck _pvs_deps _pvs
-
-_deps:
-	@dpkg -s libncursesw5-dev > /dev/null 2>&1 || (echo "Installing libncursesw5-dev..." && apt-get update -qq && apt-get install -y -qq libncursesw5-dev)
-
-_pvs_deps:
-	@which bear > /dev/null 2>&1 || (echo "Installing bear..." && apt-get update -qq && apt-get install -y -qq bear)
-	@which pvs-studio-analyzer > /dev/null 2>&1 || ( \
-		echo "Installing PVS-Studio..." && \
-		apt-get update -qq && \
-		apt-get install -y -qq wget gnupg2 && \
-		wget -q -O - https://files.pvs-studio.com/etc/pubkey.txt | gpg --dearmor -o /usr/share/keyrings/pvs-studio.gpg && \
-		echo 'deb [signed-by=/usr/share/keyrings/pvs-studio.gpg] https://files.pvs-studio.com/deb viva64 main' > /etc/apt/sources.list.d/pvs-studio.list && \
-		apt-get update -qq && \
-		apt-get install -y -qq pvs-studio \
-	)
-
-_all: $(MASTER_BIN) _players $(VIEW_BIN)
-
-_players: $(PLAYER_BINS)
-
-BEST_STRATEGY = 세희
-
-_best_player: _all
-	@echo "Best strategy: $(BEST_STRATEGY)"
-	@cp $(BUILD_DIR)/$(BEST_STRATEGY) $(BUILD_DIR)/best_player
-
 $(PLAYER_BINS): $(BUILD_DIR)/%: $(PLAYER_SRCS) $(COMMON_SRCS)
 	@mkdir -p $(BUILD_DIR)
 	$(CC) $(CFLAGS) -D$(call get_flag,$*) -I$(COMMON_INC) -Iplayer/include $^ -o $@ $(LDFLAGS)
@@ -121,23 +110,18 @@ $(VIEW_BIN): $(VIEW_SRCS) $(COMMON_SRCS)
 	@mkdir -p $(BUILD_DIR)
 	$(CC) $(CFLAGS) -D_GNU_SOURCE -I$(COMMON_INC) -Iview/include $^ -o $@ $(LDFLAGS) -lncursesw
 
-# ==== Tests (CuTest) ====
+# ============================================================
+#  Tests (CuTest)
+# ============================================================
 TEST_DIR         = tests
 CUTEST_DIR       = $(TEST_DIR)/vendor/cutest
 TEST_UNIT_DIR    = $(TEST_DIR)/unit
 TEST_INCLUDE_DIR = $(TEST_DIR)/include
 TEST_BUILD_DIR   = $(BUILD_DIR)/tests
 
-# CuTest library + every unit test translation unit + test_main entrypoint.
 TEST_SRCS = $(CUTEST_DIR)/CuTest.c \
             $(wildcard $(TEST_UNIT_DIR)/*.c)
 
-# Only the project sources actually exercised by the tests. We deliberately
-# avoid linking master/main.c (its own main collides with test_main) and
-# anything under master/src that is currently known to have compile errors
-# unrelated to the units under test.
-# player_movement.c is compiled with -DGREEDY so the greedy strategy is
-# selected for the test binary.
 TEST_PROJECT_SRCS = master/utils/parser.c \
                     common/src/argv_parser.c \
                     common/src/error_management.c \
@@ -157,25 +141,31 @@ $(TEST_BIN): $(TEST_SRCS) $(TEST_PROJECT_SRCS)
 	@mkdir -p $(TEST_BUILD_DIR)
 	$(CC) $(CFLAGS) $(TEST_INCLUDES) $^ -o $@ $(TEST_LDFLAGS)
 
-_test: $(TEST_BIN)
-	./$(TEST_BIN)
-
-_memcheck: $(TEST_BIN)
-	valgrind --leak-check=full \
-	         --show-leak-kinds=all \
-	         --errors-for-leak-kinds=all \
-	         --track-origins=yes \
-	         --error-exitcode=1 \
-	         ./$(TEST_BIN)
-
+# ============================================================
+#  PVS-Studio (requires x86_64)
+# ============================================================
 PVS_NAME ?= PVS-Studio Free
 PVS_KEY  ?= FREE-FREE-FREE-FREE
 
-_pvs: _pvs_deps _deps
+.PHONY: pvs-install pvs
+
+pvs-install:
+	@which bear > /dev/null 2>&1 || (echo "Installing bear..." && apt-get update -qq && apt-get install -y -qq bear)
+	@which pvs-studio-analyzer > /dev/null 2>&1 || ( \
+		echo "Installing PVS-Studio..." && \
+		apt-get update -qq && \
+		apt-get install -y -qq wget gnupg2 && \
+		wget -q -O - https://files.pvs-studio.com/etc/pubkey.txt | gpg --dearmor -o /usr/share/keyrings/pvs-studio.gpg && \
+		echo 'deb [signed-by=/usr/share/keyrings/pvs-studio.gpg] https://files.pvs-studio.com/deb viva64 main' > /etc/apt/sources.list.d/pvs-studio.list && \
+		apt-get update -qq && \
+		apt-get install -y -qq pvs-studio \
+	)
+
+pvs: pvs-install install
 	pvs-studio-analyzer credentials "$(PVS_NAME)" "$(PVS_KEY)"
 	./scripts/pvs-comments.sh add
 	rm -rf $(BUILD_DIR)
-	bear -- make _all
+	bear -- make all
 	pvs-studio-analyzer analyze -f compile_commands.json -o pvs-report.log -j1; \
 	status=$$?; \
 	./scripts/pvs-comments.sh remove; \
