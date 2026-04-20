@@ -130,7 +130,7 @@ void game_disconnect(game_t *game) {
 }
 
 void game_end(game_t *game) {
-    game->state->running = false;
+    game->state->ended = true;
     for (int8_t i = 0; i < game->state->players_count; i++) {
         game_sync_player_grant_turn(game->sync, i);
     }

@@ -40,7 +40,7 @@ int main(int argc, char *argv[]) {
 
     register_players_from_paths(game.state, params.players_paths);
     place_players_on_board(game.state);
-    game.state->running = true;
+    // game.state->ended = false;
 
     bool interrupted = master_run(&game, &params, pipes, view_pid, &has_view);
 

@@ -110,10 +110,12 @@ make build       # compile master, players and view
 ### Run
 
 ```bash
-make run                                                        # all strategies, defaults
-make run ARGS="-p ./build/Dante -p ./build/Morena"              # custom players
-make run ARGS="-p ./build/Dante -w 30 -h 30"                   # custom size
+make run                                                              # all strategies, defaults
+make run ARGS="-w 20 -h 20 -p ./build/Dante -p ./build/Morena"       # custom players
+make run ARGS="-w 30 -h 30 -p ./build/Dante"                         # custom size
 ```
+
+> ARGS sobreescribe los argumentos por defecto. Siempre incluir `-w` y `-h`.
 
 ### Best player
 

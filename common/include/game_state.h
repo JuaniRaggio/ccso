@@ -35,7 +35,7 @@ typedef struct {
     uint16_t x;
     uint16_t y;
     pid_t player_id;
-    bool state;
+    bool is_blocked; // true si el jugador esta blockeado
 } player_t;
 
 /**
@@ -50,6 +50,6 @@ typedef struct {
     uint16_t height;
     int8_t players_count;
     player_t players[MAX_PLAYERS];
-    bool running;
+    bool ended;
     int8_t board[];
 } game_state_t;

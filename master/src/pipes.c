@@ -105,14 +105,14 @@ void init_fd_set(fd_set *masterSet, int pipes[][pipe_ends], int playersCount, in
 }
 
 void disconnect_player(player_t *player, int32_t pipes[][pipe_ends], fd_set *master_set, int8_t idx) {
-    player->state = false;
+    player->is_blocked = true;
     FD_CLR(pipes[idx][pipe_reader], master_set);
     close(pipes[idx][pipe_reader]);
 }
 
 void close_active_pipes(int32_t pipes[][pipe_ends], player_t players[], int8_t count) {
     for (int8_t i = 0; i < count; i++) {
-        if (players[i].state)
+        if (!players[i].is_blocked)
             close(pipes[i][pipe_reader]);
     }
 }
