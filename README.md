@@ -144,3 +144,9 @@ exact cause.
 - `-s <seed>` random seed
 - `-v <path>` path to view binary
 - `-p <path>` path to a player binary
+
+## Contributors
+
+- Juan Ignacio Raggio
+- Santiago Cibeira
+- Victoria Helena Park
